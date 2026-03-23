@@ -73,6 +73,16 @@ const ADMIN_PASSWORD = 'ZKWL@2026admin';
 const ADMIN_EMAIL = 'admin@zhikeweilai.future';
 const ADMIN_NICKNAME = '管理员';
 
+// 管理后台登录页（authPage）的 headerLogo 默认配置
+// 使用 data URL，避免依赖 COS/图片上传流程（首次部署可直接生效）。
+const DEFAULT_HEADER_LOGO_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200">
+  <rect x="18" y="18" width="484" height="164" rx="34" fill="#B91C1C"/>
+  <text x="260" y="112" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="54" fill="#ffffff">智科未来</text>
+</svg>`.trim();
+const DEFAULT_HEADER_LOGO_DATA_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(DEFAULT_HEADER_LOGO_SVG)}`;
+
 const INDEX_WARN_THRESHOLD = 20;
 const INDEX_HARD_LIMIT = 64;
 
@@ -226,6 +236,20 @@ const syncDatabase = async () => {
       ];
       await HomeConfig.bulkCreate(seed);
       console.log('[DB] Default home configs created.');
+    }
+
+    // 管理后台登录页 headerLogo：确保有值，避免 section=headerLogo 为空导致显示默认占位。
+    const headerLogo = await HomeConfig.findOne({ where: { section: 'headerLogo' } });
+    if (!headerLogo) {
+      await HomeConfig.create({
+        section: 'headerLogo',
+        title: '管理后台Logo',
+        desc: '',
+        imageUrl: DEFAULT_HEADER_LOGO_DATA_URL,
+        color: '',
+        sortOrder: 0,
+      });
+      console.log('[DB] Default headerLogo created.');
     }
 
     const svcCatCount = await ServiceCategory.count();
