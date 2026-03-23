@@ -74,14 +74,10 @@ const ADMIN_EMAIL = 'admin@zhikeweilai.future';
 const ADMIN_NICKNAME = '管理员';
 
 // 管理后台登录页（authPage）的 headerLogo 默认配置
-// 使用 data URL，避免依赖 COS/图片上传流程（首次部署可直接生效）。
-const DEFAULT_HEADER_LOGO_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200">
-  <rect x="18" y="18" width="484" height="164" rx="34" fill="#B91C1C"/>
-  <text x="260" y="112" text-anchor="middle" dominant-baseline="middle"
-        font-family="Arial, Helvetica, sans-serif" font-size="54" fill="#ffffff">智科未来</text>
-</svg>`.trim();
-const DEFAULT_HEADER_LOGO_DATA_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(DEFAULT_HEADER_LOGO_SVG)}`;
+// 注意：HomeConfig.imageUrl 字段为 STRING(500)，因此不要放过长的 data URL。
+const DEFAULT_HEADER_LOGO_URL =
+  process.env.HEADER_LOGO_URL ||
+  'https://zkwl-1256887166.cos.ap-guangzhou.myqcloud.com/vino/favicon.svg';
 
 const INDEX_WARN_THRESHOLD = 20;
 const INDEX_HARD_LIMIT = 64;
@@ -245,7 +241,7 @@ const syncDatabase = async () => {
         section: 'headerLogo',
         title: '管理后台Logo',
         desc: '',
-        imageUrl: DEFAULT_HEADER_LOGO_DATA_URL,
+        imageUrl: DEFAULT_HEADER_LOGO_URL,
         color: '',
         sortOrder: 0,
       });
