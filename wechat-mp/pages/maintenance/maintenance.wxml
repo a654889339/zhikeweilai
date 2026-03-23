@@ -1,0 +1,30 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <block wx:else>
+    <view class="header">
+      <text class="main-title">{{guideName}} · 常见问题与保养建议</text>
+      <text wx:if="{{sections.length > 1}}" class="section-count">共 {{sections.length}} 个章节</text>
+    </view>
+
+    <!-- TOC -->
+    <view wx:if="{{sections.length > 1}}" class="toc-card">
+      <text class="toc-title">目录</text>
+      <view wx:for="{{sections}}" wx:key="index" class="toc-item">
+        <text class="toc-num">{{index + 1}}</text>
+        <text class="toc-text">{{item.title}}</text>
+      </view>
+    </view>
+
+    <!-- Sections -->
+    <view wx:for="{{sections}}" wx:key="index" class="chapter-card">
+      <view class="chapter-header">
+        <text class="chapter-num">{{index + 1}}</text>
+        <text class="chapter-title">{{item.title}}</text>
+      </view>
+      <view wx:for="{{item.tips}}" wx:for-item="tip" wx:key="*this" class="tip-row">
+        <text class="tip-dot">·</text>
+        <text class="tip-text">{{tip}}</text>
+      </view>
+    </view>
+  </block>
+</view>

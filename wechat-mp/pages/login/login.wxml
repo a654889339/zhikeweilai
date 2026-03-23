@@ -1,0 +1,42 @@
+<view class="page">
+  <view class="login-card">
+    <view class="logo-area">
+      <view class="logo-circle">
+          <image src="../../assets/logo.png" class="logo-image" mode="aspectFit" />
+      </view>
+      <text class="app-name">教具售卖</text>
+      <text class="app-desc">AI - Science - Future</text>
+      <text wx:if="{{headerLogoDesc}}" class="header-logo-desc">{{headerLogoDesc}}</text>
+    </view>
+
+    <!-- 微信一键登录 -->
+    <block wx:if="{{!isLoggedIn}}">
+      <button class="btn-wx-login" loading="{{logging}}" disabled="{{logging}}" bindtap="wxLogin">
+        <text wx:if="{{!logging}}">微信一键登录</text>
+        <text wx:else>登录中...</text>
+      </button>
+      <text class="login-tip">点击登录即表示同意《用户协议》和《隐私政策》</text>
+    </block>
+
+    <!-- 登录成功后设置头像和昵称（新用户） -->
+    <block wx:if="{{isLoggedIn && showProfile}}">
+      <view class="profile-setup">
+        <text class="setup-title">完善个人资料</text>
+        <view class="avatar-area">
+          <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+            <image wx:if="{{tempAvatarUrl}}" class="avatar-img" src="{{tempAvatarUrl}}" mode="aspectFill" />
+            <view wx:else class="avatar-placeholder">
+              <text class="avatar-placeholder-text">点击设置头像</text>
+            </view>
+          </button>
+        </view>
+        <view class="nickname-area">
+          <text class="field-label">昵称</text>
+          <input type="nickname" class="nickname-input" placeholder="请输入昵称" value="{{tempNickname}}" bindinput="onNicknameInput" bindchange="onNicknameInput" />
+        </view>
+        <button class="btn-save" bindtap="saveProfile" loading="{{saving}}">保存并进入</button>
+        <text class="skip-link" bindtap="skipProfile">跳过，直接进入</text>
+      </view>
+    </block>
+  </view>
+</view>

@@ -1,0 +1,30 @@
+<view class="page">
+  <view class="card">
+    <view class="edit-row">
+      <text class="edit-label">更换头像</text>
+      <button class="edit-avatar-btn" open-type="chooseAvatar" bindchooseavatar="onUpdateAvatar">
+        <image wx:if="{{avatarUrl}}" class="avatar-preview" src="{{avatarUrl}}" mode="aspectFill" />
+        <text wx:else class="edit-btn-text">选择头像</text>
+      </button>
+    </view>
+    <view class="edit-row">
+      <text class="edit-label">修改昵称</text>
+      <input type="nickname" class="edit-nickname-input" placeholder="点击修改" value="{{nickname}}" bindblur="onUpdateNickname" />
+    </view>
+    <view class="edit-row edit-row-phone">
+      <text class="edit-label">手机号</text>
+      <block wx:if="{{userPhone}}">
+        <text class="phone-masked">{{maskedPhone}}</text>
+        <text class="edit-link" bindtap="onChangePhoneTap">更换</text>
+      </block>
+      <block wx:else>
+        <view class="bind-phone-inline">
+          <input class="bind-phone-input" type="number" placeholder="11位手机号" maxlength="11" value="{{bindPhone}}" data-field="bindPhone" bindinput="onBindPhoneInput" />
+          <input class="bind-code-input" type="number" placeholder="验证码" maxlength="6" value="{{bindCode}}" data-field="bindCode" bindinput="onBindPhoneInput" />
+          <button class="btn-get-code" disabled="{{smsCountdown > 0 || sendingSmsCode}}" bindtap="onSendBindCode">{{smsCountdown > 0 ? (smsCountdown + 's') : '获取验证码'}}</button>
+          <button class="btn-bind-phone" bindtap="onSubmitBindPhone">绑定</button>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>

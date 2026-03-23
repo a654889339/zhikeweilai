@@ -1,0 +1,27 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <block wx:else>
+    <view class="header">
+      <text class="main-title">{{guideName}} · 电子说明书</text>
+      <text wx:if="{{helpItems.length > 1}}" class="chapter-count">共 {{helpItems.length}} 个章节</text>
+    </view>
+
+    <!-- TOC -->
+    <view wx:if="{{helpItems.length > 1}}" class="toc-card">
+      <text class="toc-title">目录</text>
+      <view wx:for="{{helpItems}}" wx:key="index" class="toc-item">
+        <text class="toc-num">{{index + 1}}</text>
+        <text class="toc-text">{{item.title}}</text>
+      </view>
+    </view>
+
+    <!-- Chapters -->
+    <view wx:for="{{helpItems}}" wx:key="index" class="chapter-card">
+      <view class="chapter-header">
+        <text class="chapter-num">{{index + 1}}</text>
+        <text class="chapter-title">{{item.title}}</text>
+      </view>
+      <rich-text class="chapter-content" nodes="{{item.content}}" />
+    </view>
+  </block>
+</view>

@@ -1,0 +1,92 @@
+.page { background: transparent; min-height: 100vh; }
+.loading { text-align: center; padding: 60px 0; color: #999; }
+
+/* 第二行：选择商品（与网页一致） */
+.product-select-row {
+  background: rgba(255,255,255,0.95);
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid rgba(0,0,0,0.06);
+}
+.select-product-field {
+  display: flex;
+  align-items: center;
+}
+.select-label { font-size: 28rpx; color: #333; margin-right: 16rpx; flex-shrink: 0; }
+.select-value { flex: 1; font-size: 28rpx; color: #666; }
+.select-arrow { font-size: 32rpx; color: #999; }
+
+/* Product Nav */
+.product-nav {
+  background: rgba(232, 232, 237, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  white-space: nowrap;
+  border-bottom: 1rpx solid rgba(0,0,0,0.04);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-item {
+  display: inline-block;
+  padding: 28rpx 32rpx;
+  font-size: 28rpx;
+  color: #666;
+  position: relative;
+}
+
+.nav-item.active {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 4rpx;
+  background: #1a1a1a;
+  border-radius: 2rpx;
+}
+
+/* Hero */
+.hero-block { background: #fff; margin-bottom: 10px; }
+.hero { position: relative; height: 220px; overflow: hidden; }
+.hero-img { width: 100%; height: 100%; }
+.hero-fallback { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.hero-icon-img { width: 64px; height: 64px; }
+.hero-emoji { font-size: 56px; }
+.hero-name { font-size: 22px; color: #fff; font-weight: 600; margin-top: 8px; }
+.play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 50px; height: 50px; background: rgba(0,0,0,0.5); border-radius: 50%; color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 50px; text-align: center; }
+
+/* Media（红框区域居中，与前台一致） */
+.hero-media { padding: 16px; text-align: center; }
+.hero-media-title { display: block; font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }
+.media-scroll { white-space: nowrap; display: flex; flex-direction: row; justify-content: center; }
+.media-card { display: inline-block; width: 130px; margin-right: 10px; vertical-align: top; flex-shrink: 0; }
+.media-thumb-wrap { width: 130px; height: 160px; border-radius: 10px; overflow: hidden; position: relative; background: #1a1a1a; }
+.media-thumb { width: 100%; height: 100%; }
+.media-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px; background: #2a2a2a; }
+.media-play { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); width: 36px; height: 36px; background: rgba(0,0,0,0.5); border-radius: 50%; color: #fff; font-size: 14px; text-align: center; line-height: 36px; }
+.media-label-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 8px 8px; background: linear-gradient(transparent, rgba(0,0,0,0.7)); }
+.media-label-overlay text { font-size: 13px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+
+/* Cards */
+.card { background: #fff; margin: 10px 12px; border-radius: 12px; padding: 16px; }
+.title { display: block; font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }
+
+.help-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+.help-row:last-child { border-bottom: none; }
+.help-title { font-size: 14px; color: #333; }
+.help-arrow { font-size: 18px; color: #ccc; }
+
+.entry-grid { display: flex; justify-content: space-around; }
+.entry-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.entry-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.entry-item text:last-child { font-size: 12px; color: #666; }
+
+.empty-hint { text-align: center; padding: 80px 0; color: #999; font-size: 14px; }
+.tab-bar-placeholder { height: 120rpx; }

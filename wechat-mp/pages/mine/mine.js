@@ -1,0 +1,127 @@
+const app = getApp();
+
+Page({
+  data: {
+    userInfo: null,
+    isLoggedIn: false,
+    avatarInitial: 'V',
+    avatarUrl: '',
+    maskedPhone: '',
+    profileHeaderStyle: 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);',
+    stats: [
+      { label: '待支付', value: 0 },
+      { label: '进行中', value: 0 },
+      { label: '待评价', value: 0 },
+      { label: '售后', value: 0 },
+    ],
+    menus: [
+      { title: '我的订单', emoji: '📋', url: '/pages/orders/orders' },
+      { title: '我的商品', emoji: '📦', url: '/pages/my-products/my-products' },
+      { title: '地址管理', emoji: '📍', url: '/pages/address/address' },
+      { title: '优惠券', emoji: '🎫', url: '' },
+      { title: '意见反馈', emoji: '💬', url: '', chat: true },
+      { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'www.vinotech.cn' },
+      { title: '联系我们', emoji: '📞', url: '', contact: true },
+    ],
+  },
+
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 4 });
+    }
+    this.checkLoginState();
+    this.loadMineBg();
+  },
+
+  loadMineBg() {
+    app.request({ url: '/home-config' }).then(res => {
+      const list = res.data || [];
+      const mineBg = list.find(i => i.section === 'mineBg' && i.status === 'active');
+      const style = mineBg && mineBg.imageUrl
+        ? 'background-image: url(' + mineBg.imageUrl + '); background-size: cover; background-position: center;'
+        : 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);';
+      this.setData({ profileHeaderStyle: style });
+    }).catch(() => {});
+  },
+
+  checkLoginState() {
+    const isLoggedIn = app.isLoggedIn();
+    if (isLoggedIn && !app.globalData.userInfo) {
+      app
+        .request({ url: '/auth/profile' })
+        .then(res => {
+          const user = res.data || {};
+          app.globalData.userInfo = user;
+          this.applyUserData(user);
+        })
+        .catch(() => {
+          app.clearToken();
+          this.setData({ userInfo: null, isLoggedIn: false, avatarUrl: '', avatarInitial: 'V' });
+        });
+    } else {
+      const user = app.globalData.userInfo || null;
+      if (user) {
+        this.applyUserData(user);
+      } else {
+        this.setData({ userInfo: null, isLoggedIn: isLoggedIn, avatarUrl: '', avatarInitial: 'V' });
+      }
+    }
+  },
+
+  applyUserData(user) {
+    const initial = (user.nickname || user.username || 'V').charAt(0);
+    const avatarUrl = user.avatar || '';
+    const maskedPhone = user.phone ? user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '';
+    this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial, avatarUrl, maskedPhone });
+  },
+
+  onProfileTap() {
+    if (!app.isLoggedIn()) {
+      wx.navigateTo({ url: '/pages/login/login' });
+    } else {
+      wx.navigateTo({ url: '/pages/profile-edit/profile-edit' });
+    }
+  },
+
+  onMenuTap(e) {
+    const idx = parseInt(e.currentTarget.dataset.index, 10);
+    const item = this.data.menus[idx] || {};
+    if (item.chat) {
+      wx.navigateTo({ url: '/pages/chat/chat' });
+    } else if (item.webUrl) {
+      wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(item.webUrl) });
+    } else if (item.contact) {
+      wx.showModal({
+        title: '联系我们',
+        content: '客服电话：400-8030-683',
+        cancelText: '复制',
+        confirmText: '立刻拨打',
+        success: (res) => {
+          if (res.confirm) {
+            wx.makePhoneCall({ phoneNumber: '4008030683' });
+          } else {
+            wx.setClipboardData({ data: '400-8030-683', success: () => wx.showToast({ title: '已复制' }) });
+          }
+        },
+      });
+    } else if (item.url) {
+      wx.navigateTo({ url: item.url, fail() { wx.switchTab({ url: item.url }); } });
+    } else {
+      wx.showToast({ title: '功能开发中', icon: 'none' });
+    }
+  },
+
+  logout() {
+    wx.showModal({
+      title: '退出登录',
+      content: '确定要退出登录吗？',
+      success: res => {
+        if (res.confirm) {
+          app.clearToken();
+          this.setData({ userInfo: null, isLoggedIn: false, avatarUrl: '', avatarInitial: 'V' });
+          wx.showToast({ title: '已退出', icon: 'success' });
+        }
+      },
+    });
+  },
+});

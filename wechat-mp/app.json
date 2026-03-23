@@ -1,0 +1,57 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/products/products",
+    "pages/service/service",
+    "pages/orders/orders",
+    "pages/mine/mine",
+    "pages/service-detail/service-detail",
+    "pages/guide-detail/guide-detail",
+    "pages/manual/manual",
+    "pages/maintenance/maintenance",
+    "pages/chat/chat",
+    "pages/webview/webview",
+    "pages/login/login",
+    "pages/address/address",
+    "pages/address-edit/address-edit",
+    "pages/profile-edit/profile-edit",
+    "pages/my-products/my-products"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#E8E8ED",
+    "navigationBarTitleText": "教具售卖",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#999999",
+    "selectedColor": "#B91C1C",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/products/products",
+        "text": "产品"
+      },
+      {
+        "pagePath": "pages/service/service",
+        "text": "服务"
+      },
+      {
+        "pagePath": "pages/orders/orders",
+        "text": "订单"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  },
+  "usingComponents": {},
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

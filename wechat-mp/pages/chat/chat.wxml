@@ -1,0 +1,45 @@
+<view class="chat-page">
+  <scroll-view
+    scroll-y
+    class="chat-body"
+    scroll-into-view="{{scrollToId}}"
+    scroll-with-animation
+  >
+    <view class="chat-hint" wx:if="{{!messages.length && !loading}}">暂无消息，发送第一条吧</view>
+    <view class="chat-loading" wx:if="{{loading}}">加载中...</view>
+    <view
+      wx:for="{{messages}}"
+      wx:key="id"
+      class="msg-row {{item.sender === 'user' ? 'msg-right' : 'msg-left'}}"
+      id="msg-{{item.id}}"
+    >
+      <view class="msg-avatar {{item.sender === 'user' ? 'avatar-user' : 'avatar-admin'}}">
+        <text>{{item.sender === 'user' ? userInitial : '客'}}</text>
+      </view>
+      <view class="msg-bubble-wrap">
+        <view wx:if="{{item.type === 'image'}}" class="msg-bubble bubble-img">
+          <image src="{{item.content}}" class="chat-img" mode="widthFix" bindtap="previewImage" data-url="{{item.content}}" />
+        </view>
+        <view wx:else class="msg-bubble {{item.sender === 'user' ? 'bubble-user' : 'bubble-admin'}}">
+          <text>{{item.content}}</text>
+        </view>
+        <text class="msg-time">{{item.timeStr}}</text>
+      </view>
+    </view>
+    <view style="height:20rpx" id="chat-bottom"></view>
+  </scroll-view>
+
+  <view class="chat-input-bar">
+    <view class="chat-img-btn" bindtap="chooseImage">📷</view>
+    <input
+      class="chat-input"
+      placeholder="{{isLoggedIn ? '输入消息...' : '请先登录后发送消息'}}"
+      disabled="{{!isLoggedIn}}"
+      value="{{inputText}}"
+      bindinput="onInput"
+      bindconfirm="sendMessage"
+      confirm-type="send"
+    />
+    <view class="chat-send-btn {{(!inputText || !isLoggedIn) ? 'disabled' : ''}}" bindtap="sendMessage">发送</view>
+  </view>
+</view>

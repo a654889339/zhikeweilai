@@ -1,0 +1,29 @@
+<view class="page">
+  <view class="tabs">
+    <view
+      class="tab-item {{activeTab === index ? 'active' : ''}}"
+      wx:for="{{tabs}}"
+      wx:key="key"
+      data-index="{{index}}"
+      bindtap="switchTab"
+    >
+      <text>{{item.name}}</text>
+    </view>
+  </view>
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  <view class="service-grid" wx:else>
+    <view class="grid-item" wx:for="{{services}}" wx:key="id" bindtap="goServiceDetail" data-id="{{item.id}}">
+      <view class="grid-icon" style="background: {{item.bg}}">
+        <text class="grid-emoji">{{item.emoji}}</text>
+      </view>
+      <text class="grid-name">{{item.title}}</text>
+      <text class="grid-desc">{{item.desc}}</text>
+      <text class="grid-price">¥{{item.price}}起</text>
+    </view>
+  </view>
+
+  <view class="tab-bar-placeholder"></view>
+</view>

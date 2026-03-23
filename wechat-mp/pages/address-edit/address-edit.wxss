@@ -1,0 +1,11 @@
+.page { padding: 20rpx; background: transparent; min-height: 100vh; }
+.form-group { background: #fff; padding: 24rpx 30rpx; margin-bottom: 2rpx; }
+.form-group.row { display: flex; justify-content: space-between; align-items: center; }
+.form-group:first-child { border-radius: 16rpx 16rpx 0 0; }
+.form-group:last-of-type { border-radius: 0 0 16rpx 16rpx; margin-bottom: 30rpx; }
+.label { font-size: 26rpx; color: #999; display: block; margin-bottom: 12rpx; }
+.form-group.row .label { margin-bottom: 0; }
+.input { font-size: 30rpx; color: #333; width: 100%; }
+.textarea { font-size: 30rpx; color: #333; width: 100%; height: 120rpx; }
+.picker-text { font-size: 30rpx; color: #333; }
+.save-btn { background: #B91C1C !important; color: #fff !important; border-radius: 16rpx; font-size: 30rpx; margin-top: 20rpx; }

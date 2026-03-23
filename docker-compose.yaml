@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  vino-mysql:
+    image: mysql:8.0
+    container_name: vino-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: vino_secret_2024
+      MYSQL_DATABASE: vino_db
+      MYSQL_CHARSET: utf8mb4
+    ports:
+      - "3308:3306"
+    volumes:
+      - vino-mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  vino-backend:
+    build: ./backend
+    container_name: vino-backend
+    restart: always
+    ports:
+      - "5302:5302"
+    environment:
+      NODE_ENV: production
+      PORT: 5302
+      DB_HOST: vino-mysql
+      DB_PORT: 3306
+      DB_NAME: vino_db
+      DB_USER: root
+      DB_PASSWORD: vino_secret_2024
+      JWT_SECRET: vino_jwt_production_secret_2024
+      EMAIL_ENABLED: "true"
+      EMAIL_HOST: smtp.qq.com
+      EMAIL_PORT: "587"
+      EMAIL_USERNAME: 654889339@qq.com
+      EMAIL_PASSWORD: jvwuiqxrfjmibcdb
+      EMAIL_FROM: 654889339@qq.com
+      EMAIL_FROM_NAME: Vino服务
+      WECHAT_APPID: wxf6fdff25c117e86d
+      WECHAT_SECRET: 8c82016b1f57a66764f581ae763dec15
+      FRONTEND_URL: ${FRONTEND_URL:-http://106.54.50.88:5301}
+      WECHAT_PAY_MCH_ID: ${WECHAT_PAY_MCH_ID:-}
+      WECHAT_PAY_SERIAL_NO: ${WECHAT_PAY_SERIAL_NO:-}
+      WECHAT_PAY_API_V3_KEY: ${WECHAT_PAY_API_V3_KEY:-}
+      WECHAT_PAY_PRIVATE_KEY: ${WECHAT_PAY_PRIVATE_KEY:-}
+      WECHAT_PAY_NOTIFY_URL: ${WECHAT_PAY_NOTIFY_URL:-}
+      ALIPAY_APPID: ${ALIPAY_APPID:-}
+      ALIPAY_PRIVATE_KEY: ${ALIPAY_PRIVATE_KEY:-}
+      ALIPAY_PUBLIC_KEY: ${ALIPAY_PUBLIC_KEY:-}
+      COS_SECRET_ID: ${COS_SECRET_ID:-}
+      COS_SECRET_KEY: ${COS_SECRET_KEY:-}
+    depends_on:
+      vino-mysql:
+        condition: service_healthy
+
+  vino-frontend:
+    build: ./frontend
+    container_name: vino-frontend
+    restart: always
+    ports:
+      - "5301:5301"
+    depends_on:
+      - vino-backend
+
+  vino-frontend-outlet:
+    build: ./frontend_outlet
+    container_name: vino-frontend-outlet
+    restart: always
+    ports:
+      - "5203:5203"
+    depends_on:
+      - vino-backend
+
+volumes:
+  vino-mysql-data:
