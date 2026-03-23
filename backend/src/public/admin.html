@@ -1475,8 +1475,7 @@ async function loadAuthLogo() {
     const res = await fetch(API + '/home-config').then(r => r.json());
     const items = (res.data || []).filter(i => i.status === 'active');
     const headerLogo = items.find(i => i.section === 'headerLogo');
-    const splash = items.find(i => i.section === 'splash');
-    const logo = (headerLogo && headerLogo.imageUrl) ? headerLogo : (splash && splash.imageUrl ? splash : null);
+    const logo = (headerLogo && headerLogo.imageUrl) ? headerLogo : null;
     const imgEl = document.getElementById('authLogoImg');
     const svgEl = document.getElementById('authLogoSvg');
     if (imgEl && svgEl && logo && logo.imageUrl) {

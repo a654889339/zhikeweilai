@@ -57,7 +57,21 @@ OutletMessage.belongsTo(OutletUser, { foreignKey: 'userId', as: 'user' });
 
 const models = { User, Service, ServiceCategory, Order, OrderLog, Address, DeviceGuide, ProductCategory, HomeConfig, Message, InventoryCategory, InventoryProduct, UserProduct, OutletUser, OutletOrder, OutletOrderLog, OutletAddress, OutletHomeConfig, OutletMessage, OutletServiceCategory, OutletService };
 
-const ADMIN_PASSWORD = 'Vino@2024admin';
+const TABLE_PREFIX = process.env.TABLE_PREFIX || '';
+// 通过运行时统一表名前缀实现“不同工程使用不同表”，避免读到其他工程的数据
+if (TABLE_PREFIX) {
+  for (const m of Object.values(models)) {
+    if (m && m.options && typeof m.options.tableName === 'string' && !m.options.tableName.startsWith(TABLE_PREFIX)) {
+      m.options.tableName = TABLE_PREFIX + m.options.tableName;
+      m.tableName = m.options.tableName;
+    }
+  }
+}
+
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'ZKWL@2026admin';
+const ADMIN_EMAIL = 'admin@zhikeweilai.future';
+const ADMIN_NICKNAME = '管理员';
 
 const INDEX_WARN_THRESHOLD = 20;
 const INDEX_HARD_LIMIT = 64;
@@ -127,16 +141,25 @@ const syncDatabase = async () => {
       if (!ok) console.error('[DB-IndexGuard] Index issue persists after cleanup. Manual intervention may be needed.');
     }
 
-    const admin = await User.findOne({ where: { username: 'admin' } });
+    // 管理员账号：存在则更新密码/邮箱，保证你每次重部署都能拿到可用账号
+    const admin = await User.findOne({ where: { username: ADMIN_USERNAME } });
     if (!admin) {
       await User.create({
-        username: 'admin',
-        email: 'admin@vino.service',
+        username: ADMIN_USERNAME,
+        email: ADMIN_EMAIL,
         password: ADMIN_PASSWORD,
-        nickname: '管理员',
+        nickname: ADMIN_NICKNAME,
         role: 'admin',
       });
       console.log('[DB] Default admin account created.');
+    } else {
+      admin.email = ADMIN_EMAIL;
+      admin.password = ADMIN_PASSWORD; // 由 User 的 beforeUpdate hook 做 hash
+      admin.nickname = ADMIN_NICKNAME;
+      admin.role = 'admin';
+      admin.status = 'active';
+      await admin.save();
+      console.log('[DB] Default admin account updated.');
     }
 
     const catCount = await ProductCategory.count();

@@ -1,8 +1,8 @@
 const COS = require('cos-nodejs-sdk-v5');
 const path = require('path');
 
-const Bucket = 'itsyourturnmy-1256887166';
-const Region = 'ap-singapore';
+const Bucket = 'zkwl-1256887166';
+const Region = 'ap-guangzhou';
 const CosBaseUrl = `https://${Bucket}.cos.${Region}.myqcloud.com`;
 
 const THUMB_MAX_WIDTH = 400;
