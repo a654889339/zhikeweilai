@@ -1,6 +1,6 @@
 ---
 name: deploy-to-106
-description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存（zkwl-* 容器、530x/3309 端口、独立 MySQL 卷）。使用 SSH + ghfast 镜像拉代码 + docker compose。在用户要求发布/部署/上 106 时执行本 skill。
+description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存（zkwl-* 容器、530x/3310 MySQL 映射、独立 MySQL 卷）。使用 SSH + ghfast 镜像拉代码 + docker compose。在用户要求发布/部署/上 106 时执行本 skill。
 ---
 
 # Deploy zhikeweilai to 106
@@ -10,7 +10,7 @@ description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存
 | 项目 | 主前端 | 门店 | API | MySQL 宿主机端口 |
 |------|--------|------|-----|------------------|
 | **Vino_test** | 5201 | 5203 | 5202 | 3308 |
-| **zhikeweilai** | 5301 | 5303 | 5302 | 3309 |
+| **zhikeweilai** | 5301 | 5303 | 5302 | **3310**（106 上 3309 已被 jiuyoumi 占用） |
 
 - 容器名：`zkwl-mysql`、`zkwl-backend`、`zkwl-frontend`、`zkwl-frontend-outlet`（禁止再用 `vino-*`，会与 Vino 冲突）。
 - 数据卷：`zkwl-mysql-data`（与 `vino-mysql-data` 独立）。
