@@ -158,8 +158,11 @@ exports.login = async (req, res) => {
       return res.status(400).json({ code: 400, message: '用户名和密码不能为空' });
     }
     const user = await User.findOne({ where: { username: String(username).trim() } });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ code: 401, message: '用户名或密码错误' });
+    if (!user) {
+      return res.status(404).json({ code: 404, message: '账号不存在' });
+    }
+    if (!(await user.comparePassword(password))) {
+      return res.status(401).json({ code: 401, message: '密码错误' });
     }
     if (user.status !== 'active') {
       return res.status(403).json({ code: 403, message: '账号已被禁用' });
