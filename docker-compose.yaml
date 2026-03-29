@@ -42,7 +42,7 @@ services:
       EMAIL_HOST: smtp.qq.com
       EMAIL_PORT: "587"
       EMAIL_USERNAME: 654889339@qq.com
-      EMAIL_PASSWORD: jvwuiqxrfjmibcdb
+      EMAIL_PASSWORD: cmzltsrhmqfcbaia
       EMAIL_FROM: 654889339@qq.com
       EMAIL_FROM_NAME: Vino服务
       WECHAT_APPID: wxf6fdff25c117e86d
