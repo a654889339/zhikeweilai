@@ -291,6 +291,24 @@ const syncDatabase = async () => {
       console.log('[DB] Default headerLogo created.');
     }
 
+    // 公司名称：用于邮件模板、标题等统一展示
+    const companyName = await HomeConfig.findOne({ where: { section: 'companyName' } });
+    if (!companyName) {
+      await HomeConfig.create({
+        section: 'companyName',
+        title: '智科未来',
+        desc: '公司名称配置',
+        icon: '',
+        imageUrl: '',
+        color: '',
+        path: '/',
+        price: '',
+        sortOrder: 0,
+        status: 'active',
+      });
+      console.log('[DB] Default companyName created.');
+    }
+
     return true;
   } catch (error) {
     console.error('[DB] Unable to connect:', error.message);

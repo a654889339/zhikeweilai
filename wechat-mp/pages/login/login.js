@@ -9,9 +9,11 @@ Page({
     tempAvatarUrl: '',
     tempNickname: '',
     headerLogoDesc: '',
+    companyName: '智科未来',
   },
 
   onLoad() {
+    this.setData({ companyName: app.globalData.companyName || '智科未来' });
     app.request({ url: '/home-config' }).then(res => {
       const list = res.data || [];
       const headerLogo = list.find(i => i.section === 'headerLogo' && i.status === 'active');

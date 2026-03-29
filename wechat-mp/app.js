@@ -23,6 +23,7 @@ App({
     baseUrl: 'http://106.54.50.88:5302/api',
     userInfo: null,
     token: '',
+    companyName: '智科未来',
   },
 
   onLaunch() {
@@ -36,6 +37,17 @@ App({
       this.globalData.token = token;
       this.fetchProfile();
     }
+    // 读取公司名称配置（无需登录）
+    wx.request({
+      url: this.globalData.baseUrl + '/home-config?all=1',
+      method: 'GET',
+      success: (res) => {
+        const items = (res.data && res.data.code === 0 && res.data.data) ? res.data.data : [];
+        const cn = items.find((i) => i.section === 'companyName' && i.status === 'active');
+        const name = cn && cn.title ? String(cn.title).trim() : '';
+        if (name) this.globalData.companyName = name;
+      },
+    });
   },
 
   /** 使用 wx.request，避免无效 token 时 Promise 链报错；401 静默清 token */

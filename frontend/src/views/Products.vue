@@ -79,7 +79,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { guideApi } from '@/api';
+import { guideApi, homeConfigApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import {
   sortGuidesByDisplayOrder,
@@ -151,7 +151,13 @@ const selectCategory = async (cat) => {
 };
 
 onMounted(async () => {
-  document.title = '智科未来';
+  try {
+    const hc = await homeConfigApi.list({ all: 1 });
+    const items = hc.data || [];
+    const cn = items.find((i) => i.section === 'companyName' && i.status === 'active');
+    const name = cn && cn.title ? String(cn.title).trim() : '';
+    document.title = name || '服务';
+  } catch { /* ignore */ }
   try {
     const res = await guideApi.categories();
     categories.value = res.data || [];

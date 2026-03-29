@@ -56,7 +56,9 @@ const displayText = computed(() => {
   if (splashConfig.value?.title) {
     return `即将打开${splashConfig.value.title}...`;
   }
-  return '即将打开智科未来服务站...';
+  // 兜底文案使用 companyName（来自后台 companyName 配置）
+  const fallback = splashConfig.value?.title || '服务站';
+  return `即将打开${fallback}...`;
 });
 
 

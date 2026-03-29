@@ -35,12 +35,12 @@
         <div class="share-card">
           <div class="share-card-header">
             <img v-if="headerLogoUrl" :src="headerLogoUrl" style="height:32px;object-fit:contain" />
-          <span v-else style="color:#fff;font-weight:700;font-size:18px;letter-spacing:2px">智科未来</span>
+          <span v-else style="color:#fff;font-weight:700;font-size:18px;letter-spacing:2px">{{ companyName }}</span>
           </div>
           <div class="share-qr">
             <canvas ref="qrCanvas"></canvas>
           </div>
-          <p class="share-hint">扫描二维码，打开 智科未来服务站</p>
+          <p class="share-hint">扫描二维码，打开 {{ companyName }} 服务站</p>
           <div class="share-url">{{ shareUrl }}</div>
           <van-button size="small" round plain type="primary" color="#B91C1C" class="share-copy-btn" @click="copyUrl">复制链接</van-button>
         </div>
@@ -159,6 +159,10 @@ const qrCanvas = ref(null);
 const qrFileInputRef = ref(null);
 const shareUrl = window.location.origin;
 const allItems = ref([]);
+const companyName = computed(() => {
+  const it = allItems.value.find((i) => i.section === 'companyName' && i.status === 'active');
+  return (it && it.title && String(it.title).trim()) || '智科未来';
+});
 const myProducts = ref([]);
 const addProductLoading = ref(false);
 
@@ -192,7 +196,7 @@ async function loadMyProducts() {
 
 onMounted(async () => {
   try {
-    const res = await homeConfigApi.list();
+    const res = await homeConfigApi.list({ all: 1 });
     allItems.value = res.data || [];
   } catch { /* use empty */ }
   await loadMyProducts();

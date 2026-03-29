@@ -6,7 +6,7 @@
       <img
         v-if="splashImageUrl && !splashImageError"
         :src="splashImageUrl"
-        alt="智科未来"
+        :alt="companyName"
         class="login-logo-img"
         @error="splashImageError = true"
       />
@@ -19,7 +19,7 @@
         <circle cx="498" cy="38" r="10" stroke="#999" stroke-width="1.5" fill="none"/>
         <text x="498" y="43" font-family="Arial" font-size="14" fill="#999" text-anchor="middle" font-weight="bold">R</text>
       </svg>
-      <h2>{{ splashDesc || '欢迎使用 智科未来服务' }}</h2>
+      <h2>{{ splashDesc || ('欢迎使用 ' + companyName + ' 服务') }}</h2>
       <!-- 登录页下方：显示后台 首页配置-首页logo-描述 -->
       <p v-if="headerLogoDesc" class="login-header-desc">{{ headerLogoDesc }}</p>
     </div>
@@ -112,11 +112,14 @@ const splashImageUrl = ref('');
 const splashDesc = ref('');
 const splashImageError = ref(false);
 const headerLogoDesc = ref('');
+const companyName = ref('智科未来');
 
 onMounted(async () => {
   try {
-    const res = await homeConfigApi.list();
+    const res = await homeConfigApi.list({ all: 1 });
     const items = res.data || [];
+    const cn = items.find(i => i.section === 'companyName' && i.status === 'active');
+    if (cn && cn.title) companyName.value = String(cn.title).trim() || companyName.value;
     const splash = items.find(i => i.section === 'splash' && i.status === 'active');
     if (splash) {
       if (splash.imageUrl) splashImageUrl.value = splash.imageUrl;

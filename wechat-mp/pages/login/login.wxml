@@ -4,7 +4,7 @@
       <view class="logo-circle">
           <image src="../../assets/logo.png" class="logo-image" mode="aspectFit" />
       </view>
-      <text class="app-name">智科未来</text>
+      <text class="app-name">{{companyName}}</text>
       <text class="app-desc">AI - Science - Future</text>
       <text wx:if="{{headerLogoDesc}}" class="header-logo-desc">{{headerLogoDesc}}</text>
     </view>

@@ -517,6 +517,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <p style="font-size:13px;color:#666;margin-bottom:16px">配置前台「我的」页中头像后方的背景图。留空则使用默认渐变背景。</p>
         <div class="form-group">
+          <label>公司名称配置</label>
+          <input class="form-input" id="companyNameInput" placeholder="例如：智科未来" />
+          <div style="font-size:12px;color:#999;margin-top:6px">用于全站展示（邮件模板、标题等），替换原“智科未来/VINO”等固定文案。</div>
+        </div>
+        <div class="form-group">
           <label>头像后方背景图</label>
           <div style="display:flex;gap:8px;align-items:center">
             <input class="form-input" id="mineBgImageUrl" placeholder="上传或填写图片地址" style="flex:1" />
@@ -3054,23 +3059,44 @@ async function deleteHC(id) {
   } catch { alert('删除失败'); }
 }
 
-/* ===== 个人中心配置 (mineBg) ===== */
+/* ===== 个人中心配置 (companyName + mineBg) ===== */
 let mineConfigEditId = '';
+let companyNameEditId = '';
 
 async function loadMineConfig() {
   try {
     const res = await api('/home-config?all=1');
     const items = res.data || [];
+    const companyName = items.find(i => i.section === 'companyName');
+    companyNameEditId = companyName ? companyName.id : '';
+    document.getElementById('companyNameInput').value = companyName && companyName.title ? companyName.title : '';
     const mineBg = items.find(i => i.section === 'mineBg');
     mineConfigEditId = mineBg ? mineBg.id : '';
     document.getElementById('mineBgImageUrl').value = mineBg && mineBg.imageUrl ? mineBg.imageUrl : '';
     const preview = document.getElementById('mineBgImagePreview');
     if (mineBg && mineBg.imageUrl) { preview.src = mineBg.imageUrl; preview.style.display = 'block'; }
     else { preview.style.display = 'none'; }
-  } catch { document.getElementById('mineBgImageUrl').value = ''; document.getElementById('mineBgImagePreview').style.display = 'none'; }
+  } catch {
+    document.getElementById('companyNameInput').value = '';
+    document.getElementById('mineBgImageUrl').value = '';
+    document.getElementById('mineBgImagePreview').style.display = 'none';
+  }
 }
 
 async function saveMineConfig() {
+  const companyName = document.getElementById('companyNameInput').value.trim();
+  const companyBody = {
+    section: 'companyName',
+    title: companyName || '智科未来',
+    desc: '公司名称配置',
+    icon: '',
+    color: '',
+    path: '/',
+    price: '',
+    imageUrl: '',
+    sortOrder: 0,
+    status: 'active',
+  };
   const imageUrl = document.getElementById('mineBgImageUrl').value.trim();
   const body = {
     section: 'mineBg',
@@ -3085,10 +3111,13 @@ async function saveMineConfig() {
     status: 'active',
   };
   try {
+    const r1 = companyNameEditId
+      ? await api('/home-config/' + companyNameEditId, { method: 'PUT', body: companyBody })
+      : await api('/home-config', { method: 'POST', body: companyBody });
     const res = mineConfigEditId
       ? await api('/home-config/' + mineConfigEditId, { method: 'PUT', body })
       : await api('/home-config', { method: 'POST', body });
-    if (res.code === 0) { alert('保存成功'); loadMineConfig(); }
+    if ((r1 && r1.code === 0) && res.code === 0) { alert('保存成功'); loadMineConfig(); }
     else alert(res.message || '保存失败');
   } catch { alert('保存失败'); }
 }

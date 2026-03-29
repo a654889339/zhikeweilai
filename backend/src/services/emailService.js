@@ -59,19 +59,22 @@ async function sendVerificationCode(email) {
 
   const code = generateCode();
   const transporter = createTransporter();
+  const { getCompanyName } = require('../utils/companyConfig');
+  const companyName = await getCompanyName();
 
-  const from = config.email.fromName
-    ? `"${config.email.fromName}" <${config.email.from}>`
+  const fromName = companyName || config.email.fromName || '';
+  const from = fromName
+    ? `"${fromName}" <${config.email.from}>`
     : config.email.from;
 
   await transporter.sendMail({
     from,
     to: email,
-    subject: '智科未来服务 - 邮箱验证码',
+    subject: `${companyName} 服务 - 邮箱验证码`,
     html: `
       <div style="max-width:480px;margin:0 auto;font-family:sans-serif;">
         <div style="background:#B91C1C;color:#fff;padding:20px 24px;border-radius:8px 8px 0 0;">
-          <h2 style="margin:0;">智科未来 服务站</h2>
+          <h2 style="margin:0;">${companyName} 服务</h2>
         </div>
         <div style="border:1px solid #eee;border-top:none;padding:24px;border-radius:0 0 8px 8px;">
           <p>您好，您的邮箱验证码为：</p>
