@@ -28,8 +28,9 @@
   font-weight: 600;
 }
 
-.tab-icon {
-  font-size: 40rpx;
+.tab-icon-img {
+  width: 44rpx;
+  height: 44rpx;
   margin-bottom: 4rpx;
 }
 

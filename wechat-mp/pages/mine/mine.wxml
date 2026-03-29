@@ -25,7 +25,7 @@
       data-index="{{index}}"
       bindtap="onMenuTap"
     >
-      <text class="menu-emoji">{{item.emoji}}</text>
+      <image class="menu-icon-img" src="{{item.icon}}" mode="aspectFit" />
       <text class="menu-title">{{item.title}}</text>
       <text class="menu-arrow">›</text>
     </view>

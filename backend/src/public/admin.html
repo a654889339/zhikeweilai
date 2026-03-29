@@ -394,7 +394,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <p style="font-size:13px;color:#666;margin-bottom:12px">先配置种类，再在下方商品列表中为每个商品选择种类。</p>
         <table class="order-table">
-          <thead><tr><th>ID</th><th>种类名称</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>种类名称</th><th>缩略图</th><th>是否开启二级分类</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="categoryTableBody"></tbody>
         </table>
       </div>
@@ -752,17 +752,72 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <!-- Category Editor Modal -->
     <div class="modal-overlay" id="categoryModal" style="display:none" onclick="if(event.target===this)closeCategoryEditor()">
-      <div class="modal-content" style="max-width:400px">
+      <div class="modal-content" style="max-width:520px">
         <div class="modal-header">
           <h3 id="categoryModalTitle">新增种类</h3>
           <span class="modal-close" onclick="closeCategoryEditor()">&times;</span>
         </div>
         <div class="modal-body">
           <input type="hidden" id="categoryEditId" />
+          <input type="hidden" id="categoryParentId" value="0" />
           <div class="form-group"><label>种类名称 *</label><input class="form-input" id="categoryName" placeholder="如：空调" /></div>
+          <div class="form-group" style="margin-top:6px">
+            <label>缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选）</span></label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" id="categoryThumbUrl" placeholder="上传后自动填充" style="flex:1" />
+              <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadCategoryThumb(this)" /></label>
+            </div>
+            <div id="categoryThumbPreview" style="margin-top:8px;display:none">
+              <img id="categoryThumbPreviewImg" src="" style="width:72px;height:72px;object-fit:cover;border-radius:12px;border:1px solid #eee;background:#f5f5f5" />
+            </div>
+          </div>
+          <div class="form-group" id="categoryEnableSubWrap">
+            <label style="display:flex;align-items:center;gap:10px">
+              <input type="checkbox" id="categoryEnableSub" />
+              <span>开启二级分类</span>
+            </label>
+            <div style="font-size:12px;color:#999;margin-top:6px">开启后可在下方配置二级分类；二级分类不显示「开启二级分类」选项。</div>
+          </div>
           <div class="form-group"><label>排序</label><input type="number" class="form-input" id="categorySort" value="0" /></div>
           <div class="form-group"><label>状态</label><select class="form-input" id="categoryStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
+
+          <div id="subCategorySection" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <strong>二级分类</strong>
+              <button type="button" class="refresh-btn" style="background:#059669" onclick="openSubCategoryEditor()">+ 新增二级</button>
+            </div>
+            <div style="font-size:12px;color:#666;margin-bottom:10px">二级分类配置项与商品种类一致（不含「开启二级分类」）。</div>
+            <table class="order-table" style="font-size:12px">
+              <thead><tr><th>ID</th><th>名称</th><th>缩略图</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody id="subCategoryTableBody"></tbody>
+            </table>
+          </div>
+
           <button class="submit-btn" onclick="saveCategory()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub Category Editor Modal -->
+    <div class="modal-overlay" id="subCategoryModal" style="display:none" onclick="if(event.target===this)closeSubCategoryEditor()">
+      <div class="modal-content" style="max-width:420px">
+        <div class="modal-header">
+          <h3 id="subCategoryModalTitle">新增二级分类</h3>
+          <span class="modal-close" onclick="closeSubCategoryEditor()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="subCategoryEditId" />
+          <div class="form-group"><label>名称 *</label><input class="form-input" id="subCategoryName" placeholder="如：除湿机" /></div>
+          <div class="form-group" style="margin-top:6px">
+            <label>缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选）</span></label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" id="subCategoryThumbUrl" placeholder="上传后自动填充" style="flex:1" />
+              <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadSubCategoryThumb(this)" /></label>
+            </div>
+          </div>
+          <div class="form-group"><label>排序</label><input type="number" class="form-input" id="subCategorySort" value="0" /></div>
+          <div class="form-group"><label>状态</label><select class="form-input" id="subCategoryStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
+          <button class="submit-btn" onclick="saveSubCategory()">保存</button>
         </div>
       </div>
     </div>
@@ -1845,28 +1900,57 @@ async function loadCategories() {
     const res = await api('/product-categories');
     if (res.code === 0) {
       allCategories = res.data || [];
-      tbody.innerHTML = allCategories.map(c => `<tr>
-        <td>${c.id}</td>
-        <td><strong>${c.name}</strong></td>
-        <td>${c.sortOrder}</td>
-        <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${c.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${c.status==='active'?'启用':'禁用'}</span></td>
-        <td>
-          <button class="detail-btn" onclick="openCategoryEditor(${c.id})">编辑</button>
-          <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteCategory(${c.id})">删除</button>
-        </td>
-      </tr>`).join('');
-      if (!allCategories.length) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
+      const rows = [];
+      const renderThumb = (u) => u ? `<img src="${escapeHtml(u)}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid #eee;background:#f5f5f5" class="lod-img" />` : '<span style="color:#bbb">-</span>';
+      (allCategories || []).forEach((p) => {
+        rows.push(`<tr>
+          <td>${p.id}</td>
+          <td><strong>${escapeHtml(p.name || '')}</strong></td>
+          <td>${renderThumb(p.thumbnailUrl)}</td>
+          <td>${p.enableSub ? '<span style="padding:2px 8px;border-radius:999px;font-size:12px;background:#DBEAFE;color:#1E40AF">开启</span>' : '<span style="color:#bbb">否</span>'}</td>
+          <td>${p.sortOrder ?? 0}</td>
+          <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${p.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${p.status==='active'?'启用':'禁用'}</span></td>
+          <td>
+            <button class="detail-btn" onclick="openCategoryEditor(${p.id})">编辑</button>
+            <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteCategory(${p.id})">删除</button>
+          </td>
+        </tr>`);
+        const children = p.children || [];
+        children.forEach((c) => {
+          rows.push(`<tr style="background:#fafafa">
+            <td>${c.id}</td>
+            <td style="padding-left:26px">↳ ${escapeHtml(c.name || '')}</td>
+            <td>${renderThumb(c.thumbnailUrl)}</td>
+            <td><span style="color:#bbb">-</span></td>
+            <td>${c.sortOrder ?? 0}</td>
+            <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${c.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${c.status==='active'?'启用':'禁用'}</span></td>
+            <td>
+              <button class="detail-btn" onclick="openSubCategoryEditor(${c.id})">编辑</button>
+              <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteCategory(${c.id})">删除</button>
+            </td>
+          </tr>`);
+        });
+      });
+      tbody.innerHTML = rows.join('');
+      if (!rows.length) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
     }
   } catch { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>'; }
+  setTimeout(upgradeLodImages, 0);
 }
 
 function openCategoryEditor(id) {
-  const c = id ? allCategories.find(x => x.id === id) : null;
+  const c = id ? findCategoryById(id) : null;
   document.getElementById('categoryEditId').value = c ? c.id : '';
+  document.getElementById('categoryParentId').value = c ? (c.parentId || 0) : 0;
   document.getElementById('categoryModalTitle').textContent = c ? '编辑种类' : '新增种类';
-  document.getElementById('categoryName').value = c ? c.name : '';
-  document.getElementById('categorySort').value = c ? c.sortOrder : 0;
-  document.getElementById('categoryStatus').value = c ? c.status : 'active';
+  document.getElementById('categoryName').value = c ? (c.name || '') : '';
+  document.getElementById('categoryThumbUrl').value = c ? (c.thumbnailUrl || '') : '';
+  document.getElementById('categoryEnableSub').checked = c ? !!c.enableSub : false;
+  document.getElementById('categorySort').value = c ? (c.sortOrder ?? 0) : 0;
+  document.getElementById('categoryStatus').value = c ? (c.status || 'active') : 'active';
+  updateCategoryThumbPreview();
+  updateEnableSubUI();
+  renderSubCategoryTable();
   document.getElementById('categoryModal').style.display = 'flex';
 }
 
@@ -1874,10 +1958,14 @@ function closeCategoryEditor() { document.getElementById('categoryModal').style.
 
 async function saveCategory() {
   const id = document.getElementById('categoryEditId').value;
+  const parentId = parseInt(document.getElementById('categoryParentId').value, 10) || 0;
   const name = document.getElementById('categoryName').value.trim();
   if (!name) { alert('请填写种类名称'); return; }
   const body = {
+    parentId,
     name,
+    thumbnailUrl: document.getElementById('categoryThumbUrl').value.trim(),
+    enableSub: document.getElementById('categoryEnableSub').checked ? 1 : 0,
     sortOrder: parseInt(document.getElementById('categorySort').value, 10) || 0,
     status: document.getElementById('categoryStatus').value,
   };
@@ -1888,6 +1976,159 @@ async function saveCategory() {
     if (res.code === 0) { closeCategoryEditor(); loadCategories(); loadGuides(); }
     else alert(res.message || '保存失败');
   } catch (e) { alert('保存失败'); }
+}
+
+function findCategoryById(id) {
+  const target = Number(id);
+  for (const p of (allCategories || [])) {
+    if (Number(p.id) === target) return p;
+    const children = p.children || [];
+    for (const c of children) {
+      if (Number(c.id) === target) return c;
+    }
+  }
+  return null;
+}
+
+function currentEditingCategory() {
+  const id = document.getElementById('categoryEditId').value;
+  if (!id) return null;
+  return findCategoryById(id);
+}
+
+function updateCategoryThumbPreview() {
+  const u = (document.getElementById('categoryThumbUrl').value || '').trim();
+  const wrap = document.getElementById('categoryThumbPreview');
+  const img = document.getElementById('categoryThumbPreviewImg');
+  if (u) { img.src = u; wrap.style.display = 'block'; }
+  else { img.src = ''; wrap.style.display = 'none'; }
+}
+
+function updateEnableSubUI() {
+  const parentId = parseInt(document.getElementById('categoryParentId').value, 10) || 0;
+  const wrap = document.getElementById('categoryEnableSubWrap');
+  const subSec = document.getElementById('subCategorySection');
+  if (parentId > 0) {
+    wrap.style.display = 'none';
+    subSec.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  subSec.style.display = document.getElementById('categoryEnableSub').checked ? 'block' : 'none';
+}
+
+document.addEventListener('change', (e) => {
+  if (e && e.target && e.target.id === 'categoryEnableSub') {
+    updateEnableSubUI();
+    renderSubCategoryTable();
+  }
+  if (e && e.target && e.target.id === 'categoryThumbUrl') updateCategoryThumbPreview();
+});
+
+async function uploadCategoryThumb(input) {
+  const file = input && input.files ? input.files[0] : null;
+  input.value = '';
+  if (!file) return;
+  try {
+    showUploadLoading(file.name);
+    const fd = new FormData();
+    fd.append('file', file);
+    const r = await fetch(API + '/product-categories/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd }).then(r => r.json());
+    if (r.code === 0 && r.data && r.data.url) {
+      document.getElementById('categoryThumbUrl').value = r.data.url;
+      updateCategoryThumbPreview();
+    } else {
+      alert(r.message || '上传失败');
+    }
+  } catch (e) {
+    alert('上传失败');
+  } finally {
+    hideUploadLoading();
+  }
+}
+
+function renderSubCategoryTable() {
+  const tbody = document.getElementById('subCategoryTableBody');
+  if (!tbody) return;
+  const cat = currentEditingCategory();
+  const parentId = parseInt(document.getElementById('categoryParentId').value, 10) || 0;
+  if (parentId > 0) { tbody.innerHTML = ''; return; }
+  if (!document.getElementById('categoryEnableSub').checked) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#999">未开启二级分类</td></tr>'; return; }
+  const parent = cat && (parseInt(cat.parentId, 10) || 0) === 0 ? cat : (cat ? findCategoryById(cat.id) : null);
+  const children = (parent && parent.children) ? parent.children : [];
+  const renderThumb = (u) => u ? `<img src="${escapeHtml(u)}" style="width:40px;height:40px;object-fit:cover;border-radius:10px;border:1px solid #eee;background:#f5f5f5" class="lod-img" />` : '<span style="color:#bbb">-</span>';
+  tbody.innerHTML = (children || []).map((c) => `<tr>
+    <td>${c.id}</td>
+    <td><strong>${escapeHtml(c.name || '')}</strong></td>
+    <td>${renderThumb(c.thumbnailUrl)}</td>
+    <td>${c.sortOrder ?? 0}</td>
+    <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${c.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${c.status==='active'?'启用':'禁用'}</span></td>
+    <td>
+      <button class="detail-btn" onclick="openSubCategoryEditor(${c.id})">编辑</button>
+      <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteCategory(${c.id})">删除</button>
+    </td>
+  </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:16px;color:#999">暂无二级分类</td></tr>';
+  setTimeout(upgradeLodImages, 0);
+}
+
+function openSubCategoryEditor(id) {
+  const parentId = parseInt(document.getElementById('categoryEditId').value, 10) || 0;
+  if (!parentId) { alert('请先保存一级分类后再添加二级分类'); return; }
+  const parent = findCategoryById(parentId);
+  if (!parent || (parseInt(parent.parentId, 10) || 0) > 0) { alert('请选择一级分类进行二级配置'); return; }
+  const c = id ? findCategoryById(id) : null;
+  document.getElementById('subCategoryEditId').value = c ? c.id : '';
+  document.getElementById('subCategoryModalTitle').textContent = c ? '编辑二级分类' : '新增二级分类';
+  document.getElementById('subCategoryName').value = c ? (c.name || '') : '';
+  document.getElementById('subCategoryThumbUrl').value = c ? (c.thumbnailUrl || '') : '';
+  document.getElementById('subCategorySort').value = c ? (c.sortOrder ?? 0) : 0;
+  document.getElementById('subCategoryStatus').value = c ? (c.status || 'active') : 'active';
+  document.getElementById('subCategoryModal').style.display = 'flex';
+}
+
+function closeSubCategoryEditor() { document.getElementById('subCategoryModal').style.display = 'none'; }
+
+async function uploadSubCategoryThumb(input) {
+  const file = input && input.files ? input.files[0] : null;
+  input.value = '';
+  if (!file) return;
+  try {
+    showUploadLoading(file.name);
+    const fd = new FormData();
+    fd.append('file', file);
+    const r = await fetch(API + '/product-categories/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd }).then(r => r.json());
+    if (r.code === 0 && r.data && r.data.url) {
+      document.getElementById('subCategoryThumbUrl').value = r.data.url;
+    } else {
+      alert(r.message || '上传失败');
+    }
+  } catch (e) {
+    alert('上传失败');
+  } finally {
+    hideUploadLoading();
+  }
+}
+
+async function saveSubCategory() {
+  const parentId = parseInt(document.getElementById('categoryEditId').value, 10) || 0;
+  if (!parentId) { alert('请先保存一级分类'); return; }
+  const id = document.getElementById('subCategoryEditId').value;
+  const name = document.getElementById('subCategoryName').value.trim();
+  if (!name) { alert('请填写名称'); return; }
+  const body = {
+    parentId,
+    name,
+    thumbnailUrl: document.getElementById('subCategoryThumbUrl').value.trim(),
+    sortOrder: parseInt(document.getElementById('subCategorySort').value, 10) || 0,
+    status: document.getElementById('subCategoryStatus').value,
+  };
+  try {
+    const res = id
+      ? await api('/product-categories/' + id, { method: 'PUT', body })
+      : await api('/product-categories', { method: 'POST', body });
+    if (res.code === 0) { closeSubCategoryEditor(); loadCategories(); loadGuides(); setTimeout(() => { openCategoryEditor(parentId); }, 200); }
+    else alert(res.message || '保存失败');
+  } catch { alert('保存失败'); }
 }
 
 async function deleteCategory(id) {
@@ -2246,7 +2487,21 @@ function openGuideEditor(guide) {
   document.getElementById('guideEditId').value = guide ? guide.id : '';
   document.getElementById('guideModalTitle').textContent = guide ? '编辑商品' : '新增商品';
   const gCatSel = document.getElementById('gCategoryId');
-  gCatSel.innerHTML = '<option value="">请选择种类</option>' + (allCategories || []).map(c => '<option value="'+c.id+'">'+c.name+'</option>').join('');
+  const opts = [];
+  (allCategories || []).forEach((p) => {
+    const pName = p.name || '';
+    const children = p.children || [];
+    if (children.length) {
+      opts.push('<optgroup label="' + escapeHtml(pName) + '">');
+      children.forEach((c) => {
+        opts.push('<option value="' + c.id + '">' + escapeHtml(c.name || '') + '</option>');
+      });
+      opts.push('</optgroup>');
+    } else {
+      opts.push('<option value="' + p.id + '">' + escapeHtml(pName) + '</option>');
+    }
+  });
+  gCatSel.innerHTML = '<option value="">请选择种类</option>' + opts.join('');
   gCatSel.value = guide && guide.categoryId ? guide.categoryId : '';
   document.getElementById('gName').value = guide ? guide.name : '';
   document.getElementById('gSlug').value = guide ? (guide.slug||'') : '';

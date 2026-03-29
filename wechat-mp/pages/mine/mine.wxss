@@ -82,8 +82,9 @@
   border-bottom: none;
 }
 
-.menu-emoji {
-  font-size: 36rpx;
+.menu-icon-img {
+  width: 40rpx;
+  height: 40rpx;
   margin-right: 20rpx;
 }
 

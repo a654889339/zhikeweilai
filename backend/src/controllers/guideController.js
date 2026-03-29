@@ -18,9 +18,22 @@ exports.categories = async (req, res) => {
     const list = await ProductCategory.findAll({
       where: { status: 'active' },
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],
-      attributes: ['id', 'name', 'sortOrder'],
+      attributes: ['id', 'parentId', 'name', 'sortOrder', 'thumbnailUrl', 'enableSub', 'status'],
     });
-    res.json({ code: 0, data: list });
+    const all = (list || []).map((c) => (c.get ? c.get({ plain: true }) : c));
+    const byParent = new Map();
+    all.forEach((c) => {
+      const pid = Number(c.parentId || 0);
+      if (!byParent.has(pid)) byParent.set(pid, []);
+      byParent.get(pid).push(c);
+    });
+    const sortArr = (arr) => arr.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || (a.id ?? 0) - (b.id ?? 0));
+    for (const arr of byParent.values()) sortArr(arr);
+    const attach = (node) => {
+      const children = byParent.get(Number(node.id)) || [];
+      return { ...node, children: children.map(attach) };
+    };
+    res.json({ code: 0, data: (byParent.get(0) || []).map(attach) });
   } catch (err) {
     console.error('[Guide] categories error:', err.message);
     res.status(500).json({ code: 500, message: '获取种类失败' });

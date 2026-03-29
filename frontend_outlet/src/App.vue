@@ -19,7 +19,6 @@ const route = useRoute();
 const DEFAULT_TABBAR = [
   { title: '首页', icon: 'wap-home-o', path: '/' },
   { title: '产品', icon: 'label-o', path: '/products' },
-  { title: '订单', icon: 'bill-o', path: '/orders' },
   { title: '我的', icon: 'contact-o', path: '/mine' },
 ];
 
@@ -28,6 +27,7 @@ function filterTabbarNoService(items) {
     const p = (it.path || '').trim();
     if (p === '/services') return false;
     if (p.startsWith('/service/')) return false;
+    if (p === '/orders') return false;
     return true;
   });
 }

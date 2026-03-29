@@ -15,19 +15,19 @@ Page({
       { label: '售后', value: 0 },
     ],
     menus: [
-      { title: '我的订单', emoji: '📋', url: '/pages/orders/orders' },
-      { title: '我的商品', emoji: '📦', url: '/pages/my-products/my-products' },
-      { title: '地址管理', emoji: '📍', url: '/pages/address/address' },
-      { title: '优惠券', emoji: '🎫', url: '' },
-      { title: '意见反馈', emoji: '💬', url: '', chat: true },
-      { title: '关于' + (getApp().globalData.companyName || '服务'), emoji: 'ℹ️', url: '', webUrl: 'www.vinotech.cn' },
-      { title: '联系我们', emoji: '📞', url: '', contact: true },
+      { title: '我的订单', icon: '/images/icons/mine-orders.svg', url: '/pages/orders/orders' },
+      { title: '我的商品', icon: '/images/icons/mine-bag.svg', url: '/pages/my-products/my-products' },
+      { title: '地址管理', icon: '/images/icons/mine-location.svg', url: '/pages/address/address' },
+      { title: '优惠券', icon: '/images/icons/mine-bag.svg', url: '' },
+      { title: '意见反馈', icon: '/images/icons/mine-comment.svg', url: '', chat: true },
+      { title: '关于' + (getApp().globalData.companyName || '服务'), icon: '/images/icons/mine-info.svg', url: '', webUrl: 'www.vinotech.cn' },
+      { title: '联系我们', icon: '/images/icons/mine-phone.svg', url: '', contact: true },
     ],
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 4 });
+      this.getTabBar().setData({ selected: 3 });
     }
     this.checkLoginState();
     this.loadMineBg();

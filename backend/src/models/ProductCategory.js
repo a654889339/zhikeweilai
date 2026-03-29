@@ -7,9 +7,23 @@ const ProductCategory = sequelize.define('ProductCategory', {
     primaryKey: true,
     autoIncrement: true,
   },
+  parentId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
   name: {
     type: DataTypes.STRING(100),
     allowNull: false,
+  },
+  thumbnailUrl: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+  },
+  enableSub: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
   },
   sortOrder: {
     type: DataTypes.INTEGER,
