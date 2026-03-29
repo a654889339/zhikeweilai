@@ -1,6 +1,12 @@
 .page { background: transparent; min-height: 100vh; }
 .loading { text-align: center; padding: 60px 0; color: #999; }
 
+/* 顶部搜索框（与前端文案一致） */
+.products-search-wrap { padding: 20rpx 24rpx 18rpx; }
+.products-search-inner { display: flex; align-items: center; gap: 16rpx; background: #2d2d33; border-radius: 20rpx; padding: 18rpx 22rpx; }
+.products-search-icon { color: #9ca3af; font-size: 28rpx; }
+.products-search-input { flex: 1; min-width: 0; color: #f3f4f6; font-size: 30rpx; }
+
 /* 第二行：选择商品（与网页一致） */
 .product-select-row {
   background: rgba(255,255,255,0.95);

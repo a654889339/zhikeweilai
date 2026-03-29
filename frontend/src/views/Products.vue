@@ -8,7 +8,7 @@
             v-model.trim="searchKeyword"
             type="search"
             class="products-search-input"
-            placeholder="请输入设备型号或系列"
+            placeholder="搜索实验材料"
             enterkeyhint="search"
             autocomplete="off"
           />
@@ -23,7 +23,6 @@
             type="button"
             class="sidebar-item"
             :class="{ active: selectedCategoryId === cat.id, sub: cat.depth === 1, header: cat.isHeader }"
-            :disabled="cat.isHeader"
             @click="selectCategory(cat)"
           >
             <span class="sidebar-item-inner">
@@ -121,6 +120,8 @@ function flattenSidebarTree(tree) {
         thumb: p.thumbnailUrl ? fullUrl(String(p.thumbnailUrl).trim()) : '',
         depth: 0,
         isHeader: true,
+        hasChildren: true,
+        firstChildId: children[0] ? children[0].id : null,
         children,
       });
       children.forEach((c) => {
@@ -131,6 +132,8 @@ function flattenSidebarTree(tree) {
           thumb: c.thumbnailUrl ? fullUrl(String(c.thumbnailUrl).trim()) : (p.thumbnailUrl ? fullUrl(String(p.thumbnailUrl).trim()) : ''),
           depth: 1,
           isHeader: false,
+          hasChildren: false,
+          firstChildId: null,
           children: [],
         });
       });
@@ -142,6 +145,8 @@ function flattenSidebarTree(tree) {
         thumb: p.thumbnailUrl ? fullUrl(String(p.thumbnailUrl).trim()) : '',
         depth: 0,
         isHeader: false,
+        hasChildren: false,
+        firstChildId: null,
         children: [],
       });
     }
@@ -151,8 +156,21 @@ function flattenSidebarTree(tree) {
 
 const sidebarItems = computed(() => flattenSidebarTree(categories.value));
 
+function findCategoryDeep(tree, id) {
+  const target = Number(id);
+  const arr = Array.isArray(tree) ? tree : [];
+  for (const p of arr) {
+    if (Number(p.id) === target) return p;
+    const children = Array.isArray(p.children) ? p.children : [];
+    for (const c of children) {
+      if (Number(c.id) === target) return c;
+    }
+  }
+  return null;
+}
+
 const currentCategoryName = computed(() => {
-  const c = categories.value.find((x) => x.id === selectedCategoryId.value);
+  const c = findCategoryDeep(categories.value, selectedCategoryId.value);
   return c ? c.name : '';
 });
 
@@ -168,13 +186,15 @@ const filteredDeviceGuides = computed(() => {
 });
 
 const currentCategory = computed(() =>
-  categories.value.find((x) => x.id === selectedCategoryId.value) || null
+  findCategoryDeep(categories.value, selectedCategoryId.value)
 );
 
 const currentCategoryBannerSrc = computed(() => {
   const u = currentCategory.value?.thumbnailUrl;
-  if (!u || !String(u).trim()) return '';
-  return fullUrl(String(u).trim());
+  if (u && String(u).trim()) return fullUrl(String(u).trim());
+  const item = sidebarItems.value.find((x) => Number(x.id) === Number(selectedCategoryId.value));
+  if (item && item.thumb) return item.thumb;
+  return '';
 });
 
 const currentCategoryBannerThumb = computed(() => currentCategoryBannerSrc.value);
@@ -185,7 +205,12 @@ function openGuide(d) {
 }
 
 const selectCategory = async (cat) => {
-  if (!cat || cat.isHeader) return;
+  if (!cat) return;
+  if (cat.isHeader && cat.hasChildren && cat.firstChildId) {
+    const child = sidebarItems.value.find((x) => Number(x.id) === Number(cat.firstChildId));
+    if (child) return selectCategory(child);
+    selectedCategoryId.value = cat.firstChildId;
+  }
   if (selectedCategoryId.value === cat.id) return;
   selectedCategoryId.value = cat.id;
   searchKeyword.value = '';
@@ -293,7 +318,7 @@ onMounted(async () => {
 
 .product-sidebar {
   flex-shrink: 0;
-  width: 96px;
+  width: 150px;
   padding: 12px 0;
   background: #eef0f3;
   border-right: 1px solid rgba(0, 0, 0, 0.08);
@@ -357,10 +382,11 @@ onMounted(async () => {
 .sidebar-name {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   font-size: 13px;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.25;
+  max-width: 5em;
 }
 
 .sidebar-item.active {

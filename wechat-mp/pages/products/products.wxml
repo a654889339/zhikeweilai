@@ -1,4 +1,10 @@
 <view class="page">
+  <view class="products-search-wrap">
+    <view class="products-search-inner">
+      <text class="products-search-icon">🔍</text>
+      <input class="products-search-input" placeholder="搜索实验材料" disabled="true" />
+    </view>
+  </view>
   <!-- 第一行：商品种类（与网页前台一致） -->
   <view class="product-nav">
     <scroll-view scroll-x class="product-nav-scroll">
