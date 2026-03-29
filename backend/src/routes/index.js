@@ -1,7 +1,5 @@
 const { Router } = require('express');
 const authRoutes = require('./auth');
-const serviceRoutes = require('./service');
-const serviceCategoryRoutes = require('./serviceCategory');
 const orderRoutes = require('./order');
 const addressRoutes = require('./address');
 const guideRoutes = require('./guide');
@@ -17,8 +15,6 @@ const seedController = require('../controllers/seedController');
 const router = Router();
 
 router.use('/auth', authRoutes);
-router.use('/services', serviceRoutes);
-router.use('/service-categories', serviceCategoryRoutes);
 router.use('/orders', orderRoutes);
 router.use('/addresses', addressRoutes);
 router.use('/guides', guideRoutes);

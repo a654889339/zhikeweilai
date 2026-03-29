@@ -19,10 +19,18 @@ const route = useRoute();
 const DEFAULT_TABBAR = [
   { title: '首页', icon: 'wap-home-o', path: '/' },
   { title: '产品', icon: 'label-o', path: '/products' },
-  { title: '服务', icon: 'apps-o', path: '/services' },
   { title: '订单', icon: 'bill-o', path: '/orders' },
   { title: '我的', icon: 'contact-o', path: '/mine' },
 ];
+
+function filterTabbarNoService(items) {
+  return (items || []).filter((it) => {
+    const p = (it.path || '').trim();
+    if (p === '/services') return false;
+    if (p.startsWith('/service/')) return false;
+    return true;
+  });
+}
 
 const tabbarItems = ref([...DEFAULT_TABBAR]);
 
@@ -31,11 +39,14 @@ async function loadTabbarConfig() {
     const res = await homeConfigApi.tabbar();
     const list = (res.data || []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
     if (list.length) {
-      tabbarItems.value = list.map((i) => ({
-        title: i.title || '',
-        icon: (i.icon && i.icon.trim()) || 'wap-home-o',
-        path: (i.path && i.path.trim()) || '/',
-      }));
+      tabbarItems.value = filterTabbarNoService(
+        list.map((i) => ({
+          title: i.title || '',
+          icon: (i.icon && i.icon.trim()) || 'wap-home-o',
+          path: (i.path && i.path.trim()) || '/',
+        })),
+      );
+      if (!tabbarItems.value.length) tabbarItems.value = [...DEFAULT_TABBAR];
     }
   } catch {
     tabbarItems.value = [...DEFAULT_TABBAR];
@@ -44,7 +55,7 @@ async function loadTabbarConfig() {
 
 onMounted(loadTabbarConfig);
 
-const hiddenTabRoutes = ['/login', '/register', '/service/', '/address', '/guide/'];
+const hiddenTabRoutes = ['/login', '/register', '/address', '/guide/'];
 const showTabbar = computed(() => {
   return !hiddenTabRoutes.some((r) => route.path.startsWith(r));
 });

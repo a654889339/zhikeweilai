@@ -73,7 +73,7 @@
       <text class="section-more" bindtap="goServiceList">查看全部 ›</text>
     </view>
     <scroll-view scroll-x class="service-scroll">
-      <view class="service-card" wx:for="{{hotServices}}" wx:key="id" bindtap="goServiceDetail" data-id="{{item.id}}">
+      <view class="service-card" wx:for="{{hotServices}}" wx:key="id" bindtap="goPath" data-path="{{item.navigatePath}}">
         <view class="service-cover" style="background: {{item.bg}}">
           <text class="service-icon-text">{{item.emoji}}</text>
         </view>

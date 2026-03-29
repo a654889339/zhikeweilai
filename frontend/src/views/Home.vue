@@ -54,7 +54,7 @@
     <div class="section card-section first-card" v-if="navLgItems.length || navSmItems.length">
       <div class="section-header">
         <h3>{{ navSectionTitle }}</h3>
-        <span class="more" @click="$router.push('/services')">进度查询 ›</span>
+        <span class="more" @click="$router.push('/products')">进度查询 ›</span>
       </div>
       <!-- 大图标行 -->
       <div class="nav-lg-row" v-if="navLgItems.length">
@@ -107,7 +107,7 @@
     <div class="section card-section section-hot-service">
       <div class="section-header">
         <h3>{{ hotServiceTitle }}</h3>
-        <span class="more" @click="$router.push('/services')">查看全部 ›</span>
+        <span class="more" @click="$router.push('/products')">查看全部 ›</span>
       </div>
       <div class="service-list">
         <div v-for="item in hotServices" :key="item.id" class="service-card" @click="$router.push(item.path)">
@@ -319,16 +319,16 @@ const homeSectionOffsetStyle = computed(() =>
 const navLgItems = computed(() =>
   allItems.value.filter(i => i.section === 'navLg' && i.status === 'active')
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb, path: i.path || '/services', color: i.color }))
+    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb, path: i.path || '/products', color: i.color }))
 );
 const navSmItems = computed(() =>
   allItems.value.filter(i => i.section === 'navSm' && i.status === 'active')
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb, path: i.path || '/services', color: i.color }))
+    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb, path: i.path || '/products', color: i.color }))
 );
 const hotServices = computed(() =>
   allItems.value.filter(i => i.section === 'hotService' && i.status === 'active')
-    .map(i => ({ id: i.id, title: i.title, desc: i.desc, price: i.price, icon: i.icon, coverBg: i.color, path: i.path || '/services' }))
+    .map(i => ({ id: i.id, title: i.title, desc: i.desc, price: i.price, icon: i.icon, coverBg: i.color, path: i.path || '/products' }))
 );
 const recommends = computed(() =>
   allItems.value.filter(i => i.section === 'recommend' && i.status === 'active')

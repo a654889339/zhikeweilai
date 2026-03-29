@@ -11,16 +11,8 @@ const routes = [
     name: 'Products',
     component: () => import('@/views/Products.vue'),
   },
-  {
-    path: '/services',
-    name: 'Services',
-    component: () => import('@/views/Services.vue'),
-  },
-  {
-    path: '/service/:id',
-    name: 'ServiceDetail',
-    component: () => import('@/views/ServiceDetail.vue'),
-  },
+  { path: '/services', redirect: '/products' },
+  { path: '/service/:id', redirect: '/products' },
   {
     path: '/guide/:id',
     name: 'GuideDetail',

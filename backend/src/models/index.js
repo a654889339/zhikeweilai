@@ -213,18 +213,18 @@ const syncDatabase = async () => {
         { section:'banner', title:'Vino 品质服务', desc:'专业·高效·可信赖', color:'linear-gradient(135deg, #B91C1C, #7F1D1D)', sortOrder:1 },
         { section:'banner', title:'新用户专享', desc:'首单立减 20 元', color:'linear-gradient(135deg, #1E40AF, #1E3A5F)', sortOrder:2 },
         { section:'banner', title:'企业解决方案', desc:'定制化一站式服务', color:'linear-gradient(135deg, #065F46, #064E3B)', sortOrder:3 },
-        { section:'nav', title:'全部服务', icon:'apps-o', path:'/services', color:'#B91C1C', sortOrder:1 },
-        { section:'nav', title:'预约', icon:'calendar-o', path:'/services', color:'#D97706', sortOrder:2 },
-        { section:'nav', title:'维修', icon:'setting-o', path:'/services', color:'#2563EB', sortOrder:3 },
-        { section:'nav', title:'咨询', icon:'chat-o', path:'/services', color:'#7C3AED', sortOrder:4 },
-        { section:'nav', title:'安装', icon:'logistics', path:'/services', color:'#059669', sortOrder:5 },
-        { section:'nav', title:'保养', icon:'shield-o', path:'/services', color:'#DC2626', sortOrder:6 },
-        { section:'nav', title:'检测', icon:'scan', path:'/services', color:'#EA580C', sortOrder:7 },
-        { section:'nav', title:'更多', icon:'more-o', path:'/services', color:'#6B7280', sortOrder:8 },
-        { section:'hotService', title:'设备维修', desc:'专业工程师上门服务', price:'99', icon:'setting-o', color:'linear-gradient(135deg, #B91C1C, #991B1B)', path:'/service/1', sortOrder:1 },
-        { section:'hotService', title:'深度清洁', desc:'全方位清洁保养', price:'149', icon:'brush-o', color:'linear-gradient(135deg, #2563EB, #1D4ED8)', path:'/service/2', sortOrder:2 },
-        { section:'hotService', title:'系统检测', desc:'全面检测评估', price:'49', icon:'scan', color:'linear-gradient(135deg, #059669, #047857)', path:'/service/3', sortOrder:3 },
-        { section:'hotService', title:'数据恢复', desc:'专业数据找回', price:'199', icon:'replay', color:'linear-gradient(135deg, #7C3AED, #6D28D9)', path:'/service/4', sortOrder:4 },
+        { section:'nav', title:'全部产品', icon:'apps-o', path:'/products', color:'#B91C1C', sortOrder:1 },
+        { section:'nav', title:'预约', icon:'calendar-o', path:'/products', color:'#D97706', sortOrder:2 },
+        { section:'nav', title:'维修', icon:'setting-o', path:'/products', color:'#2563EB', sortOrder:3 },
+        { section:'nav', title:'咨询', icon:'chat-o', path:'/products', color:'#7C3AED', sortOrder:4 },
+        { section:'nav', title:'安装', icon:'logistics', path:'/products', color:'#059669', sortOrder:5 },
+        { section:'nav', title:'保养', icon:'shield-o', path:'/products', color:'#DC2626', sortOrder:6 },
+        { section:'nav', title:'检测', icon:'scan', path:'/products', color:'#EA580C', sortOrder:7 },
+        { section:'nav', title:'更多', icon:'more-o', path:'/products', color:'#6B7280', sortOrder:8 },
+        { section:'hotService', title:'设备维修', desc:'专业工程师上门服务', price:'99', icon:'setting-o', color:'linear-gradient(135deg, #B91C1C, #991B1B)', path:'/products', sortOrder:1 },
+        { section:'hotService', title:'深度清洁', desc:'全方位清洁保养', price:'149', icon:'brush-o', color:'linear-gradient(135deg, #2563EB, #1D4ED8)', path:'/products', sortOrder:2 },
+        { section:'hotService', title:'系统检测', desc:'全面检测评估', price:'49', icon:'scan', color:'linear-gradient(135deg, #059669, #047857)', path:'/products', sortOrder:3 },
+        { section:'hotService', title:'数据恢复', desc:'专业数据找回', price:'199', icon:'replay', color:'linear-gradient(135deg, #7C3AED, #6D28D9)', path:'/products', sortOrder:4 },
         { section:'recommend', title:'会员权益', desc:'专属折扣', icon:'vip-card-o', color:'linear-gradient(135deg, #F59E0B, #D97706)', sortOrder:1 },
         { section:'recommend', title:'服务保障', desc:'无忧售后', icon:'shield-o', color:'linear-gradient(135deg, #10B981, #059669)', sortOrder:2 },
         { section:'recommend', title:'积分商城', desc:'好礼兑换', icon:'gift-o', color:'linear-gradient(135deg, #EC4899, #DB2777)', sortOrder:3 },
@@ -246,35 +246,6 @@ const syncDatabase = async () => {
         sortOrder: 0,
       });
       console.log('[DB] Default headerLogo created.');
-    }
-
-    const svcCatCount = await ServiceCategory.count();
-    if (svcCatCount === 0) {
-      await ServiceCategory.bulkCreate([
-        { name: '维修', key: 'repair', sortOrder: 1 },
-        { name: '清洁', key: 'clean', sortOrder: 2 },
-        { name: '检测', key: 'inspect', sortOrder: 3 },
-        { name: '数据', key: 'data', sortOrder: 4 },
-      ]);
-      console.log('[DB] Default service categories created.');
-    }
-
-    const svcCount = await Service.count();
-    if (svcCount === 0) {
-      const [repair, clean, inspect, data] = await ServiceCategory.findAll({ order: [['sortOrder', 'ASC']] });
-      const seedServices = [
-        { categoryId: repair.id, title: '设备维修', description: '专业工程师提供全方位维修服务，品质保障，售后无忧。', icon: 'setting-o', price: 99, originPrice: 159, bg: '#B91C1C', sortOrder: 1 },
-        { categoryId: repair.id, title: '上门维修', description: '快速响应，工程师2小时内上门服务。', icon: 'location-o', price: 149, originPrice: 199, bg: '#DC2626', sortOrder: 2 },
-        { categoryId: repair.id, title: '远程支持', description: '在线视频指导，远程诊断问题。', icon: 'phone-o', price: 29, originPrice: 49, bg: '#EF4444', sortOrder: 3 },
-        { categoryId: clean.id, title: '深度清洁', description: '全方位清洁保养，焕然一新。', icon: 'brush-o', price: 149, originPrice: 199, bg: '#2563EB', sortOrder: 1 },
-        { categoryId: clean.id, title: '日常清洁', description: '基础维护清洁，保持良好状态。', icon: 'smile-o', price: 69, originPrice: 89, bg: '#3B82F6', sortOrder: 2 },
-        { categoryId: inspect.id, title: '全面检测', description: '系统全面评估，发现潜在问题。', icon: 'scan', price: 49, originPrice: 79, bg: '#059669', sortOrder: 1 },
-        { categoryId: inspect.id, title: '性能优化', description: '提速升级，优化系统性能。', icon: 'fire-o', price: 79, originPrice: 129, bg: '#10B981', sortOrder: 2 },
-        { categoryId: data.id, title: '数据恢复', description: '专业数据找回，高成功率。', icon: 'replay', price: 199, originPrice: 299, bg: '#7C3AED', sortOrder: 1 },
-        { categoryId: data.id, title: '数据备份', description: '安全迁移，完整备份保护。', icon: 'description', price: 59, originPrice: 89, bg: '#8B5CF6', sortOrder: 2 },
-      ];
-      await Service.bulkCreate(seedServices);
-      console.log('[DB] Default services created.');
     }
 
     return true;

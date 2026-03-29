@@ -98,6 +98,6 @@ Page({
   },
 
   goServices() {
-    wx.switchTab({ url: '/pages/service/service' });
+    wx.switchTab({ url: '/pages/products/products' });
   },
 });

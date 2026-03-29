@@ -61,10 +61,10 @@ async function main() {
     { section: 'navSm', title: '保养', icon: 'shield-o', path: '/services', color: '#DC2626', sortOrder: 3 },
     { section: 'navSm', title: '更多', icon: 'more-o', path: '/services', color: '#6B7280', sortOrder: 4 },
     // hotService (自助服务)
-    { section: 'hotService', title: '设备维修', desc: '专业工程师上门服务', price: '99', icon: 'setting-o', color: 'linear-gradient(135deg, #7C3AED, #6D28D9)', path: '/service/1', sortOrder: 1 },
-    { section: 'hotService', title: '深度清洁', desc: '全方位清洁保养', price: '149', icon: 'brush-o', color: 'linear-gradient(135deg, #2563EB, #1D4ED8)', path: '/service/2', sortOrder: 2 },
-    { section: 'hotService', title: '全面检测', desc: '系统全面评估', price: '49', icon: 'scan', color: 'linear-gradient(135deg, #059669, #047857)', path: '/service/3', sortOrder: 3 },
-    { section: 'hotService', title: '新设备安装', desc: '专业安装调试', price: '199', icon: 'logistics', color: 'linear-gradient(135deg, #B91C1C, #991B1B)', path: '/service/4', sortOrder: 4 },
+    { section: 'hotService', title: '设备维修', desc: '专业工程师上门服务', price: '99', icon: 'setting-o', color: 'linear-gradient(135deg, #7C3AED, #6D28D9)', path: '/products', sortOrder: 1 },
+    { section: 'hotService', title: '深度清洁', desc: '全方位清洁保养', price: '149', icon: 'brush-o', color: 'linear-gradient(135deg, #2563EB, #1D4ED8)', path: '/products', sortOrder: 2 },
+    { section: 'hotService', title: '全面检测', desc: '系统全面评估', price: '49', icon: 'scan', color: 'linear-gradient(135deg, #059669, #047857)', path: '/products', sortOrder: 3 },
+    { section: 'hotService', title: '新设备安装', desc: '专业安装调试', price: '199', icon: 'logistics', color: 'linear-gradient(135deg, #B91C1C, #991B1B)', path: '/products', sortOrder: 4 },
     // recommend (服务产品)
     { section: 'recommend', title: '服务商权益', desc: '专属优惠折扣', icon: 'vip-card-o', color: 'linear-gradient(135deg, #F59E0B, #D97706)', sortOrder: 1 },
     { section: 'recommend', title: '质保服务', desc: '无忧售后保障', icon: 'shield-o', color: 'linear-gradient(135deg, #10B981, #059669)', sortOrder: 2 },

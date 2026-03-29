@@ -46,12 +46,6 @@ export const addressApi = {
   setDefault: (id) => request.put(`/addresses/${id}/default`),
 };
 
-export const serviceApi = {
-  // 服务商前端：仅访问 /outlet 下的服务配置
-  list: (params) => request.get('/services', { params }),
-  detail: (id) => request.get(`/services/${id}`),
-};
-
 export const guideApi = {
   categories: () => Promise.resolve({ data: [] }),
   list: () => Promise.resolve({ data: [] }),

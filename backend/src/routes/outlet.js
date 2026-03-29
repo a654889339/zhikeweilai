@@ -8,9 +8,6 @@ const outletOrderCtrl = require('../controllers/outletOrderController');
 const outletHomeConfigCtrl = require('../controllers/outletHomeConfigController');
 const outletMsgCtrl = require('../controllers/outletMessageController');
 const outletAddrCtrl = require('../controllers/outletAddressController');
-const outletServiceCtrl = require('../controllers/outletServiceController');
-const outletServiceCategoryCtrl = require('../controllers/outletServiceCategoryController');
-
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 const router = Router();
 
@@ -43,20 +40,6 @@ router.post('/home-config', authMiddleware, adminMiddleware, outletHomeConfigCtr
 router.post('/home-config/upload', authMiddleware, adminMiddleware, upload.single('file'), outletHomeConfigCtrl.uploadImage);
 router.put('/home-config/:id', authMiddleware, adminMiddleware, outletHomeConfigCtrl.update);
 router.delete('/home-config/:id', authMiddleware, adminMiddleware, outletHomeConfigCtrl.remove);
-
-// ===== Services (outlet) =====
-// 前台使用：服务商前端只访问这些接口
-router.get('/service-categories', outletServiceCategoryCtrl.list);
-router.get('/services', outletServiceCtrl.list);
-
-// 后台管理：服务配置（服务商/分销商管理下）
-router.get('/services/admin/list', authMiddleware, adminMiddleware, outletServiceCtrl.adminList);
-router.post('/service-categories', authMiddleware, adminMiddleware, outletServiceCategoryCtrl.create);
-router.put('/service-categories/:id', authMiddleware, adminMiddleware, outletServiceCategoryCtrl.update);
-router.delete('/service-categories/:id', authMiddleware, adminMiddleware, outletServiceCategoryCtrl.remove);
-router.post('/services', authMiddleware, adminMiddleware, outletServiceCtrl.create);
-router.put('/services/:id', authMiddleware, adminMiddleware, outletServiceCtrl.update);
-router.delete('/services/:id', authMiddleware, adminMiddleware, outletServiceCtrl.remove);
 
 // ===== Messages (outlet user) =====
 router.get('/messages/mine', auth, outletMsgCtrl.myMessages);

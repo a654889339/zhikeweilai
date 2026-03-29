@@ -22,11 +22,6 @@ export const authApi = {
   },
 };
 
-export const serviceApi = {
-  list: (params) => request.get('/services', { params }),
-  detail: (id) => request.get(`/services/${id}`),
-};
-
 export const orderApi = {
   create: (data) => request.post('/orders', data),
   mine: (params) => request.get('/orders/mine', { params }),

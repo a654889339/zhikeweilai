@@ -26,7 +26,6 @@ Page({
       this.getTabBar().setData({ selected: 0 });
     }
     this.loadHomeConfig();
-    this.loadHotServices();
     this.loadMyProducts();
   },
 
@@ -97,12 +96,25 @@ Page({
         const hotServiceTitleItem = items.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
         const recommendTitleItem = items.find(i => i.section === 'recommendTitle' && i.status === 'active');
         const myProductsTitleItem = items.find(i => i.section === 'myProducts' && i.status === 'active');
+        const defaultNavPath = '/pages/products/products';
         const navLg = items.filter(i => i.section === 'navLg' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: this.webPathToMpTabOrPage(i.path) || defaultNavPath, color: i.color }));
         const navSm = items.filter(i => i.section === 'navSm' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: this.webPathToMpTabOrPage(i.path) || defaultNavPath, color: i.color }));
+        const iconEmoji = { 'setting-o': '🔧', 'brush-o': '✨', scan: '🔍', replay: '💾', logistics: '📦' };
+        const hotFromConfig = items.filter(i => i.section === 'hotService' && i.status === 'active')
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+          .map(i => ({
+            id: i.id,
+            title: i.title || '推荐',
+            desc: i.desc || '',
+            price: i.price || 0,
+            emoji: iconEmoji[i.icon] || '🔧',
+            bg: i.color || 'linear-gradient(135deg, #B91C1C, #991B1B)',
+            navigatePath: this.webPathToMpTabOrPage(i.path) || defaultNavPath,
+          }));
         this.setData({
           headerLogoUrl: headerLogo ? toFull(headerLogo.imageUrl) : '',
           heroBgUrl: singleBg,
@@ -113,6 +125,7 @@ Page({
           myProductsTitle: (myProductsTitleItem && myProductsTitleItem.title) ? myProductsTitleItem.title.trim() : '我的商品',
           navLgItems: navLg,
           navSmItems: navSm,
+          hotServices: hotFromConfig.length ? hotFromConfig : this.getFallbackHotServices(),
         });
       })
       .catch(() => {});
@@ -128,25 +141,30 @@ Page({
     this.setData({ heroBgList: list });
   },
 
-  loadHotServices() {
-    app.request({ url: '/services' })
-      .then(res => {
-        const data = (res.data || []).slice(0, 8);
-        const hotServices = data.map(s => ({
-          id: s.id, title: s.title || '服务', desc: s.description || '专业服务',
-          price: s.price || 0, emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)',
-        }));
-        this.setData({ hotServices: hotServices.length ? hotServices : this.getFallbackHotServices() });
-      })
-      .catch(() => this.setData({ hotServices: this.getFallbackHotServices() }));
+  /** 后台配置的 H5 路径转为小程序 tab 页或非 tab 页路径 */
+  webPathToMpTabOrPage(webPath) {
+    const p = (webPath && String(webPath).trim()) || '';
+    if (!p) return '/pages/products/products';
+    if (p.startsWith('/pages/')) {
+      if (p.indexOf('/service') !== -1) return '/pages/products/products';
+      return p;
+    }
+    if (p === '/products' || p.startsWith('/products?')) return '/pages/products/products';
+    if (p.startsWith('/guide/')) {
+      const slug = p.replace(/^\/guide\//, '').split('/')[0];
+      if (slug) return `/pages/guide-detail/guide-detail?id=${encodeURIComponent(slug)}`;
+    }
+    if (p.startsWith('/service/') || p.startsWith('/services')) return '/pages/products/products';
+    return '/pages/products/products';
   },
 
   getFallbackHotServices() {
+    const tab = '/pages/products/products';
     return [
-      { id: 1, title: '设备维修', desc: '专业工程师', price: '99', emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
-      { id: 2, title: '深度清洁', desc: '全方位保养', price: '149', emoji: '✨', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
-      { id: 3, title: '系统检测', desc: '全面评估', price: '49', emoji: '🔍', bg: 'linear-gradient(135deg, #059669, #047857)' },
-      { id: 4, title: '数据恢复', desc: '专业找回', price: '199', emoji: '💾', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
+      { id: 1, title: '设备维修', desc: '专业工程师', price: '99', emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)', navigatePath: tab },
+      { id: 2, title: '深度清洁', desc: '全方位保养', price: '149', emoji: '✨', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)', navigatePath: tab },
+      { id: 3, title: '系统检测', desc: '全面评估', price: '49', emoji: '🔍', bg: 'linear-gradient(135deg, #059669, #047857)', navigatePath: tab },
+      { id: 4, title: '数据恢复', desc: '专业找回', price: '199', emoji: '💾', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)', navigatePath: tab },
     ];
   },
 
@@ -157,10 +175,6 @@ Page({
     }
   },
 
-  goService() { wx.switchTab({ url: '/pages/service/service' }); },
-  goServiceList() { wx.switchTab({ url: '/pages/service/service' }); },
-
-  goServiceDetail(e) {
-    wx.navigateTo({ url: '/pages/service-detail/service-detail?id=' + e.currentTarget.dataset.id });
-  },
+  goService() { wx.switchTab({ url: '/pages/products/products' }); },
+  goServiceList() { wx.switchTab({ url: '/pages/products/products' }); },
 });

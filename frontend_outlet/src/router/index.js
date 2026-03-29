@@ -2,8 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 const routes = [
   { path: '/', name: 'Home', component: () => import('@/views/Home.vue') },
-  { path: '/services', name: 'Services', component: () => import('@/views/Services.vue') },
-  { path: '/service/:id', name: 'ServiceDetail', component: () => import('@/views/ServiceDetail.vue') },
+  { path: '/products', name: 'Products', component: () => import('@/views/Products.vue') },
+  { path: '/services', redirect: '/products' },
+  { path: '/service/:id', redirect: '/products' },
   { path: '/orders', name: 'Orders', component: () => import('@/views/Orders.vue') },
   { path: '/mine', name: 'Mine', component: () => import('@/views/Mine.vue') },
   { path: '/mine/profile', name: 'ProfileEdit', component: () => import('@/views/ProfileEdit.vue') },

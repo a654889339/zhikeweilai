@@ -208,7 +208,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-nav-item" data-page="orders" onclick="switchPage('orders')">订单管理</div>
     <div class="dash-nav-item" data-page="users" onclick="switchPage('users')">用户管理</div>
     <div class="dash-nav-item" data-page="guides" onclick="switchPage('guides')">商品配置</div>
-    <div class="dash-nav-item" data-page="serviceConfig" onclick="switchPage('serviceConfig')">服务配置</div>
     <div class="dash-nav-item" data-page="inventory" onclick="switchPage('inventory')">商品库存</div>
     <div class="dash-nav-item" data-page="homeConfig" onclick="switchPage('homeConfig')">首页配置</div>
     <div class="dash-nav-item" data-page="homeAnimConfig" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
@@ -1175,24 +1174,24 @@ async function api(path, options = {}) {
 let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
-const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','mineConfig','messages'];
+const tocPages = ['overview','orders','users','guides','inventory','homeConfig','homeAnimConfig','mineConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
-  {page:'guides',label:'商品配置'},{page:'serviceConfig',label:'服务配置'},{page:'inventory',label:'商品库存'},
+  {page:'guides',label:'商品配置'},{page:'inventory',label:'商品库存'},
   {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
   {page:'mineConfig',label:'个人中心配置'},{page:'messages',label:'留言板'}
 ];
 const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
-  {page:'outletServiceConfig',label:'服务配置'},{page:'outletHomeConfig',label:'首页配置'},{page:'outletHomeAnimConfig',label:'首页动画配置'},
+  {page:'outletHomeConfig',label:'首页配置'},{page:'outletHomeAnimConfig',label:'首页动画配置'},
   {page:'outletMineConfig',label:'个人中心配置'},{page:'outletMessages',label:'留言板'}
 ];
 
 function renderTopNav(items, activePage) {
   const nav = document.getElementById('dashTopNav');
-  const adminOnlyPages = ['guides','serviceConfig','inventory'];
+  const adminOnlyPages = ['guides','inventory'];
   const isAdmin = currentUser && currentUser.role === 'admin';
   nav.innerHTML = items.map(it => {
     if (adminOnlyPages.includes(it.page) && !isAdmin) return '';
@@ -1230,7 +1229,6 @@ function switchPage(page) {
   if (page === 'orders') loadOrders();
   if (page === 'users') { userPage = 1; loadUsers(); }
   if (page === 'guides') { loadCategories(); loadGuides(); }
-  if (page === 'serviceConfig') { loadServiceCategories(); loadServices(); }
   if (page === 'inventory') { invProductPage = 1; loadInventoryCategories(); loadInventoryProducts(); }
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
@@ -1239,7 +1237,6 @@ function switchPage(page) {
   if (page === 'outletOverview') loadOutletStats();
   if (page === 'outletOrders') { outletOrderPage = 1; loadOutletOrders(); }
   if (page === 'outletUsers') { outletUserPage = 1; loadOutletUsers(); }
-  if (page === 'outletServiceConfig') { loadOutletServiceCategories(); loadOutletServices(); }
   if (page === 'outletHomeConfig') { outletCurrentHCPage = 'homeConfig'; loadOutletHomeConfig(); }
   if (page === 'outletHomeAnimConfig') { outletCurrentHCPage = 'homeAnimConfig'; loadOutletHomeAnimConfig(); }
   if (page === 'outletMineConfig') loadOutletMineConfig();
@@ -2911,15 +2908,13 @@ async function uploadHCImage(input) {
   const formData = new FormData();
   formData.append('file', file);
 
+  showUploadLoading(file.name);
   try {
-    console.log('上传URL:', API + '/home-config/upload');
     const res = await fetch(API + '/home-config/upload', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token },
       body: formData
     }).then(r => r.json());
-
-    console.log('上传响应:', res);
 
     if (res.code === 0 && res.data?.url) {
       document.getElementById('hcImageUrl').value = res.data.url;
@@ -2927,13 +2922,14 @@ async function uploadHCImage(input) {
       const preview = document.getElementById('hcImagePreview');
       preview.src = res.data.url;
       preview.style.display = 'block';
-      alert('上传成功！');
     } else {
       alert(res.message || '上传失败');
     }
   } catch (e) {
     console.error('上传错误:', e);
     alert('上传失败: ' + e.message);
+  } finally {
+    hideUploadLoading();
   }
   input.value = '';
 }
@@ -3024,6 +3020,7 @@ async function uploadMineBgImage(input) {
   if (!token) { alert('未登录或已过期'); input.value = ''; return; }
   const formData = new FormData();
   formData.append('file', file);
+  showUploadLoading(file.name);
   try {
     const res = await fetch(API + '/home-config/upload', {
       method: 'POST',
@@ -3035,9 +3032,9 @@ async function uploadMineBgImage(input) {
       const preview = document.getElementById('mineBgImagePreview');
       preview.src = res.data.url;
       preview.style.display = 'block';
-      alert('上传成功');
     } else { alert(res.message || '上传失败'); }
   } catch (e) { alert('上传失败: ' + (e.message || e)); }
+  finally { hideUploadLoading(); }
   input.value = '';
 }
 

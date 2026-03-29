@@ -53,19 +53,19 @@
       <div class="section-card">
         <h3 class="section-title">服务入口</h3>
         <div class="service-entry-grid">
-          <div class="entry-item" @click="$router.push('/services')">
+          <div class="entry-item" @click="$router.push('/products')">
             <div class="entry-icon" style="background:#EDE9FE"><van-icon name="service-o" size="22" color="#7C3AED" /></div>
             <span>自助服务</span>
           </div>
-          <div class="entry-item" @click="$router.push('/services')">
+          <div class="entry-item" @click="$router.push('/products')">
             <div class="entry-icon" style="background:#DBEAFE"><van-icon name="location-o" size="22" color="#2563EB" /></div>
             <span>服务网点</span>
           </div>
-          <div class="entry-item" @click="$router.push('/services')">
+          <div class="entry-item" @click="$router.push('/products')">
             <div class="entry-icon" style="background:#D1FAE5"><van-icon name="shield-o" size="22" color="#059669" /></div>
             <span>售后政策</span>
           </div>
-          <div class="entry-item" @click="$router.push('/services')">
+          <div class="entry-item" @click="$router.push('/products')">
             <div class="entry-icon" style="background:#FEF3C7"><van-icon name="balance-list-o" size="22" color="#D97706" /></div>
             <span>维修报价</span>
           </div>

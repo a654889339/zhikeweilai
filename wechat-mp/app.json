@@ -38,10 +38,6 @@
         "text": "产品"
       },
       {
-        "pagePath": "pages/service/service",
-        "text": "服务"
-      },
-      {
         "pagePath": "pages/orders/orders",
         "text": "订单"
       },
