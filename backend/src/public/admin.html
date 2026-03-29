@@ -451,11 +451,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn" onclick="filterHC('all')" id="hcFilterAll" style="background:var(--primary);color:#fff">全部</button>
-          <button class="btn" id="hcFilterNavLg" onclick="filterHC('navLg')">自助预约(大)</button>
-          <button class="btn" id="hcFilterNavSm" onclick="filterHC('navSm')">自助预约(小)</button>
-          <button class="btn" id="hcFilterHotService" onclick="filterHC('hotService')">自助服务</button>
-          <button class="btn" id="hcFilterRecommend" onclick="filterHC('recommend')">服务产品</button>
-          <button class="btn" onclick="filterHC('myProducts')" id="hcFilterMyProducts" title="首页「我的商品」区块，数据来自商品库存">我的商品</button>
+          <button class="btn" onclick="filterHC('myProducts')" id="hcFilterMyProducts" title="首页「我的实验材料」区块，数据来自商品库存">我的实验材料</button>
           <span style="display:inline-flex;align-items:center;gap:6px;margin-left:8px">
             <label for="hcSectionOffsetPx" style="font-size:13px;color:#666;white-space:nowrap">板块整体偏移(px)</label>
             <input type="number" id="hcSectionOffsetPx" placeholder="0" style="width:72px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px" />
@@ -493,7 +489,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="section-header">
           <h3>首页动画配置管理</h3>
         </div>
-        <p style="font-size:13px;color:#666;margin-bottom:16px">配置开场动画、首页 Logo、首页背景图。与「首页配置」中的自助预约/自助服务/服务产品分开管理。</p>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">配置开场动画、首页 Logo、首页背景图。</p>
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn" onclick="filterHCAnim('all')" id="hcAnimFilterAll" style="background:var(--primary);color:#fff">全部</button>
           <button class="btn" onclick="filterHCAnim('splash')" id="hcAnimFilterSplash">开场动画</button>
@@ -1098,7 +1094,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="section-header"><h3>服务商首页配置</h3>
           <div style="display:flex;gap:8px"><button class="refresh-btn" onclick="loadOutletHomeConfig()">刷新</button><button class="refresh-btn" style="background:#059669" onclick="openOutletHCEditor()">+ 新增</button></div>
         </div>
-        <p style="font-size:13px;color:#666;margin-bottom:12px">管理服务商前端首页板块（自助预约/自助服务/服务产品/我的商品等）。</p>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">管理服务商前端首页板块。</p>
         <table class="order-table"><thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图标</th><th>图片</th><th>排序</th><th>状态</th><th>操作</th></tr></thead><tbody id="outletHCTableBody"></tbody></table>
         <div class="order-empty" id="outletHCEmpty" style="display:none">暂无配置</div>
       </div>
@@ -2915,9 +2911,9 @@ async function showInvProductQR(productId) {
 let allHCItems = [];
 let hcFilterSection = 'all';
 let hcAnimFilterSection = 'all';
-const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'hotService', 'recommend', 'myProducts'];
+const HOME_CONFIG_SECTIONS = ['myProducts'];
 const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', myProducts: '我的实验材料', tabbar: '底部栏' };
 
 async function loadHomeConfig() {
   try {
@@ -3117,15 +3113,15 @@ function upgradeLodImages() {
 
 function onHCSectionChange() {
   const sec = document.getElementById('hcSection').value;
-  const noIcon = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'myProducts'];
-  const noPath = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'myProducts'];
-  const showImage = ['splash', 'headerLogo', 'homeBg', 'navLg', 'navSm'];
-  const hideColor = ['headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'myProducts'];
+  const noIcon = ['banner', 'splash', 'headerLogo', 'homeBg', 'myProducts'];
+  const noPath = ['banner', 'splash', 'headerLogo', 'homeBg', 'myProducts'];
+  const showImage = ['splash', 'headerLogo', 'homeBg'];
+  const hideColor = ['headerLogo', 'homeBg', 'myProducts'];
   const titleLabel = document.getElementById('hcTitleLabel');
   const titleInput = document.getElementById('hcTitle');
   titleLabel.textContent = '标题';
   titleInput.placeholder = '显示标题';
-  document.getElementById('hcPriceGroup').style.display = sec === 'hotService' ? '' : 'none';
+  document.getElementById('hcPriceGroup').style.display = 'none';
   document.getElementById('hcIconGroup').style.display = noIcon.includes(sec) ? 'none' : '';
   document.getElementById('hcPathGroup').style.display = noPath.includes(sec) ? 'none' : '';
   document.getElementById('hcImageGroup').style.display = showImage.includes(sec) ? '' : 'none';
@@ -3142,13 +3138,6 @@ function onHCSectionChange() {
     imgLabel.innerHTML = '首页Logo图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议使用透明背景PNG，高度约40px）</span>';
   } else if (sec === 'homeBg') {
     imgLabel.innerHTML = '首页背景图 <span style="font-weight:normal;color:#999;font-size:12px">（建议尺寸 750x600 以上，将显示在首页顶部）</span>';
-  } else if (sec === 'navLg') {
-    imgLabel.innerHTML = '大图标图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议 200x200 带背景的图标）</span>';
-  } else if (sec === 'navSm') {
-    imgLabel.innerHTML = '小图标图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议 80x80 图标）</span>';
-  } else if (sec === 'hotService' || sec === 'recommend') {
-    colorLabel.innerHTML = '底色 <span style="font-weight:normal;color:#999;font-size:12px">（卡片/图标背景色，如 #B91C1C 或 linear-gradient(...)）</span>';
-    colorInput.placeholder = '如 #B91C1C 或 linear-gradient(135deg, #3B82F6, #1D4ED8)';
   } else {
     colorLabel.textContent = '颜色/渐变背景';
     colorInput.placeholder = '如 #B91C1C 或 linear-gradient(...)';
@@ -3157,8 +3146,7 @@ function onHCSectionChange() {
 }
 
 const HC_SECTION_OPTS_HOME = [
-  { v: 'navLg', l: '自助预约-大图标' }, { v: 'navSm', l: '自助预约-小图标' },
-  { v: 'hotService', l: '自助服务' }, { v: 'recommend', l: '服务产品' }, { v: 'myProducts', l: '我的商品' }
+  { v: 'myProducts', l: '我的实验材料' }
 ];
 const HC_SECTION_OPTS_ANIM = [
   { v: 'splash', l: '开场动画 (Splash)' }, { v: 'headerLogo', l: '首页Logo (HeaderLogo)' }, { v: 'homeBg', l: '首页背景图 (HomeBg)' }
@@ -4026,7 +4014,7 @@ function deleteOutletService(id) {
 
 // --- Outlet HomeConfig / HomeAnimConfig / MineConfig ---
 let outletCurrentHCPage = 'homeConfig';
-const outletHCSections = { homeConfig: ['navLg','navSm','hotService','recommend','myProducts'], homeAnimConfig: ['splash','headerLogo','homeBg'], mineConfig: ['mineConfig'] };
+const outletHCSections = { homeConfig: ['myProducts'], homeAnimConfig: ['splash','headerLogo','homeBg'], mineConfig: ['mineConfig'] };
 
 async function loadOutletHomeConfig() { await _loadOutletHC('homeConfig', 'outletHCTableBody', 'outletHCEmpty'); }
 async function loadOutletHomeAnimConfig() { await _loadOutletHC('homeAnimConfig', 'outletHATableBody', 'outletHAEmpty'); }

@@ -50,35 +50,7 @@
 
     <!-- 首页配置管理区域：仅此区域受「板块整体偏移」影响，不移动首页动画配置（背景/Logo/Hero） -->
     <div class="home-config-wrap" :style="homeSectionOffsetStyle">
-    <!-- 自助预约（仅此区块上移，与下方我的商品/热门服务同层级） -->
-    <div class="section card-section first-card" v-if="navLgItems.length || navSmItems.length">
-      <div class="section-header">
-        <h3>{{ navSectionTitle }}</h3>
-        <span class="more" @click="$router.push('/products')">进度查询 ›</span>
-      </div>
-      <!-- 大图标行 -->
-      <div class="nav-lg-row" v-if="navLgItems.length">
-        <div class="nav-lg-item" v-for="item in navLgItems" :key="item.id" @click="$router.push(item.path)">
-          <div class="nav-lg-icon">
-            <img v-if="item.imageUrl" :src="item.imageUrlThumb || item.imageUrl" class="nav-lg-img" />
-            <van-icon v-else :name="item.icon || 'apps-o'" size="36" :color="item.color || '#B91C1C'" />
-          </div>
-          <span class="nav-lg-label" :style="{ color: item.color || '#B91C1C' }">{{ item.title }}</span>
-        </div>
-      </div>
-      <!-- 小图标行 -->
-      <div class="nav-sm-row" v-if="navSmItems.length">
-        <div class="nav-sm-item" v-for="item in navSmItems" :key="item.id" @click="$router.push(item.path)">
-          <div class="nav-sm-icon">
-            <img v-if="item.imageUrl" :src="item.imageUrlThumb || item.imageUrl" class="nav-sm-img" />
-            <van-icon v-else :name="item.icon || 'apps-o'" size="20" color="#666" />
-          </div>
-          <span class="nav-sm-label">{{ item.title }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
+    <!-- 我的实验材料：为空时整栏隐藏 -->
     <div v-if="myProducts.length" class="section card-section">
       <div class="section-header">
         <h3>{{ myProductsTitle }}</h3>
@@ -99,42 +71,6 @@
             <van-icon v-else name="photo-o" class="my-product-icon-placeholder" />
           </div>
           <span class="my-product-name">{{ item.productName || item.productKey }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Hot Services -->
-    <div class="section card-section section-hot-service">
-      <div class="section-header">
-        <h3>{{ hotServiceTitle }}</h3>
-        <span class="more" @click="$router.push('/products')">查看全部 ›</span>
-      </div>
-      <div class="service-list">
-        <div v-for="item in hotServices" :key="item.id" class="service-card" @click="$router.push(item.path)">
-          <div class="service-cover" :style="{ background: item.coverBg }">
-            <van-icon :name="item.icon" size="36" color="#fff" />
-          </div>
-          <div class="service-info">
-            <h4>{{ item.title }}</h4>
-            <p>{{ item.desc }}</p>
-            <span class="price">¥{{ item.price }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Recommend：层级低于底栏，避免遮挡首页/产品/我的底部导航 -->
-    <div class="section card-section section-recommend">
-      <div class="section-header">
-        <h3>{{ recommendTitle }}</h3>
-      </div>
-      <div class="recommend-grid">
-        <div v-for="item in recommends" :key="item.id" class="recommend-card">
-          <div class="recommend-icon" :style="{ background: item.bg }">
-            <van-icon :name="item.icon" size="28" color="#fff" />
-          </div>
-          <h4>{{ item.title }}</h4>
-          <p>{{ item.desc }}</p>
         </div>
       </div>
     </div>
@@ -293,21 +229,9 @@ const heroBgList = computed(() => {
     .filter(i => i.url);
 });
 const heroBgFallback = computed(() => allItems.value.find(i => i.section === 'homeBg' && i.status === 'active')?.imageUrl || '');
-const navSectionTitle = computed(() => {
-  const item = allItems.value.find(i => i.section === 'navSectionTitle' && i.status === 'active');
-  return (item?.title || '').trim() || '自助预约';
-});
-const hotServiceTitle = computed(() => {
-  const item = allItems.value.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
-  return (item?.title || '').trim() || '自助服务';
-});
-const recommendTitle = computed(() => {
-  const item = allItems.value.find(i => i.section === 'recommendTitle' && i.status === 'active');
-  return (item?.title || '').trim() || '服务产品';
-});
 const myProductsTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'myProducts' && i.status === 'active');
-  return (item?.title || '').trim() || '我的商品';
+  return (item?.title || '').trim() || '我的实验材料';
 });
 // 首页板块整体上下偏移量(px)，来自后台首页配置
 const homeSectionOffsetPx = computed(() => {
@@ -318,25 +242,6 @@ const homeSectionOffsetPx = computed(() => {
 });
 const homeSectionOffsetStyle = computed(() =>
   homeSectionOffsetPx.value !== 0 ? { marginTop: homeSectionOffsetPx.value + 'px' } : undefined
-);
-
-const navLgItems = computed(() =>
-  allItems.value.filter(i => i.section === 'navLg' && i.status === 'active')
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb, path: i.path || '/products', color: i.color }))
-);
-const navSmItems = computed(() =>
-  allItems.value.filter(i => i.section === 'navSm' && i.status === 'active')
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb, path: i.path || '/products', color: i.color }))
-);
-const hotServices = computed(() =>
-  allItems.value.filter(i => i.section === 'hotService' && i.status === 'active')
-    .map(i => ({ id: i.id, title: i.title, desc: i.desc, price: i.price, icon: i.icon, coverBg: i.color, path: i.path || '/products' }))
-);
-const recommends = computed(() =>
-  allItems.value.filter(i => i.section === 'recommend' && i.status === 'active')
-    .map(i => ({ id: i.id, title: i.title, desc: i.desc, icon: i.icon, bg: i.color }))
 );
 
 watch(showShare, async (val) => {
@@ -431,19 +336,7 @@ const copyUrl = async () => {
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
-/* 仅「自助预约」区块上移；我的商品、热门服务等同层级，不设负 margin */
-.card-section.first-card {
-  margin-top: -32vh;
-  min-height: 0;
-}
-/* 任意连续卡片之间统一留白，避免「我的商品」与自助服务/热门服务重叠 */
-.card-section + .card-section {
-  margin-top: 20px;
-}
-/* 为你推荐与卡片区同级，层级低于 tabbar */
-.section-recommend {
-  z-index: 1;
-}
+/* 首页已移除「自助预约/自助服务/服务产品」板块 */
 
 /* ===== Section common ===== */
 .section { padding: 20px; animation: fadeInUp 0.4s var(--vino-transition) both; }
@@ -454,75 +347,9 @@ const copyUrl = async () => {
 .section-header h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--vino-dark); }
 .more { font-size: 14px; color: var(--vino-primary); font-weight: 500; cursor: pointer; }
 
-/* ===== 自助预约 - 大图标 ===== */
-.nav-lg-row {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-bottom: 12px;
-}
-.nav-lg-row::-webkit-scrollbar { display: none; }
-.nav-lg-item {
-  flex: 1;
-  min-width: 90px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.nav-lg-item:active { transform: scale(0.95); }
-.nav-lg-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f8f8;
-}
-.nav-lg-img { width: 100%; height: 100%; object-fit: cover; }
-.nav-lg-label { font-size: 13px; font-weight: 600; text-align: center; }
+/* navLg/navSm 样式已随板块移除 */
 
-/* ===== 自助预约 - 小图标 ===== */
-.nav-sm-row {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-top: 4px;
-  border-top: 1px solid rgba(0,0,0,0.04);
-}
-.nav-sm-row::-webkit-scrollbar { display: none; }
-.nav-sm-item {
-  flex: 1;
-  min-width: 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 4px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.nav-sm-item:active { transform: scale(0.92); }
-.nav-sm-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-}
-.nav-sm-img { width: 100%; height: 100%; object-fit: contain; }
-.nav-sm-label { font-size: 11px; color: #666; text-align: center; }
-
-/* ===== 我的商品 ===== */
+/* ===== 我的实验材料 ===== */
 .my-products-empty { padding: 16px; text-align: center; color: #999; font-size: 14px; }
 .hidden-input { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
 .my-products-list { display: flex; flex-direction: column; gap: 10px; }
@@ -539,33 +366,7 @@ const copyUrl = async () => {
 .my-product-name { flex: 1; font-size: 15px; font-weight: 600; color: var(--vino-dark); min-width: 0; }
 .my-product-key { font-size: 12px; color: #999; font-family: monospace; flex-shrink: 0; }
 
-/* ===== Hot Services ===== */
-.service-list { display: flex; gap: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
-.service-list::-webkit-scrollbar { display: none; }
-.service-card {
-  min-width: 150px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-.service-card:active { transform: scale(0.96); }
-.service-cover { height: 100px; display: flex; align-items: center; justify-content: center; }
-.service-info { padding: 12px 14px 14px; text-align: center; }
-.service-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
-.service-info p { font-size: 12px; color: var(--vino-text-secondary); margin-bottom: 8px; }
-.price { font-size: 17px; font-weight: 700; color: var(--vino-primary); letter-spacing: -0.02em; }
-
-/* ===== Recommend ===== */
-.recommend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.recommend-card { background: #f5f5f5; border-radius: 12px; padding: 20px 16px; transition: transform 0.25s; cursor: pointer; text-align: center; }
-.recommend-card:active { transform: scale(0.97); }
-.recommend-icon { width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
-.recommend-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
-.recommend-card p { font-size: 13px; color: var(--vino-text-secondary); line-height: 1.5; }
+/* hotService/recommend 样式已随板块移除 */
 
 /* 首页配置管理区域包装器，仅此区域受后台「板块整体偏移」影响 */
 .home-config-wrap { position: relative; }

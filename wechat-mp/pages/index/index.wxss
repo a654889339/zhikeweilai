@@ -32,7 +32,7 @@
 /* Card sections with margins */
 .card-section { margin: 20rpx 24rpx; padding: 30rpx; background: rgba(255,255,255,0.95); border-radius: 24rpx; box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06); position: relative; z-index: 2; }
 .card-section:first-of-type { margin-top: -80rpx; }
-.section-recommend { z-index: 1; }
+/* section-recommend 已移除 */
 .home-bg-swiper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; height: 100%; }
 .home-bg-swiper swiper-item { height: 100%; }
 .home-bg-swiper .home-bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
@@ -42,23 +42,9 @@
 .section-title { font-size: 34rpx; font-weight: 700; color: #1d1d1f; }
 .section-more { font-size: 24rpx; color: #999; }
 
-/* Nav Large */
-.nav-lg-row { white-space: nowrap; padding-bottom: 16rpx; }
-.nav-lg-item { display: inline-flex; flex-direction: column; align-items: center; width: 180rpx; margin-right: 16rpx; }
-.nav-lg-icon { width: 140rpx; height: 140rpx; border-radius: 28rpx; overflow: hidden; background: #f8f8f8; display: flex; align-items: center; justify-content: center; margin-bottom: 12rpx; }
-.nav-lg-img { width: 100%; height: 100%; }
-.nav-lg-emoji { font-size: 56rpx; }
-.nav-lg-label { font-size: 24rpx; font-weight: 600; text-align: center; }
+/* navLg/navSm 已移除 */
 
-/* Nav Small */
-.nav-sm-row { display: flex; flex-wrap: wrap; padding-top: 12rpx; border-top: 1rpx solid rgba(0,0,0,0.04); }
-.nav-sm-item { width: 20%; display: flex; flex-direction: column; align-items: center; padding: 16rpx 0; }
-.nav-sm-icon { width: 76rpx; height: 76rpx; border-radius: 20rpx; overflow: hidden; background: #f5f5f5; display: flex; align-items: center; justify-content: center; margin-bottom: 8rpx; }
-.nav-sm-img { width: 100%; height: 100%; }
-.nav-sm-emoji { font-size: 36rpx; }
-.nav-sm-label { font-size: 20rpx; color: #666; text-align: center; }
-
-/* 我的商品（首页不显示添加按钮和序列号） */
+/* 我的实验材料（首页不显示添加按钮和序列号） */
 .my-products-list { display: flex; flex-direction: column; gap: 20rpx; }
 .my-product-item { display: flex; align-items: center; gap: 20rpx; padding: 24rpx 28rpx; background: #f8f8f8; border-radius: 20rpx; }
 .my-product-item--clickable:active { opacity: 0.88; }
@@ -69,22 +55,6 @@
 .my-product-name { flex: 1; font-size: 30rpx; font-weight: 600; color: #1d1d1f; min-width: 0; }
 .my-products-empty { padding: 32rpx; text-align: center; color: #999; font-size: 28rpx; }
 
-/* Hot Services */
-.service-scroll { white-space: nowrap; }
-.service-card { display: inline-block; width: 260rpx; margin-right: 16rpx; border-radius: 16rpx; overflow: hidden; background: #fff; box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06); }
-.service-cover { height: 180rpx; display: flex; align-items: center; justify-content: center; }
-.service-icon-text { font-size: 64rpx; }
-.service-info { padding: 16rpx 20rpx; }
-.service-name { font-size: 28rpx; font-weight: 500; display: block; margin-bottom: 6rpx; }
-.service-desc { font-size: 22rpx; color: #999; display: block; margin-bottom: 8rpx; }
-.service-price { font-size: 30rpx; font-weight: 600; color: #B91C1C; }
-
-/* Recommend */
-.recommend-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
-.recommend-item { width: 48%; background: #f5f5f5; border-radius: 16rpx; padding: 24rpx; box-sizing: border-box; margin-bottom: 16rpx; }
-.recommend-icon { width: 80rpx; height: 80rpx; border-radius: 20rpx; display: flex; align-items: center; justify-content: center; margin-bottom: 16rpx; }
-.recommend-emoji { font-size: 40rpx; }
-.recommend-name { font-size: 28rpx; font-weight: 500; display: block; margin-bottom: 6rpx; }
-.recommend-desc { font-size: 22rpx; color: #999; }
+/* hotService/recommend 已移除 */
 
 .tab-bar-placeholder { height: 120rpx; }

@@ -20,35 +20,7 @@
     </view>
   </view>
 
-  <!-- 自助预约 -->
-  <view class="card-section" wx:if="{{navLgItems.length || navSmItems.length}}">
-    <view class="section-header">
-      <text class="section-title">{{navSectionTitle}}</text>
-      <text class="section-more" bindtap="goService">进度查询 ›</text>
-    </view>
-    <!-- 大图标 -->
-    <scroll-view scroll-x class="nav-lg-row" wx:if="{{navLgItems.length}}">
-      <view class="nav-lg-item" wx:for="{{navLgItems}}" wx:key="id" bindtap="goPath" data-path="{{item.path}}">
-        <view class="nav-lg-icon">
-          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrlThumb || item.imageUrl}}" class="nav-lg-img" mode="aspectFill" />
-          <text wx:else class="nav-lg-emoji">🔧</text>
-        </view>
-        <text class="nav-lg-label" style="color:{{item.color || '#B91C1C'}}">{{item.title}}</text>
-      </view>
-    </scroll-view>
-    <!-- 小图标 -->
-    <view class="nav-sm-row" wx:if="{{navSmItems.length}}">
-      <view class="nav-sm-item" wx:for="{{navSmItems}}" wx:key="id" bindtap="goPath" data-path="{{item.path}}">
-        <view class="nav-sm-icon">
-          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrlThumb || item.imageUrl}}" class="nav-sm-img" mode="aspectFit" />
-          <text wx:else class="nav-sm-emoji">📋</text>
-        </view>
-        <text class="nav-sm-label">{{item.title}}</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
+  <!-- 我的实验材料：为空时整栏隐藏 -->
   <view wx:if="{{myProducts.length}}" class="card-section">
     <view class="section-header">
       <text class="section-title">{{myProductsTitle}}</text>
@@ -62,40 +34,6 @@
           <text wx:else class="my-product-icon-placeholder">📦</text>
         </view>
         <text class="my-product-name">{{item.productName || item.productKey}}</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- Hot Services -->
-  <view class="card-section">
-    <view class="section-header">
-      <text class="section-title">{{hotServiceTitle}}</text>
-      <text class="section-more" bindtap="goServiceList">查看全部 ›</text>
-    </view>
-    <scroll-view scroll-x class="service-scroll">
-      <view class="service-card" wx:for="{{hotServices}}" wx:key="id" bindtap="goPath" data-path="{{item.navigatePath}}">
-        <view class="service-cover" style="background: {{item.bg}}">
-          <text class="service-icon-text">{{item.emoji}}</text>
-        </view>
-        <view class="service-info">
-          <text class="service-name">{{item.title}}</text>
-          <text class="service-desc">{{item.desc}}</text>
-          <text class="service-price">¥{{item.price}}</text>
-        </view>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- Recommend：层级低于底栏 -->
-  <view class="card-section section-recommend">
-    <text class="section-title" style="display:block;margin-bottom:20rpx">{{recommendTitle}}</text>
-    <view class="recommend-grid">
-      <view class="recommend-item" wx:for="{{recommends}}" wx:key="id">
-        <view class="recommend-icon" style="background: {{item.bg}}">
-          <text class="recommend-emoji">{{item.emoji}}</text>
-        </view>
-        <text class="recommend-name">{{item.title}}</text>
-        <text class="recommend-desc">{{item.desc}}</text>
       </view>
     </view>
   </view>
