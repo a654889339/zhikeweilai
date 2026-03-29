@@ -20,7 +20,7 @@ Page({
       { title: '地址管理', emoji: '📍', url: '/pages/address/address' },
       { title: '优惠券', emoji: '🎫', url: '' },
       { title: '意见反馈', emoji: '💬', url: '', chat: true },
-      { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'www.vinotech.cn' },
+      { title: '关于' + (getApp().globalData.companyName || '服务'), emoji: 'ℹ️', url: '', webUrl: 'www.vinotech.cn' },
       { title: '联系我们', emoji: '📞', url: '', contact: true },
     ],
   },
