@@ -23,11 +23,13 @@ request.interceptors.response.use(
     return data;
   },
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const msg = error.response?.data?.message || error.message || '网络错误';
+    if (status === 401) {
       localStorage.removeItem('vino_outlet_token');
       router.replace('/login');
     }
-    return Promise.reject(error);
+    return Promise.reject(new Error(msg));
   }
 );
 
