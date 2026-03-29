@@ -368,6 +368,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- 群组管理 Page -->
+    <div class="dash-page" id="page-chatGroups">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>全部群组</h3>
+          <button class="refresh-btn" onclick="loadChatGroups()">刷新</button>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">查看每个群组的创建人、群主/管理员/成员与创建时间。</p>
+        <table class="order-table">
+          <thead><tr><th>ID</th><th>名称</th><th>创建人</th><th>创建时间</th><th>人数</th><th>群主</th><th>管理员</th><th>普通成员</th></tr></thead>
+          <tbody id="chatGroupTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="chatGroupEmpty" style="display:none">暂无群组</div>
+        <div class="pagination" id="chatGroupPagination"></div>
+      </div>
+    </div>
+
     <!-- 商品配置 Page -->
     <div class="dash-page" id="page-guides">
       <div class="dash-section">
@@ -1119,6 +1136,57 @@ function jumpUserPageGo() {
   userPage = Math.min(Math.max(1, p), max);
   loadUsers();
 }
+
+async function updateUserRole(userId, role) {
+  try {
+    const res = await api('/auth/admin/users/' + userId + '/role', { method: 'PUT', body: { role } });
+    if (res.code === 0) loadUsers();
+    else alert(res.message || '更新失败');
+  } catch (e) { alert(e.message || '网络错误'); }
+}
+
+let chatGroupPage = 1;
+async function loadChatGroups() {
+  const tbody = document.getElementById('chatGroupTableBody');
+  const empty = document.getElementById('chatGroupEmpty');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#999">加载中...</td></tr>';
+  try {
+    const res = await api('/chat-groups/admin/list?page=' + chatGroupPage + '&pageSize=20');
+    if (res.code !== 0) throw new Error(res.message || '加载失败');
+    const d = res.data || {};
+    const list = d.list || [];
+    if (!list.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      const pg = document.getElementById('chatGroupPagination');
+      if (pg) pg.innerHTML = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    let html = '';
+    list.forEach(function (g) {
+      const ct = g.createdAt ? new Date(g.createdAt).toLocaleString('zh-CN') : '-';
+      const cr = g.creator ? (g.creator.nickname || g.creator.username) : '-';
+      const ownNames = (g.owners || []).map(function (m) { return m.user ? (m.user.nickname || m.user.username) : ''; }).filter(Boolean).join('、') || '-';
+      const admNames = (g.admins || []).map(function (m) { return m.user ? (m.user.nickname || m.user.username) : ''; }).filter(Boolean).join('、') || '-';
+      const memNames = (g.members || []).map(function (m) { return m.user ? (m.user.nickname || m.user.username) : ''; }).filter(Boolean).join('、') || '-';
+      html += '<tr><td>' + g.id + '</td><td>' + escapeHtml(g.name || '') + '</td><td>' + escapeHtml(cr) + '</td><td style="font-size:12px">' + ct + '</td><td>' + g.memberCount + '</td><td style="font-size:12px;max-width:140px;word-break:break-all">' + escapeHtml(ownNames) + '</td><td style="font-size:12px;max-width:140px;word-break:break-all">' + escapeHtml(admNames) + '</td><td style="font-size:12px;max-width:200px;word-break:break-all">' + escapeHtml(memNames) + '</td></tr>';
+    });
+    tbody.innerHTML = html;
+    const total = d.total || 0;
+    const ps = d.pageSize || 20;
+    const totalPages = Math.ceil(total / ps) || 1;
+    const pag = document.getElementById('chatGroupPagination');
+    if (pag) {
+      pag.innerHTML = totalPages > 1
+        ? '<button class="page-btn" onclick="chatGroupPage--;loadChatGroups()" ' + (chatGroupPage <= 1 ? 'disabled' : '') + '>上一页</button><span class="page-info">' + chatGroupPage + ' / ' + totalPages + '（共 ' + total + ' 条）</span><button class="page-btn" onclick="chatGroupPage++;loadChatGroups()" ' + (chatGroupPage >= totalPages ? 'disabled' : '') + '>下一页</button>'
+        : '<span class="page-info">共 ' + total + ' 条</span>';
+    }
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#B91C1C">加载失败</td></tr>';
+  }
+}
 function jumpOutletUserPageGo() {
   const el = document.getElementById('outletUserPageJump');
   if (!el) return;
@@ -1174,11 +1242,12 @@ async function api(path, options = {}) {
 let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
-const tocPages = ['overview','orders','users','guides','inventory','homeConfig','homeAnimConfig','mineConfig','messages'];
+const tocPages = ['overview','orders','users','chatGroups','guides','inventory','homeConfig','homeAnimConfig','mineConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
+  {page:'chatGroups',label:'群组管理'},
   {page:'guides',label:'商品配置'},{page:'inventory',label:'商品库存'},
   {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
   {page:'mineConfig',label:'个人中心配置'},{page:'messages',label:'留言板'}
@@ -1228,6 +1297,7 @@ function switchPage(page) {
   if (page !== 'outletMessages') { stopOutletMsgPolling(); outletCurrentChatUserId = null; }
   if (page === 'orders') loadOrders();
   if (page === 'users') { userPage = 1; loadUsers(); }
+  if (page === 'chatGroups') loadChatGroups();
   if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'inventory') { invProductPage = 1; loadInventoryCategories(); loadInventoryProducts(); }
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); }
@@ -1291,7 +1361,11 @@ function showDashboard(user) {
   document.getElementById('infoUsername').textContent = user.username;
   document.getElementById('infoEmail').textContent = user.email || '-';
   document.getElementById('infoNickname').textContent = user.nickname || '-';
-  document.getElementById('infoRole').innerHTML = user.role === 'admin' ? '<span class="role-tag admin">管理员</span>' : '<span class="role-tag user">普通用户</span>';
+  document.getElementById('infoRole').innerHTML = user.role === 'admin'
+    ? '<span class="role-tag admin">管理员</span>'
+    : user.role === 'teacher'
+      ? '<span class="role-tag user" style="background:#F3E8FF;color:#7C3AED">教师</span>'
+      : '<span class="role-tag user">学生</span>';
   document.getElementById('infoStatus').textContent = user.status === 'active' ? '正常' : '已禁用';
   document.getElementById('infoCreated').textContent = user.createdAt ? new Date(user.createdAt).toLocaleString('zh-CN') : '-';
   const host = window.location.hostname;
@@ -1580,10 +1654,13 @@ async function loadUsers() {
       const totalUsers = stats.totalUsers || total;
       const adminCount = stats.adminCount || 0;
       const totalAddresses = stats.totalAddresses || 0;
+      const stu = stats.studentCount != null ? stats.studentCount : 0;
+      const tea = stats.teacherCount != null ? stats.teacherCount : 0;
       document.getElementById('userStats').innerHTML = `
         <div class="stat-card"><h3>总用户</h3><div class="val">${totalUsers}</div></div>
         <div class="stat-card"><h3>管理员</h3><div class="val" style="color:#B91C1C">${adminCount}</div></div>
-        <div class="stat-card"><h3>普通用户</h3><div class="val" style="color:#2563EB">${totalUsers - adminCount}</div></div>
+        <div class="stat-card"><h3>学生</h3><div class="val" style="color:#2563EB">${stu}</div></div>
+        <div class="stat-card"><h3>教师</h3><div class="val" style="color:#7C3AED">${tea}</div></div>
         <div class="stat-card"><h3>地址总数</h3><div class="val" style="color:#059669">${totalAddresses}</div></div>`;
       if (!allUsers.length) {
         tbody.innerHTML = '';
@@ -1615,7 +1692,12 @@ function renderUserTable() {
     const addrCount = u.addresses ? u.addresses.length : 0;
     const boundKeys = u.boundProductKeys || [];
     const boundStr = boundKeys.length ? boundKeys.join('、') : '-';
-    const roleTag = u.role === 'admin' ? '<span class="role-tag admin">管理员</span>' : '<span class="role-tag user">用户</span>';
+    const r = u.role === 'admin' ? 'admin' : u.role === 'teacher' ? 'teacher' : 'student';
+    const roleTag = `<select class="form-input" style="min-width:100px;padding:4px 8px;font-size:13px" onchange="updateUserRole(${u.id}, this.value)">
+      <option value="admin" ${r==='admin'?'selected':''}>管理员</option>
+      <option value="student" ${r==='student'?'selected':''}>学生</option>
+      <option value="teacher" ${r==='teacher'?'selected':''}>教师</option>
+    </select>`;
     const regTime = u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '-';
     const isExpanded = expandedUsers.has(u.id);
     html += `<tr>

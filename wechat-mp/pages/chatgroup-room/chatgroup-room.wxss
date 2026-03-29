@@ -1,0 +1,61 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f9fafb;
+}
+.msg-area {
+  flex: 1;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+.msg {
+  margin-bottom: 24rpx;
+  max-width: 88%;
+}
+.msg-mine {
+  margin-left: auto;
+  text-align: right;
+}
+.msg-mine .bubble {
+  background: #b91c1c;
+  color: #fff;
+}
+.meta {
+  font-size: 22rpx;
+  color: #6b7280;
+  margin-bottom: 8rpx;
+}
+.bubble {
+  display: inline-block;
+  padding: 16rpx 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  text-align: left;
+  word-break: break-all;
+}
+.img {
+  max-width: 400rpx;
+  border-radius: 12rpx;
+}
+.input-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 20rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1rpx solid #e5e7eb;
+}
+.input {
+  flex: 1;
+  min-height: 64rpx;
+  padding: 0 16rpx;
+  background: #f3f4f6;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+.pic-btn, .send-btn {
+  flex-shrink: 0;
+}

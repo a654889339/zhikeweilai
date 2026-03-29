@@ -2,9 +2,11 @@
   "pages": [
     "pages/index/index",
     "pages/products/products",
+    "pages/chatgroup/chatgroup",
     "pages/service/service",
     "pages/orders/orders",
     "pages/mine/mine",
+    "pages/chatgroup-room/chatgroup-room",
     "pages/service-detail/service-detail",
     "pages/guide-detail/guide-detail",
     "pages/manual/manual",
@@ -36,6 +38,10 @@
       {
         "pagePath": "pages/products/products",
         "text": "产品"
+      },
+      {
+        "pagePath": "pages/chatgroup/chatgroup",
+        "text": "群组"
       },
       {
         "pagePath": "pages/orders/orders",

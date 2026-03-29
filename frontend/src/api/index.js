@@ -35,6 +35,21 @@ export const guideApi = {
   detail: (id) => request.get(`/guides/${id}`),
 };
 
+export const chatGroupApi = {
+  mine: () => request.get('/chat-groups/mine'),
+  create: (data) => request.post('/chat-groups', data),
+  join: (id) => request.post(`/chat-groups/${id}/join`),
+  messages: (id, params) => request.get(`/chat-groups/${id}/messages`, { params }),
+  send: (id, data) => request.post(`/chat-groups/${id}/messages`, data),
+  uploadImage: (id, file) => {
+    const fd = new FormData();
+    fd.append('image', file);
+    return request.post(`/chat-groups/${id}/upload-image`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
+
 // 聊天消息 API（用户端）
 export const messageApi = {
   mine: () => request.get('/messages/mine'),

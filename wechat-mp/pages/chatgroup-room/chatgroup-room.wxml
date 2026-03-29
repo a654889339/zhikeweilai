@@ -1,0 +1,14 @@
+<view class="page">
+  <scroll-view scroll-y class="msg-area" scroll-into-view="{{scrollTo}}" scroll-with-animation>
+    <view wx:for="{{messages}}" wx:key="id" id="b{{item.id}}" class="msg {{item.userId == mineId ? 'msg-mine' : ''}}">
+      <view class="meta">{{item.user.nickname || item.user.username}}</view>
+      <image wx:if="{{item.type === 'image'}}" class="img" src="{{item.content}}" mode="widthFix" data-url="{{item.content}}" bindtap="previewImg" />
+      <view wx:else class="bubble">{{item.content}}</view>
+    </view>
+  </scroll-view>
+  <view class="input-bar">
+    <button class="pic-btn" size="mini" bindtap="chooseImage">图</button>
+    <input class="input" value="{{inputText}}" bindinput="onInput" confirm-type="send" bindconfirm="send" />
+    <button class="send-btn" size="mini" type="primary" bindtap="send">发送</button>
+  </view>
+</view>

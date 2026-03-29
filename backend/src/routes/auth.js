@@ -21,6 +21,7 @@ router.get('/profile', authMiddleware, authController.getProfile);
 router.put('/profile', authMiddleware, authController.updateProfile);
 router.post('/upload-avatar', authMiddleware, upload.single('avatar'), authController.uploadAvatar);
 router.get('/admin/users', authMiddleware, adminMiddleware, authController.adminGetUsers);
+router.put('/admin/users/:id/role', authMiddleware, adminMiddleware, authController.adminUpdateUserRole);
 router.delete('/admin/users/:userId/products/:productKey', authMiddleware, adminMiddleware, authController.adminUnbindProduct);
 router.get('/my-products', authMiddleware, authController.myProducts);
 router.post('/bind-product', authMiddleware, authController.bindProduct);

@@ -8,8 +8,14 @@ const outletOrderCtrl = require('../controllers/outletOrderController');
 const outletHomeConfigCtrl = require('../controllers/outletHomeConfigController');
 const outletMsgCtrl = require('../controllers/outletMessageController');
 const outletAddrCtrl = require('../controllers/outletAddressController');
+const guideController = require('../controllers/guideController');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 const router = Router();
+
+// 商品指南（与主站同源数据，供门店前台展示）
+router.get('/guides/categories', guideController.categories);
+router.get('/guides', guideController.list);
+router.get('/guides/:id', guideController.detail);
 
 // ===== Auth =====
 router.post('/auth/send-code', outletAuthCtrl.sendCode);

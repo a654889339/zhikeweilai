@@ -29,6 +29,11 @@ const routes = [
     component: () => import('@/views/MaintenancePage.vue'),
   },
   {
+    path: '/chatgroup',
+    name: 'ChatGroup',
+    component: () => import('@/views/ChatGroup.vue'),
+  },
+  {
     path: '/orders',
     name: 'Orders',
     component: () => import('@/views/Orders.vue'),

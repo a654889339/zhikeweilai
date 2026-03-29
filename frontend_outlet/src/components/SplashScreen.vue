@@ -5,9 +5,9 @@
         <div class="splash-logo-wrapper">
           <!-- 动态图片：如果配置了 imageUrl 则显示图片，否则显示默认 SVG -->
           <img
-            v-if="splashConfig?.imageUrl && !imageError"
-            :src="splashConfig.imageUrl"
-            :alt="splashConfig.title || '智科未来'"
+            v-if="logoUrl && !imageError"
+            :src="logoUrl"
+            :alt="splashConfig?.title || '智科未来'"
             class="splash-logo-image"
             @error="onImageError"
           />
@@ -68,20 +68,21 @@ const onImageError = () => {
   // 图片加载失败时，会自动显示 SVG 备用方案
 };
 
-// 加载开场动画配置
 const loadSplashConfig = async () => {
   try {
     const res = await homeConfigApi.list();
     if (res.data) {
-      // 查找 section 为 splash 且状态为 active 的配置
-      const splash = res.data.find(item => item.section === 'splash' && item.status === 'active');
-      if (splash) {
-        splashConfig.value = splash;
-      }
+      const items = res.data;
+      const splash = items.find((item) => item.section === 'splash' && item.status === 'active');
+      const headerLogo = items.find((item) => item.section === 'headerLogo' && item.status === 'active');
+      if (splash) splashConfig.value = splash;
+      logoUrl.value =
+        (headerLogo && headerLogo.imageUrl && String(headerLogo.imageUrl).trim()) ||
+        (splash && splash.imageUrl && String(splash.imageUrl).trim()) ||
+        '';
     }
   } catch (error) {
     console.error('加载开场动画配置失败:', error);
-    // 失败时使用默认配置（SVG）
   }
 };
 

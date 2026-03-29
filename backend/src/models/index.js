@@ -20,6 +20,9 @@ const OutletHomeConfig = require('./OutletHomeConfig');
 const OutletMessage = require('./OutletMessage');
 const OutletServiceCategory = require('./OutletServiceCategory');
 const OutletService = require('./OutletService');
+const ChatGroup = require('./ChatGroup');
+const ChatGroupMember = require('./ChatGroupMember');
+const GroupMessage = require('./GroupMessage');
 
 ProductCategory.hasMany(DeviceGuide, { foreignKey: 'categoryId', as: 'guides' });
 DeviceGuide.belongsTo(ProductCategory, { foreignKey: 'categoryId', as: 'category' });
@@ -55,7 +58,42 @@ OutletAddress.belongsTo(OutletUser, { foreignKey: 'userId', as: 'user' });
 OutletUser.hasMany(OutletMessage, { foreignKey: 'userId', as: 'messages' });
 OutletMessage.belongsTo(OutletUser, { foreignKey: 'userId', as: 'user' });
 
-const models = { User, Service, ServiceCategory, Order, OrderLog, Address, DeviceGuide, ProductCategory, HomeConfig, Message, InventoryCategory, InventoryProduct, UserProduct, OutletUser, OutletOrder, OutletOrderLog, OutletAddress, OutletHomeConfig, OutletMessage, OutletServiceCategory, OutletService };
+ChatGroup.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
+User.hasMany(ChatGroup, { foreignKey: 'creatorId', as: 'createdGroups' });
+ChatGroup.hasMany(ChatGroupMember, { foreignKey: 'groupId', as: 'members' });
+ChatGroupMember.belongsTo(ChatGroup, { foreignKey: 'groupId', as: 'group' });
+ChatGroupMember.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(ChatGroupMember, { foreignKey: 'userId', as: 'groupMemberships' });
+ChatGroup.hasMany(GroupMessage, { foreignKey: 'groupId', as: 'groupMessages' });
+GroupMessage.belongsTo(ChatGroup, { foreignKey: 'groupId', as: 'group' });
+GroupMessage.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+const models = {
+  User,
+  Service,
+  ServiceCategory,
+  Order,
+  OrderLog,
+  Address,
+  DeviceGuide,
+  ProductCategory,
+  HomeConfig,
+  Message,
+  InventoryCategory,
+  InventoryProduct,
+  UserProduct,
+  OutletUser,
+  OutletOrder,
+  OutletOrderLog,
+  OutletAddress,
+  OutletHomeConfig,
+  OutletMessage,
+  OutletServiceCategory,
+  OutletService,
+  ChatGroup,
+  ChatGroupMember,
+  GroupMessage,
+};
 
 const TABLE_PREFIX = process.env.TABLE_PREFIX || '';
 // 通过运行时统一表名前缀实现“不同工程使用不同表”，避免读到其他工程的数据
@@ -139,6 +177,11 @@ const syncDatabase = async () => {
     console.log('[DB] Connection established successfully.');
     await cleanDuplicateIndexes();
     await sequelize.sync({ alter: true });
+    try {
+      await sequelize.query(`UPDATE users SET role = 'student' WHERE role = 'user'`);
+    } catch (_) {
+      /* 列已迁移或非 MySQL */
+    }
     console.log('[DB] All models synchronized.');
     const healthy = await checkIndexHealth();
     if (!healthy) {

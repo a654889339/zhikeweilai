@@ -252,6 +252,8 @@ exports.adminGetUsers = async (req, res) => {
 
     const totalUsers = await User.count();
     const adminCount = await User.count({ where: { role: 'admin' } });
+    const studentCount = await User.count({ where: { role: 'student' } });
+    const teacherCount = await User.count({ where: { role: 'teacher' } });
     const totalAddresses = await Address.count();
 
     res.json({
@@ -261,12 +263,41 @@ exports.adminGetUsers = async (req, res) => {
         total: count,
         page: pg,
         pageSize: ps,
-        stats: { totalUsers, adminCount, totalAddresses },
+        stats: { totalUsers, adminCount, studentCount, teacherCount, totalAddresses },
       },
     });
   } catch (err) {
     console.error('[Auth] adminGetUsers error:', err.message);
     res.status(500).json({ code: 500, message: '获取用户列表失败' });
+  }
+};
+
+const USER_ROLES = ['admin', 'student', 'teacher'];
+
+/** 管理端：修改用户角色 */
+exports.adminUpdateUserRole = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const role = req.body.role != null ? String(req.body.role).trim() : '';
+    if (!id || !USER_ROLES.includes(role)) {
+      return res.status(400).json({ code: 400, message: '无效的角色' });
+    }
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ code: 404, message: '用户不存在' });
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+    if (String(user.username).toLowerCase() === ADMIN_USERNAME.toLowerCase() && role !== 'admin') {
+      return res.status(400).json({ code: 400, message: '不能修改默认管理员角色' });
+    }
+    if (user.role === 'admin' && role !== 'admin') {
+      const n = await User.count({ where: { role: 'admin' } });
+      if (n <= 1) return res.status(400).json({ code: 400, message: '至少保留一名管理员' });
+    }
+    user.role = role;
+    await user.save();
+    res.json({ code: 0, message: '已更新', data: { id: user.id, role: user.role } });
+  } catch (err) {
+    console.error('[Auth] adminUpdateUserRole error:', err.message);
+    res.status(500).json({ code: 500, message: err.message || '更新失败' });
   }
 };
 

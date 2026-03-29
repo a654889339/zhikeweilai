@@ -41,7 +41,7 @@ exports.seedData = async (req, res) => {
           email: `test${idx}_${hex}@seed.local`,
           phone,
           nickname: randItem(FIRST_NAMES) + randItem(LAST_NAMES) + randInt(1, 999),
-          role: 'user',
+          role: 'student',
           status: 'active',
         });
       }

@@ -47,7 +47,7 @@ export const addressApi = {
 };
 
 export const guideApi = {
-  categories: () => Promise.resolve({ data: [] }),
-  list: () => Promise.resolve({ data: [] }),
-  detail: () => Promise.resolve({ data: null }),
+  categories: () => request.get('/guides/categories'),
+  list: (params) => request.get('/guides', { params }),
+  detail: (id) => request.get(`/guides/${id}`),
 };

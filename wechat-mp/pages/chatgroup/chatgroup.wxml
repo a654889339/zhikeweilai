@@ -1,0 +1,26 @@
+<view class="page">
+  <view class="head">
+    <text class="title">群组</text>
+    <button class="btn-new" size="mini" bindtap="openCreate">新建群组</button>
+  </view>
+  <view class="search-wrap">
+    <input class="search" placeholder="搜索群组名称..." bindinput="onSearchInput" value="{{searchKw}}" />
+  </view>
+  <view wx:if="{{showCreate}}" class="create-panel">
+    <input class="create-input" placeholder="群组名称" value="{{newName}}" bindinput="onNewName" maxlength="40" />
+    <view class="create-actions">
+      <button size="mini" bindtap="cancelCreate">取消</button>
+      <button size="mini" type="primary" bindtap="submitCreate">创建</button>
+    </view>
+  </view>
+  <view wx:if="{{loading}}" class="empty">加载中...</view>
+  <scroll-view wx:else scroll-y class="list" enable-flex>
+    <block wx:if="{{filtered.length}}">
+      <view wx:for="{{filtered}}" wx:key="id" class="item" bindtap="openRoom" data-id="{{item.id}}">
+        <text class="item-name">{{item.name}}</text>
+        <text class="item-id">#{{item.id}}</text>
+      </view>
+    </block>
+    <view wx:else class="empty">暂无群组</view>
+  </scroll-view>
+</view>
