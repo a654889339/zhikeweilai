@@ -75,15 +75,15 @@ type HomeConfig struct {
 	Color            string    `gorm:"size:200" json:"color"`
 	Path             string    `gorm:"size:200" json:"path"`
 	Price            string    `gorm:"size:20" json:"price"`
-	TitleEn          string    `gorm:"size:100" json:"titleEn"`
-	DescEn           string    `gorm:"size:200" json:"descEn"`
-	IconEn           string    `gorm:"size:100" json:"iconEn"`
+	TitleEn          string    `gorm:"column:titleEn;size:100" json:"titleEn"`
+	DescEn           string    `gorm:"column:descEn;size:200" json:"descEn"`
+	IconEn           string    `gorm:"column:iconEn;size:100" json:"iconEn"`
 	ImageURLEn       string    `gorm:"column:imageUrlEn;size:500" json:"imageUrlEn"`
 	ImageURLThumbEn  string    `gorm:"column:imageUrlThumbEn;size:500" json:"imageUrlThumbEn"`
 	SortOrder        int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status           string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	CreatedAt        time.Time `json:"createdAt"`
-	UpdatedAt        time.Time `json:"updatedAt"`
+	CreatedAt        time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt        time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (HomeConfig) TableName() string { return "home_configs" }
