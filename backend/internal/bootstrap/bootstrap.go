@@ -53,7 +53,49 @@ func Run() error {
 		log.Println("[DB] Minimal i18n seed applied (full set may exist from previous Node deploy).")
 	}
 
+	if err := ensureHomeConfigI18nColumns(); err != nil {
+		log.Printf("[zkwl] ensureHomeConfigI18nColumns: %v", err)
+	}
+
 	return seedDefaultsIfEmpty()
+}
+
+// ensureHomeConfigI18nColumns 旧库 home_configs 可能无英文列，GORM Save 会报 Unknown column 'titleEn'。
+func ensureHomeConfigI18nColumns() error {
+	type colDDL struct {
+		name string
+		ddl  string
+	}
+	// 列名与 models.HomeConfig 的 gorm column 一致
+	steps := []colDDL{
+		{"titleEn", "ALTER TABLE `home_configs` ADD COLUMN `titleEn` VARCHAR(100) NOT NULL DEFAULT ''"},
+		{"descEn", "ALTER TABLE `home_configs` ADD COLUMN `descEn` VARCHAR(200) NOT NULL DEFAULT ''"},
+		{"iconEn", "ALTER TABLE `home_configs` ADD COLUMN `iconEn` VARCHAR(100) NOT NULL DEFAULT ''"},
+		{"imageUrlEn", "ALTER TABLE `home_configs` ADD COLUMN `imageUrlEn` VARCHAR(500) NOT NULL DEFAULT ''"},
+		{"imageUrlThumbEn", "ALTER TABLE `home_configs` ADD COLUMN `imageUrlThumbEn` VARCHAR(500) NOT NULL DEFAULT ''"},
+	}
+	added := 0
+	for _, step := range steps {
+		var n int64
+		if err := db.DB.Raw(`
+			SELECT COUNT(*) FROM information_schema.COLUMNS
+			WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'home_configs' AND COLUMN_NAME = ?
+		`, step.name).Scan(&n).Error; err != nil {
+			return err
+		}
+		if n > 0 {
+			continue
+		}
+		if err := db.DB.Exec(step.ddl).Error; err != nil {
+			log.Printf("[zkwl] ensureHomeConfigI18nColumns ADD %s: %v", step.name, err)
+			continue
+		}
+		added++
+	}
+	if added > 0 {
+		log.Printf("[zkwl] ensureHomeConfigI18nColumns: added %d column(s)", added)
+	}
+	return nil
 }
 
 func migrateLegacyProductCategoryHierarchy() error {
