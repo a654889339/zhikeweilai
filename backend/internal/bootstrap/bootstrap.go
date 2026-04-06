@@ -170,7 +170,28 @@ func promoteGuidesStillOnL1() error {
 	return nil
 }
 
+func ensureInventoryProductCategoryIDColumn() error {
+	var n int64
+	if err := db.DB.Raw(`
+		SELECT COUNT(*) FROM information_schema.COLUMNS
+		WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'inventory_products' AND COLUMN_NAME = 'productCategoryId'
+	`).Scan(&n).Error; err != nil {
+		return err
+	}
+	if n > 0 {
+		return nil
+	}
+	if err := db.DB.Exec("ALTER TABLE inventory_products ADD COLUMN `productCategoryId` INT NOT NULL DEFAULT 0").Error; err != nil {
+		return err
+	}
+	log.Println("[zkwl] ensureInventoryProductCategoryIDColumn: added column productCategoryId")
+	return nil
+}
+
 func fixInventoryProductCategoryPlaceholders() error {
+	if err := ensureInventoryProductCategoryIDColumn(); err != nil {
+		return err
+	}
 	var nBad int64
 	if err := db.DB.Model(&models.InventoryProduct{}).Where("productCategoryId = ?", 0).Count(&nBad).Error; err != nil {
 		return err

@@ -22,8 +22,8 @@ type InventoryProduct struct {
 	SortOrder         int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status            string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	Tags              string    `gorm:"size:200" json:"tags"`
-	CreatedAt         time.Time `json:"createdAt"`
-	UpdatedAt         time.Time `json:"updatedAt"`
+	CreatedAt         time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt         time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 	ProductCategory   *ProductCategory `gorm:"foreignKey:ProductCategoryID" json:"productCategory,omitempty"`
 }
 
