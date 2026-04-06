@@ -699,7 +699,7 @@ func authMyProducts(c *gin.Context) {
 		return
 	}
 	var products []models.InventoryProduct
-	db.DB.Preload("Category").Where("serialNumber IN ?", keys).Find(&products)
+	db.DB.Preload("ProductCategory").Where("serialNumber IN ?", keys).Find(&products)
 
 	rawSlugs := make([]string, 0)
 	for _, p := range products {
@@ -718,34 +718,22 @@ func authMyProducts(c *gin.Context) {
 			}
 		}
 	}
-	invCatNames := make([]string, 0)
-	seen := map[string]bool{}
+	pcIDSeen := map[int]bool{}
+	pcIDs := make([]int, 0)
 	for _, p := range products {
-		if p.Category != nil && p.Category.Name != "" && !seen[p.Category.Name] {
-			seen[p.Category.Name] = true
-			invCatNames = append(invCatNames, p.Category.Name)
+		if p.ProductCategoryID > 0 && !pcIDSeen[p.ProductCategoryID] {
+			pcIDSeen[p.ProductCategoryID] = true
+			pcIDs = append(pcIDs, p.ProductCategoryID)
 		}
 	}
-	invNameToPcID := map[string]int{}
-	invNameToNameEn := map[string]string{}
 	defaultSlugByPcID := map[int]string{}
-	if len(invCatNames) > 0 {
-		var pcs []models.ProductCategory
-		db.DB.Where("name IN ?", invCatNames).Find(&pcs)
-		pcIDs := make([]int, 0)
-		for _, pc := range pcs {
-			invNameToPcID[pc.Name] = pc.ID
-			invNameToNameEn[pc.Name] = pc.NameEn
-			pcIDs = append(pcIDs, pc.ID)
-		}
-		if len(pcIDs) > 0 {
-			var dgs []models.DeviceGuide
-			db.DB.Where("categoryId IN ? AND status = ?", pcIDs, "active").Order("sortOrder ASC, id ASC").Find(&dgs)
-			for _, g := range dgs {
-				if g.CategoryID != nil && g.Slug != nil && *g.Slug != "" {
-					if _, ok := defaultSlugByPcID[*g.CategoryID]; !ok {
-						defaultSlugByPcID[*g.CategoryID] = strings.TrimSpace(*g.Slug)
-					}
+	if len(pcIDs) > 0 {
+		var dgs []models.DeviceGuide
+		db.DB.Where("categoryId IN ? AND status = ?", pcIDs, "active").Order("sortOrder ASC, id ASC").Find(&dgs)
+		for _, g := range dgs {
+			if g.CategoryID != nil && g.Slug != nil && *g.Slug != "" {
+				if _, ok := defaultSlugByPcID[*g.CategoryID]; !ok {
+					defaultSlugByPcID[*g.CategoryID] = strings.TrimSpace(*g.Slug)
 				}
 			}
 		}
@@ -755,12 +743,8 @@ func authMyProducts(c *gin.Context) {
 		if raw != "" && validSlug[raw] {
 			return raw
 		}
-		cn := ""
-		if p.Category != nil {
-			cn = p.Category.Name
-		}
-		if pcID, ok := invNameToPcID[cn]; ok {
-			if s, ok := defaultSlugByPcID[pcID]; ok {
+		if p.ProductCategoryID > 0 {
+			if s, ok := defaultSlugByPcID[p.ProductCategoryID]; ok {
 				return s
 			}
 		}
@@ -776,12 +760,14 @@ func authMyProducts(c *gin.Context) {
 			effectiveSlugs = append(effectiveSlugs, gs)
 		}
 		cn := ""
-		if p.Category != nil {
-			cn = p.Category.Name
+		cnEn := ""
+		if p.ProductCategory != nil {
+			cn = p.ProductCategory.Name
+			cnEn = p.ProductCategory.NameEn
 		}
 		infoMap[p.SerialNumber] = struct {
 			productName, categoryName, categoryNameEn, guideSlug string
-		}{p.Name, cn, invNameToNameEn[cn], gs}
+		}{p.Name, cn, cnEn, gs}
 	}
 	guideBySlug := map[string]struct {
 		GuideID, CategoryID int

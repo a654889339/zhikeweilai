@@ -92,16 +92,14 @@ func AnalyticsStats(c *gin.Context) {
 func SeedData(c *gin.Context) {
 	users := queryInt(c, "users", 10000)
 	products := queryInt(c, "products", 10000)
-	var cats []models.InventoryCategory
-	db.DB.Find(&cats)
-	if len(cats) == 0 {
-		for _, name := range []string{"空调", "冰箱", "洗衣机", "热水器", "其他"} {
-			db.DB.Create(&models.InventoryCategory{Name: name, SortOrder: 0, Status: "active"})
-		}
-		db.DB.Find(&cats)
+	var l2 []models.ProductCategory
+	db.DB.Where("level = ? AND status = ?", 2, "active").Find(&l2)
+	if len(l2) == 0 {
+		resp.Err(c, 400, 400, "请先在「商品配置」中维护至少一个二级商品种类")
+		return
 	}
-	catIDs := make([]int, len(cats))
-	for i, c := range cats {
+	catIDs := make([]int, len(l2))
+	for i, c := range l2 {
 		catIDs[i] = c.ID
 	}
 	const batch = 500
@@ -150,7 +148,7 @@ func SeedData(c *gin.Context) {
 				st = "inactive"
 			}
 			p := models.InventoryProduct{
-				CategoryID:   catIDs[idx%len(catIDs)],
+				ProductCategoryID: catIDs[idx%len(catIDs)],
 				Name:         prefixes[idx%len(prefixes)] + " " + suffixes[idx%len(suffixes)] + "-" + hexv,
 				SerialNumber: fmt.Sprintf("SN%06d%s", idx, hexv),
 				SortOrder:    rint(idx) % 100,

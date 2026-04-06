@@ -112,7 +112,24 @@ function flattenSidebarTree(tree) {
   const sortedParents = sortCategoriesForSidebar(arr);
   sortedParents.forEach((p) => {
     const children = Array.isArray(p.children) ? sortCategoriesForSidebar(p.children) : [];
-    if (children.length) {
+    if (children.length === 1) {
+      const c0 = children[0];
+      out.push({
+        _key: `sc-${p.id}-${c0.id}`,
+        id: c0.id,
+        name: p.name,
+        thumb: c0.thumbnailUrl
+          ? fullUrl(String(c0.thumbnailUrl).trim())
+          : p.thumbnailUrl
+            ? fullUrl(String(p.thumbnailUrl).trim())
+            : '',
+        depth: 0,
+        isHeader: false,
+        hasChildren: false,
+        firstChildId: null,
+        children: [],
+      });
+    } else if (children.length > 1) {
       out.push({
         _key: `p-${p.id}`,
         id: p.id,

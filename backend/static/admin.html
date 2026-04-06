@@ -393,7 +393,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <p style="font-size:13px;color:#666;margin-bottom:12px">先配置种类，再在下方商品列表中为每个商品选择种类。</p>
         <table class="order-table">
-          <thead><tr><th>ID</th><th>种类名称</th><th>缩略图</th><th>积分</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>层级</th><th>父类</th><th>种类名称</th><th>缩略图</th><th>积分</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="categoryTableBody"></tbody>
         </table>
       </div>
@@ -936,7 +936,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div id="guideLangZh">
             <h4 style="margin:0 0 12px;color:var(--primary)">基本信息</h4>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group"><label>所属种类 *</label><select class="form-input" id="gCategoryId"><option value="">请选择种类</option></select></div>
+              <div class="form-group"><label>二级种类 *</label><select class="form-input" id="gCategoryId"><option value="">请选择二级种类</option></select></div>
               <div class="form-group"><label>名称 *</label><input class="form-input" id="gName" placeholder="如：空调" /></div>
               <div class="form-group"><label>英文描述 * <span style="font-weight:normal;color:#999;font-size:12px">（唯一标识，用于链接路径，如 aircondition）</span></label><input class="form-input" id="gSlug" placeholder="如：aircondition" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'')" /></div>
               <div class="form-group"><label>副标题</label><input class="form-input" id="gSubtitle" placeholder="如：家用/商用中央空调" /></div>
@@ -1045,6 +1045,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <label>语种</label>
             <select class="form-input" id="categoryLang" onchange="onCategoryLangChange()"><option value="zh">中文</option><option value="en">English</option></select>
           </div>
+          <div class="form-group">
+            <label>层级 *</label>
+            <select class="form-input" id="categoryLevel" onchange="onCategoryLevelFieldsChange()">
+              <option value="1">一级</option>
+              <option value="2">二级</option>
+            </select>
+          </div>
+          <div class="form-group" id="categoryParentRow" style="display:none">
+            <label>归属一级 *</label>
+            <select class="form-input" id="categoryParentId"><option value="">请选择一级种类</option></select>
+          </div>
           <div id="categoryLangZh">
             <div class="form-group"><label>种类名称 *</label><input class="form-input" id="categoryName" placeholder="如：空调" /></div>
             <div class="form-group">
@@ -1101,7 +1112,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="modal-body">
           <input type="hidden" id="invProductEditId" />
-          <div class="form-group"><label>种类 *</label><select class="form-input" id="invProductCategoryId"><option value="">请选择种类</option></select></div>
+          <div class="form-group"><label>种类（商品配置·二级）*</label><select class="form-input" id="invProductCategoryId"><option value="">请选择二级种类</option></select></div>
           <div class="form-group"><label>商品名称 *</label><input class="form-input" id="invProductName" placeholder="如：某某型号空调" /></div>
           <div class="form-group"><label>序列号 (key) * <span style="font-weight:normal;color:#999;font-size:12px">（唯一，扫码绑定时作为参数）</span></label><input class="form-input" id="invProductSerialNumber" placeholder="如：AC-2024-001" /></div>
           <div class="form-group"><label>商品配置 <span style="font-weight:normal;color:#999;font-size:12px">（如 aircondition，将作为二维码链接参数，绑定后跳转 /guide/商品配置）</span></label><input class="form-input" id="invProductGuideSlug" placeholder="如：aircondition 或 Centralair-conditioning" /></div>
@@ -1615,7 +1626,7 @@ function switchPage(page) {
   if (page === 'users') { userPage = 1; loadUsers(); }
   if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'serviceConfig') { loadServiceCategories(); loadServices(); }
-  if (page === 'inventory') { invProductPage = 1; loadInventoryCategories(); loadInventoryProducts(); }
+  if (page === 'inventory') { invProductPage = 1; loadCategories().then(function () { loadInventoryCategories(); loadInventoryProducts(); }); }
   if (page === 'courseCenter') loadCourseCenterItems();
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); loadGuides(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
@@ -2179,14 +2190,51 @@ async function loadGuides() {
 }
 
 let allCategories = [];
+function fillInvFilterProductCategoryOptions() {
+  const filterSel = document.getElementById('invFilterCategoryId');
+  if (!filterSel) return;
+  const cur = filterSel.value;
+  const l2 = (allCategories || []).filter(c => c.level === 2);
+  filterSel.innerHTML = '<option value="">全部</option>' + l2.map(c => {
+    const p = (allCategories || []).find(x => x.id === c.parentId);
+    const label = p ? (p.name + ' / ' + c.name) : c.name;
+    return '<option value="' + c.id + '">' + label + '</option>';
+  }).join('');
+  if (cur) filterSel.value = cur;
+}
+function fillCategoryParentSelect(selectedParentId) {
+  const sel = document.getElementById('categoryParentId');
+  if (!sel) return;
+  const l1 = (allCategories || []).filter(c => c.level === 1);
+  sel.innerHTML = '<option value="">请选择一级种类</option>' + l1.map(p => '<option value="' + p.id + '">' + p.name + '</option>').join('');
+  if (selectedParentId) sel.value = String(selectedParentId);
+}
+function onCategoryLevelFieldsChange() {
+  const lev = parseInt(document.getElementById('categoryLevel').value, 10) || 1;
+  document.getElementById('categoryParentRow').style.display = lev === 2 ? '' : 'none';
+  if (lev === 2) {
+    const editId = document.getElementById('categoryEditId').value;
+    const cur = editId ? allCategories.find(x => String(x.id) === String(editId)) : null;
+    fillCategoryParentSelect(cur && cur.level === 2 ? cur.parentId : null);
+  }
+}
 async function loadCategories() {
   const tbody = document.getElementById('categoryTableBody');
   try {
     const res = await api('/product-categories');
     if (res.code === 0) {
       allCategories = res.data || [];
-      tbody.innerHTML = allCategories.map(c => `<tr>
+      tbody.innerHTML = allCategories.map(c => {
+        const lv = c.level === 2 ? '二级' : '一级';
+        let parentCell = '-';
+        if (c.level === 2 && c.parentId) {
+          const p = allCategories.find(x => x.id === c.parentId);
+          parentCell = p ? p.name : ('#' + c.parentId);
+        }
+        return `<tr>
         <td>${c.id}</td>
+        <td>${lv}</td>
+        <td style="font-size:13px;color:#555">${parentCell}</td>
         <td><strong>${c.name}</strong></td>
         <td>${c.thumbnailUrl ? `<img src="${String(c.thumbnailUrl).replace(/"/g,'&quot;')}" class="lod-img" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #eee" alt="" />` : '<span style="color:#999">-</span>'}</td>
         <td>${c.points != null ? c.points : 0}</td>
@@ -2196,16 +2244,21 @@ async function loadCategories() {
           <button class="detail-btn" onclick="openCategoryEditor(${c.id})">编辑</button>
           <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteCategory(${c.id})">删除</button>
         </td>
-      </tr>`).join('');
-      if (!allCategories.length) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
+      </tr>`;
+      }).join('');
+      if (!allCategories.length) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
+      fillInvFilterProductCategoryOptions();
     }
-  } catch { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>'; }
+  } catch { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>'; }
 }
 
 function openCategoryEditor(id) {
   const c = id ? allCategories.find(x => x.id === id) : null;
   document.getElementById('categoryEditId').value = c ? c.id : '';
   document.getElementById('categoryModalTitle').textContent = c ? '编辑种类' : '新增种类';
+  const lev = c ? (c.level === 2 ? 2 : 1) : 1;
+  document.getElementById('categoryLevel').value = String(lev);
+  onCategoryLevelFieldsChange();
   document.getElementById('categoryName').value = c ? c.name : '';
   document.getElementById('categoryNameEn').value = c ? (c.nameEn || '') : '';
   document.getElementById('categoryPoints').value = c && (c.points != null && c.points !== '') ? c.points : 0;
@@ -2244,6 +2297,13 @@ async function saveCategory() {
   const id = document.getElementById('categoryEditId').value;
   const name = document.getElementById('categoryName').value.trim();
   if (!name) { alert('请填写种类名称'); return; }
+  const level = parseInt(document.getElementById('categoryLevel').value, 10) || 1;
+  let parentId = null;
+  if (level === 2) {
+    const pv = document.getElementById('categoryParentId').value;
+    if (!pv) { alert('二级种类必须选择归属的一级父类'); return; }
+    parentId = parseInt(pv, 10);
+  }
   const thumb = document.getElementById('categoryThumbnailUrl').value.trim();
   const thumbEn = document.getElementById('categoryThumbnailUrlEn').value.trim();
   const body = {
@@ -2254,6 +2314,8 @@ async function saveCategory() {
     points: Math.max(0, parseInt(document.getElementById('categoryPoints').value, 10) || 0),
     sortOrder: parseInt(document.getElementById('categorySort').value, 10) || 0,
     status: document.getElementById('categoryStatus').value,
+    level,
+    parentId: level === 2 ? parentId : null,
   };
   try {
     const res = id
@@ -2265,7 +2327,7 @@ async function saveCategory() {
 }
 
 async function deleteCategory(id) {
-  if (!confirm('确定删除该种类？其下商品将变为未分类。')) return;
+  if (!confirm('确定删除该种类？若存在子类或已绑定商品/库存，将删除失败。')) return;
   try {
     const res = await api('/product-categories/' + id, { method: 'DELETE' });
     if (res.code === 0) { loadCategories(); loadGuides(); }
@@ -2768,7 +2830,12 @@ function openGuideEditor(guide) {
   document.getElementById('guideEditId').value = guide ? guide.id : '';
   document.getElementById('guideModalTitle').textContent = guide ? '编辑商品' : '新增商品';
   const gCatSel = document.getElementById('gCategoryId');
-  gCatSel.innerHTML = '<option value="">请选择种类</option>' + (allCategories || []).map(c => '<option value="'+c.id+'">'+c.name+'</option>').join('');
+  const l2 = (allCategories || []).filter(c => c.level === 2);
+  gCatSel.innerHTML = '<option value="">请选择二级种类</option>' + l2.map(c => {
+    const p = (allCategories || []).find(x => x.id === c.parentId);
+    const label = p ? (p.name + ' / ' + c.name) : c.name;
+    return '<option value="' + c.id + '">' + label + '</option>';
+  }).join('');
   gCatSel.value = guide && guide.categoryId ? guide.categoryId : '';
   document.getElementById('gName').value = guide ? guide.name : '';
   document.getElementById('gSlug').value = guide ? (guide.slug||'') : '';
@@ -2835,8 +2902,12 @@ async function saveGuide() {
   const editId = id ? parseInt(id) : 0;
   const dup = allGuides.find(g => g.slug === slug && g.id !== editId);
   if (dup) { alert('英文描述 "' + slug + '" 已被 "' + dup.name + '" 使用，请更换'); return; }
+  if (!document.getElementById('gCategoryId').value) { alert('请选择二级种类'); return; }
   const body = {
-    categoryId: document.getElementById('gCategoryId').value ? parseInt(document.getElementById('gCategoryId').value, 10) : null,
+    categoryId: (function () {
+      const v = document.getElementById('gCategoryId').value;
+      return v ? parseInt(v, 10) : null;
+    })(),
     name: document.getElementById('gName').value,
     slug,
     subtitle: document.getElementById('gSubtitle').value,
@@ -3089,12 +3160,12 @@ async function loadInventoryProducts(resetPage) {
   const tbody = document.getElementById('invProductTableBody');
   const empty = document.getElementById('invProductEmpty');
   tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
-  const categoryId = document.getElementById('invFilterCategoryId') && document.getElementById('invFilterCategoryId').value;
+  const productCategoryId = document.getElementById('invFilterCategoryId') && document.getElementById('invFilterCategoryId').value;
   const status = document.getElementById('invFilterStatus') && document.getElementById('invFilterStatus').value;
   const tag = document.getElementById('invFilterTag') && document.getElementById('invFilterTag').value.trim();
   const keyword = document.getElementById('invFilterKeyword') && document.getElementById('invFilterKeyword').value.trim();
   const params = new URLSearchParams();
-  if (categoryId) params.set('categoryId', categoryId);
+  if (productCategoryId) params.set('productCategoryId', productCategoryId);
   if (status) params.set('status', status);
   if (tag) params.set('tag', tag);
   if (keyword) params.set('keyword', keyword);
@@ -3113,7 +3184,7 @@ async function loadInventoryProducts(resetPage) {
     const boundStr = (p) => (p.boundUserIds && p.boundUserIds.length) ? p.boundUserIds.join(', ') : '-';
     tbody.innerHTML = allInvProducts.map(p => `<tr>
       <td>${p.id}</td>
-      <td>${p.category ? p.category.name : '-'}</td>
+      <td>${p.productCategory ? p.productCategory.name : '-'}</td>
       <td>${p.name}</td>
       <td style="font-family:monospace;font-size:12px">${p.serialNumber}</td>
       <td>${p.sortOrder}</td>
@@ -3172,8 +3243,14 @@ function openInvProductEditor(product) {
   document.getElementById('invProductModalTitle').textContent = product ? '编辑商品' : '新增商品';
   document.getElementById('invProductEditId').value = product ? product.id : '';
   const sel = document.getElementById('invProductCategoryId');
-  sel.innerHTML = '<option value="">请选择种类</option>' + (allInvCategories || []).map(c => '<option value="'+c.id+'">'+c.name+'</option>').join('');
-  sel.value = product && product.categoryId ? product.categoryId : '';
+  const l2 = (allCategories || []).filter(c => c.level === 2);
+  sel.innerHTML = '<option value="">请选择二级种类</option>' + l2.map(c => {
+    const p = (allCategories || []).find(x => x.id === c.parentId);
+    const label = p ? (p.name + ' / ' + c.name) : c.name;
+    return '<option value="' + c.id + '">' + label + '</option>';
+  }).join('');
+  const pcid = product && (product.productCategoryId != null ? product.productCategoryId : product.categoryId);
+  sel.value = pcid ? String(pcid) : '';
   document.getElementById('invProductName').value = product ? product.name : '';
   document.getElementById('invProductSerialNumber').value = product ? product.serialNumber : '';
   document.getElementById('invProductGuideSlug').value = product && product.guideSlug ? product.guideSlug : '';
@@ -3187,16 +3264,16 @@ function editInvProduct(id) { const p = allInvProducts.find(x => x.id === id); i
 
 async function saveInvProduct() {
   const id = document.getElementById('invProductEditId').value;
-  const categoryId = document.getElementById('invProductCategoryId').value;
+  const productCategoryId = document.getElementById('invProductCategoryId').value;
   const name = document.getElementById('invProductName').value.trim();
   const serialNumber = document.getElementById('invProductSerialNumber').value.trim();
-  if (!categoryId) { alert('请选择种类'); return; }
+  if (!productCategoryId) { alert('请选择二级种类'); return; }
   if (!name) { alert('商品名称不能为空'); return; }
   if (!serialNumber) { alert('序列号不能为空'); return; }
   try {
     const guideSlug = document.getElementById('invProductGuideSlug').value.trim();
     const tags = document.getElementById('invProductTags').value.trim();
-    const body = { categoryId: parseInt(categoryId, 10), name, serialNumber, guideSlug, sortOrder: parseInt(document.getElementById('invProductSort').value) || 0, status: document.getElementById('invProductStatus').value, tags };
+    const body = { productCategoryId: parseInt(productCategoryId, 10), name, serialNumber, guideSlug, sortOrder: parseInt(document.getElementById('invProductSort').value) || 0, status: document.getElementById('invProductStatus').value, tags };
     const res = id ? await api('/inventory/products/' + id, { method: 'PUT', body }) : await api('/inventory/products', { method: 'POST', body });
     if (res.code === 0) { closeInvProductEditor(); loadInventoryProducts(); }
     else alert(res.message || '保存失败');
@@ -3214,11 +3291,11 @@ async function deleteInvProduct(id) {
 
 function buildInvProductQuery() {
   const params = new URLSearchParams();
-  const categoryId = document.getElementById('invFilterCategoryId') && document.getElementById('invFilterCategoryId').value;
+  const productCategoryId = document.getElementById('invFilterCategoryId') && document.getElementById('invFilterCategoryId').value;
   const status = document.getElementById('invFilterStatus') && document.getElementById('invFilterStatus').value;
   const tag = document.getElementById('invFilterTag') && document.getElementById('invFilterTag').value.trim();
   const keyword = document.getElementById('invFilterKeyword') && document.getElementById('invFilterKeyword').value.trim();
-  if (categoryId) params.set('categoryId', categoryId);
+  if (productCategoryId) params.set('productCategoryId', productCategoryId);
   if (status) params.set('status', status);
   if (tag) params.set('tag', tag);
   if (keyword) params.set('keyword', keyword);
@@ -3323,7 +3400,7 @@ async function toggleInvProductStatus(id, currentStatus) {
   if (!p) return;
   const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
   try {
-    const body = { categoryId: p.categoryId || (p.category && p.category.id), name: p.name, serialNumber: p.serialNumber, guideSlug: p.guideSlug || '', sortOrder: p.sortOrder ?? 0, status: newStatus, tags: p.tags != null ? p.tags : '' };
+    const body = { productCategoryId: p.productCategoryId || (p.productCategory && p.productCategory.id), name: p.name, serialNumber: p.serialNumber, guideSlug: p.guideSlug || '', sortOrder: p.sortOrder ?? 0, status: newStatus, tags: p.tags != null ? p.tags : '' };
     const res = await api('/inventory/products/' + id, { method: 'PUT', body });
     if (res.code === 0) loadInventoryProducts();
     else alert(res.message || '操作失败');

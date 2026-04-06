@@ -52,10 +52,14 @@ type ProductCategory struct {
 	NameEn          string    `gorm:"size:100" json:"nameEn"`
 	ThumbnailURLEn  *string   `gorm:"column:thumbnailUrlEn;size:1024" json:"thumbnailUrlEn"`
 	Points          int       `gorm:"column:points;default:0" json:"points"`
+	Level           int       `gorm:"column:level;not null;default:1" json:"level"` // 1=一级 2=二级
+	ParentID        *int      `gorm:"column:parentId;index" json:"parentId"`
 	SortOrder       int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status          string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
+	Parent          *ProductCategory   `gorm:"foreignKey:ParentID" json:"parent,omitempty"`
+	Children        []ProductCategory  `gorm:"foreignKey:ParentID" json:"children,omitempty"`
 }
 
 func (ProductCategory) TableName() string { return "product_categories" }

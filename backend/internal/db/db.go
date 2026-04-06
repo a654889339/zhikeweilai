@@ -35,6 +35,10 @@ func AutoMigrate() error {
 	if err := DB.AutoMigrate(&models.CourseCenterItem{}); err != nil {
 		return err
 	}
+	// device_guides.manualPdfUrl 等列若主迁移失败则不会创建（曾出现 1054 unknown column manualPdfUrl）
+	if err := DB.AutoMigrate(&models.DeviceGuide{}); err != nil {
+		return err
+	}
 	return DB.AutoMigrate(
 		&models.User{},
 		&models.OutletUser{},

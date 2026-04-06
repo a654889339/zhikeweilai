@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -24,18 +25,78 @@ import (
 
 var guideIDNumeric = regexp.MustCompile(`^\d+$`)
 
+func categoryToGuideTree(cat models.ProductCategory) gin.H {
+	h := gin.H{
+		"id":        cat.ID,
+		"name":      cat.Name,
+		"nameEn":    cat.NameEn,
+		"sortOrder": cat.SortOrder,
+		"level":     cat.Level,
+		"parentId":  cat.ParentID,
+	}
+	if cat.ThumbnailURL != nil {
+		h["thumbnailUrl"] = *cat.ThumbnailURL
+	} else {
+		h["thumbnailUrl"] = ""
+	}
+	if cat.ThumbnailURLEn != nil {
+		h["thumbnailUrlEn"] = *cat.ThumbnailURLEn
+	} else {
+		h["thumbnailUrlEn"] = ""
+	}
+	return h
+}
+
 func guideCategories(c *gin.Context) {
-	var list []models.ProductCategory
-	db.DB.Where("status = ?", "active").Order("sortOrder ASC, id ASC").
-		Select("id", "name", "nameEn", "sortOrder", "thumbnail_url", "thumbnailUrlEn").Find(&list)
-	resp.OK(c, list)
+	var all []models.ProductCategory
+	db.DB.Where("status = ?", "active").Order("sortOrder ASC, id ASC").Find(&all)
+	childrenOf := map[int][]models.ProductCategory{}
+	for _, cat := range all {
+		if cat.Level == 2 && cat.ParentID != nil {
+			pid := *cat.ParentID
+			childrenOf[pid] = append(childrenOf[pid], cat)
+		}
+	}
+	out := make([]gin.H, 0)
+	for _, cat := range all {
+		if cat.ParentID != nil {
+			continue
+		}
+		if cat.Level != 1 && cat.Level != 0 {
+			continue
+		}
+		h := categoryToGuideTree(cat)
+		if ch := childrenOf[cat.ID]; len(ch) > 0 {
+			arr := make([]gin.H, 0, len(ch))
+			for _, c := range ch {
+				arr = append(arr, categoryToGuideTree(c))
+			}
+			h["children"] = arr
+		}
+		out = append(out, h)
+	}
+	resp.OK(c, out)
+}
+
+func validateGuideProductCategoryID(cid *int) error {
+	if cid == nil || *cid <= 0 {
+		return fmt.Errorf("请选择二级商品种类")
+	}
+	var pc models.ProductCategory
+	if err := db.DB.First(&pc, *cid).Error; err != nil {
+		return fmt.Errorf("商品种类不存在")
+	}
+	if pc.Level != 2 || pc.ParentID == nil {
+		return fmt.Errorf("商品种类必须选择二级分类")
+	}
+	return nil
 }
 
 func guideList(c *gin.Context) {
 	q := db.DB.Model(&models.DeviceGuide{}).Where("status = ?", "active")
 	if cid := strings.TrimSpace(c.Query("categoryId")); cid != "" {
 		if id, err := strconv.Atoi(cid); err == nil {
-			q = q.Where("categoryId = ? OR categoryId IS NULL", id)
+			q = q.Where("categoryId = ?", id)
 		}
 	}
 	var guides []models.DeviceGuide
@@ -119,6 +180,10 @@ func guideCreate(c *gin.Context) {
 		resp.Err(c, 400, 400, "参数错误")
 		return
 	}
+	if err := validateGuideProductCategoryID(g.CategoryID); err != nil {
+		resp.Err(c, 400, 400, err.Error())
+		return
+	}
 	if err := db.DB.Create(&g).Error; err != nil {
 		resp.Err(c, 500, 500, err.Error())
 		return
@@ -148,6 +213,10 @@ func guideUpdate(c *gin.Context) {
 	}
 	raw, _ := json.Marshal(body)
 	_ = json.Unmarshal(raw, &guide)
+	if err := validateGuideProductCategoryID(guide.CategoryID); err != nil {
+		resp.Err(c, 400, 400, err.Error())
+		return
+	}
 	if err := db.DB.Save(&guide).Error; err != nil {
 		resp.Err(c, 500, 500, err.Error())
 		return

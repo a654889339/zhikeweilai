@@ -73,18 +73,13 @@ func invRemoveCategory(c *gin.Context) {
 		resp.Err(c, 404, 404, "种类不存在")
 		return
 	}
-	var n int64
-	db.DB.Model(&models.InventoryProduct{}).Where("categoryId = ?", cat.ID).Count(&n)
-	if n > 0 {
-		resp.Err(c, 400, 400, "该种类下还有商品，请先删除或移出商品")
-		return
-	}
+	// 库存商品已改为关联「商品配置」二级种类，不再引用本表
 	db.DB.Delete(&cat)
 	resp.OKMsg(c, "删除成功")
 }
 
 func invListProducts(c *gin.Context) {
-	categoryID := c.Query("categoryId")
+	productCategoryID := c.Query("productCategoryId")
 	status := c.Query("status")
 	keyword := strings.TrimSpace(c.Query("keyword"))
 	tag := strings.TrimSpace(c.Query("tag"))
@@ -94,8 +89,8 @@ func invListProducts(c *gin.Context) {
 		pageSize = 200
 	}
 	q := db.DB.Model(&models.InventoryProduct{})
-	if categoryID != "" {
-		q = q.Where("categoryId = ?", categoryID)
+	if productCategoryID != "" {
+		q = q.Where("productCategoryId = ?", productCategoryID)
 	}
 	if status != "" {
 		q = q.Where("status = ?", status)
@@ -110,7 +105,7 @@ func invListProducts(c *gin.Context) {
 	var total int64
 	q.Count(&total)
 	var rows []models.InventoryProduct
-	q.Preload("Category").Order("categoryId ASC, sortOrder ASC, id ASC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&rows)
+	q.Preload("ProductCategory").Order("productCategoryId ASC, sortOrder ASC, id ASC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&rows)
 	sns := make([]string, len(rows))
 	for i, p := range rows {
 		sns[i] = p.SerialNumber
@@ -137,25 +132,35 @@ func invListProducts(c *gin.Context) {
 	resp.OK(c, gin.H{"list": list, "total": total, "page": page, "pageSize": pageSize})
 }
 
+func invValidateProductCategoryL2(id int) bool {
+	if id <= 0 {
+		return false
+	}
+	var pc models.ProductCategory
+	if err := db.DB.First(&pc, id).Error; err != nil {
+		return false
+	}
+	return pc.Level == 2 && pc.ParentID != nil
+}
+
 func invCreateProduct(c *gin.Context) {
 	var body models.InventoryProduct
 	if err := c.ShouldBindJSON(&body); err != nil {
 		resp.Err(c, 400, 400, "参数错误")
 		return
 	}
-	if body.CategoryID == 0 || strings.TrimSpace(body.Name) == "" || strings.TrimSpace(body.SerialNumber) == "" {
+	if body.ProductCategoryID == 0 || strings.TrimSpace(body.Name) == "" || strings.TrimSpace(body.SerialNumber) == "" {
 		resp.Err(c, 400, 400, "信息不完整")
+		return
+	}
+	if !invValidateProductCategoryL2(body.ProductCategoryID) {
+		resp.Err(c, 400, 400, "种类须选择商品配置中的二级分类")
 		return
 	}
 	var n int64
 	db.DB.Model(&models.InventoryProduct{}).Where("serialNumber = ?", strings.TrimSpace(body.SerialNumber)).Count(&n)
 	if n > 0 {
 		resp.Err(c, 400, 400, "该序列号已存在")
-		return
-	}
-	var cat models.InventoryCategory
-	if err := db.DB.First(&cat, body.CategoryID).Error; err != nil {
-		resp.Err(c, 400, 400, "种类不存在")
 		return
 	}
 	if body.Status == "" {
@@ -176,8 +181,12 @@ func invUpdateProduct(c *gin.Context) {
 	}
 	var body models.InventoryProduct
 	_ = c.ShouldBindJSON(&body)
-	if body.CategoryID != 0 {
-		p.CategoryID = body.CategoryID
+	if body.ProductCategoryID != 0 {
+		if !invValidateProductCategoryL2(body.ProductCategoryID) {
+			resp.Err(c, 400, 400, "种类须选择商品配置中的二级分类")
+			return
+		}
+		p.ProductCategoryID = body.ProductCategoryID
 	}
 	if body.Name != "" {
 		p.Name = strings.TrimSpace(body.Name)
@@ -295,10 +304,10 @@ func invImportExcel(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	header := rows[0]
-	var cats []models.InventoryCategory
-	db.DB.Find(&cats)
+	var pcL2 []models.ProductCategory
+	db.DB.Where("level = ? AND status = ?", 2, "active").Find(&pcL2)
 	byName := map[string]int{}
-	for _, cat := range cats {
+	for _, cat := range pcL2 {
 		byName[cat.Name] = cat.ID
 	}
 	success := 0
@@ -337,7 +346,7 @@ func invImportExcel(c *gin.Context, cfg *config.Config) {
 		}
 		cid, ok := byName[catName]
 		if !ok {
-			failed = append(failed, gin.H{"row": i + 2, "reason": fmt.Sprintf("种类“%s”不存在", catName)})
+			failed = append(failed, gin.H{"row": i + 2, "reason": fmt.Sprintf("二级种类「%s」不存在（请在商品配置中维护同名二级种类）", catName)})
 			continue
 		}
 		var ex int64
@@ -347,7 +356,7 @@ func invImportExcel(c *gin.Context, cfg *config.Config) {
 			continue
 		}
 		db.DB.Create(&models.InventoryProduct{
-			CategoryID: cid, Name: name, SerialNumber: sn, GuideSlug: guideSlug, SortOrder: sortOrder, Status: status, Tags: tags,
+			ProductCategoryID: cid, Name: name, SerialNumber: sn, GuideSlug: guideSlug, SortOrder: sortOrder, Status: status, Tags: tags,
 		})
 		success++
 	}
@@ -431,13 +440,13 @@ func invBatchDeleteExcel(c *gin.Context) {
 }
 
 func invExportProducts(c *gin.Context, cfg *config.Config) {
-	categoryID := c.Query("categoryId")
+	productCategoryID := c.Query("productCategoryId")
 	status := c.Query("status")
 	keyword := strings.TrimSpace(c.Query("keyword"))
 	tag := strings.TrimSpace(c.Query("tag"))
 	q := db.DB.Model(&models.InventoryProduct{})
-	if categoryID != "" {
-		q = q.Where("categoryId = ?", categoryID)
+	if productCategoryID != "" {
+		q = q.Where("productCategoryId = ?", productCategoryID)
 	}
 	if status != "" {
 		q = q.Where("status = ?", status)
@@ -450,7 +459,7 @@ func invExportProducts(c *gin.Context, cfg *config.Config) {
 		q = q.Where("name LIKE ? OR serialNumber LIKE ?", kw, kw)
 	}
 	var list []models.InventoryProduct
-	q.Preload("Category").Order("categoryId ASC, sortOrder ASC, id ASC").Find(&list)
+	q.Preload("ProductCategory").Order("productCategoryId ASC, sortOrder ASC, id ASC").Find(&list)
 	sns := make([]string, len(list))
 	for i, p := range list {
 		sns[i] = p.SerialNumber
@@ -471,8 +480,8 @@ func invExportProducts(c *gin.Context, cfg *config.Config) {
 	}
 	for i, p := range list {
 		catName := ""
-		if p.Category != nil {
-			catName = p.Category.Name
+		if p.ProductCategory != nil {
+			catName = p.ProductCategory.Name
 		}
 		st := "启用"
 		if p.Status == "inactive" {

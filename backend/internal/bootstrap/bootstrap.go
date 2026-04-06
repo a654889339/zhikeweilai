@@ -54,19 +54,75 @@ func Run() error {
 	return seedDefaultsIfEmpty()
 }
 
+func migrateLegacyProductCategoryHierarchy() error {
+	_ = db.DB.Exec("UPDATE product_categories SET level = 1 WHERE level IS NULL OR level = 0").Error
+	var guides []models.DeviceGuide
+	if err := db.DB.Where("categoryId IS NOT NULL").Find(&guides).Error; err != nil {
+		return err
+	}
+	for _, g := range guides {
+		if g.CategoryID == nil {
+			continue
+		}
+		var pc models.ProductCategory
+		if err := db.DB.First(&pc, *g.CategoryID).Error; err != nil {
+			continue
+		}
+		if pc.Level == 2 {
+			continue
+		}
+		var l2s []models.ProductCategory
+		db.DB.Where("parentId = ? AND level = ?", pc.ID, 2).Order("sortOrder ASC, id ASC").Find(&l2s)
+		var targetID int
+		if len(l2s) > 0 {
+			targetID = l2s[0].ID
+		} else {
+			pid := pc.ID
+			child := models.ProductCategory{
+				Name:      pc.Name,
+				Level:     2,
+				ParentID:  &pid,
+				SortOrder: pc.SortOrder,
+				Status:    pc.Status,
+				Points:    pc.Points,
+			}
+			if err := db.DB.Create(&child).Error; err != nil {
+				continue
+			}
+			targetID = child.ID
+		}
+		_ = db.DB.Model(&models.DeviceGuide{}).Where("id = ?", g.ID).Update("categoryId", targetID).Error
+	}
+	return nil
+}
+
 func seedDefaultsIfEmpty() error {
+	if err := migrateLegacyProductCategoryHierarchy(); err != nil {
+		log.Printf("[zkwl] migrateLegacyProductCategoryHierarchy: %v", err)
+	}
 	var pc int64
 	if err := db.DB.Model(&models.ProductCategory{}).Count(&pc).Error; err != nil {
 		return err
 	}
 	if pc == 0 {
-		if err := db.DB.Create([]models.ProductCategory{
-			{Name: "空调", SortOrder: 1, Status: "active"},
-			{Name: "除湿与储能", SortOrder: 2, Status: "active"},
-		}).Error; err != nil {
+		a := models.ProductCategory{Name: "空调", Level: 1, SortOrder: 1, Status: "active"}
+		b := models.ProductCategory{Name: "除湿与储能", Level: 1, SortOrder: 2, Status: "active"}
+		if err := db.DB.Create(&a).Error; err != nil {
 			return err
 		}
-		log.Println("[DB] Default product categories created.")
+		if err := db.DB.Create(&b).Error; err != nil {
+			return err
+		}
+		pa, pb := a.ID, b.ID
+		a1 := models.ProductCategory{Name: "壁挂空调", Level: 2, ParentID: &pa, SortOrder: 1, Status: "active"}
+		b1 := models.ProductCategory{Name: "除湿机", Level: 2, ParentID: &pb, SortOrder: 1, Status: "active"}
+		if err := db.DB.Create(&a1).Error; err != nil {
+			return err
+		}
+		if err := db.DB.Create(&b1).Error; err != nil {
+			return err
+		}
+		log.Println("[DB] Default product categories (L1+L2) created.")
 	}
 
 	var sc int64
@@ -129,12 +185,12 @@ func seedDefaultsIfEmpty() error {
 		return err
 	}
 	if dg == 0 {
-		var pcs []models.ProductCategory
-		if err := db.DB.Order("sortOrder ASC").Limit(2).Find(&pcs).Error; err != nil {
+		var l2 []models.ProductCategory
+		if err := db.DB.Where("level = ?", 2).Order("sortOrder ASC, id ASC").Limit(2).Find(&l2).Error; err != nil {
 			return err
 		}
-		if len(pcs) >= 2 {
-			c1, c2 := pcs[0].ID, pcs[1].ID
+		if len(l2) >= 2 {
+			c1, c2 := l2[0].ID, l2[1].ID
 			guides := []models.DeviceGuide{
 				{Name: "空调", Slug: strPtr("aircondition"), Subtitle: "家用/商用中央空调", Icon: "cluster-o", Emoji: "❄️", Gradient: "linear-gradient(135deg, #3B82F6, #1D4ED8)", Badge: "热门", SortOrder: 1, CategoryID: &c1, Status: "active"},
 				{Name: "除湿机", Slug: strPtr("dehumidifier"), Subtitle: "家用/工业除湿设备", Icon: "filter-o", Emoji: "💧", Gradient: "linear-gradient(135deg, #06B6D4, #0891B2)", SortOrder: 2, CategoryID: &c2, Status: "active"},

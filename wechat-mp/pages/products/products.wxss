@@ -21,41 +21,81 @@
 .select-value { flex: 1; font-size: 28rpx; color: #666; }
 .select-arrow { font-size: 32rpx; color: #999; }
 
-/* Product Nav */
-.product-nav {
-  background: rgba(232, 232, 237, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  white-space: nowrap;
-  border-bottom: 1rpx solid rgba(0,0,0,0.04);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+/* 与 H5 一致：左侧二级列表 + 右侧内容 */
+.products-layout-mp {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 400rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.08);
 }
 
-.nav-item {
-  display: inline-block;
-  padding: 28rpx 32rpx;
-  font-size: 28rpx;
-  color: #666;
-  position: relative;
+.product-sidebar-mp {
+  width: 200rpx;
+  flex-shrink: 0;
+  max-height: 70vh;
+  background: #eef0f3;
+  border-right: 1rpx solid rgba(0, 0, 0, 0.08);
+  padding: 16rpx 0;
+  box-sizing: border-box;
 }
 
-.nav-item.active {
-  color: #1a1a1a;
+.sidebar-item-mp {
+  margin: 0 12rpx 12rpx;
+  padding: 16rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: #4b5563;
+  line-height: 1.35;
+}
+
+.sidebar-item-mp.header {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #6b7280;
+  border-radius: 16rpx;
+}
+
+.sidebar-item-mp.sub {
+  padding: 14rpx 12rpx;
+}
+
+.sidebar-item-mp.active {
+  background: rgba(255, 183, 77, 0.45);
+  color: #111827;
   font-weight: 600;
 }
 
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+.sidebar-inner-mp {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.sidebar-thumb-mp {
   width: 48rpx;
-  height: 4rpx;
-  background: #1a1a1a;
-  border-radius: 2rpx;
+  height: 48rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+  background: #f3f4f6;
+}
+
+.sidebar-name-mp {
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.sidebar-name-mp.only {
+  display: block;
+}
+
+.product-main-mp {
+  flex: 1;
+  min-width: 0;
+  background: #fafafa;
 }
 
 /* Hero */

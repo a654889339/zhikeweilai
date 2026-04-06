@@ -1,0 +1,5 @@
+-- 可选：若 AutoMigrate 未执行，可手工为 product_categories 增加层级字段、为 inventory_products 增加 productCategoryId
+-- ALTER TABLE product_categories ADD COLUMN `level` INT NOT NULL DEFAULT 1;
+-- ALTER TABLE product_categories ADD COLUMN `parentId` INT NULL DEFAULT NULL;
+-- ALTER TABLE inventory_products ADD COLUMN `productCategoryId` INT NOT NULL DEFAULT 0;
+-- UPDATE product_categories SET `level` = 1 WHERE `level` IS NULL OR `level` = 0;

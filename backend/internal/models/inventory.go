@@ -9,23 +9,22 @@ type InventoryCategory struct {
 	Status    string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
-	Products  []InventoryProduct `gorm:"foreignKey:CategoryID" json:"products,omitempty"`
 }
 
 func (InventoryCategory) TableName() string { return "inventory_categories" }
 
 type InventoryProduct struct {
-	ID           int       `gorm:"primaryKey" json:"id"`
-	CategoryID   int       `gorm:"column:categoryId;not null;index" json:"categoryId"`
-	Name         string    `gorm:"size:200;not null" json:"name"`
-	SerialNumber string    `gorm:"column:serialNumber;size:100;not null;uniqueIndex:serialNumber" json:"serialNumber"`
-	GuideSlug    string    `gorm:"column:guideSlug;size:200" json:"guideSlug"`
-	SortOrder    int       `gorm:"column:sortOrder" json:"sortOrder"`
-	Status       string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	Tags         string    `gorm:"size:200" json:"tags"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	Category     *InventoryCategory `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
+	ID                int       `gorm:"primaryKey" json:"id"`
+	ProductCategoryID int       `gorm:"column:productCategoryId;not null;default:0;index" json:"productCategoryId"` // 商品配置中的二级种类 ID
+	Name              string    `gorm:"size:200;not null" json:"name"`
+	SerialNumber      string    `gorm:"column:serialNumber;size:100;not null;uniqueIndex:serialNumber" json:"serialNumber"`
+	GuideSlug         string    `gorm:"column:guideSlug;size:200" json:"guideSlug"`
+	SortOrder         int       `gorm:"column:sortOrder" json:"sortOrder"`
+	Status            string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
+	Tags              string    `gorm:"size:200" json:"tags"`
+	CreatedAt         time.Time `json:"createdAt"`
+	UpdatedAt         time.Time `json:"updatedAt"`
+	ProductCategory   *ProductCategory `gorm:"foreignKey:ProductCategoryID" json:"productCategory,omitempty"`
 }
 
 func (InventoryProduct) TableName() string { return "inventory_products" }
