@@ -6,7 +6,7 @@
       <text class="title">{{course.name}}</text>
       <text wx:if="{{course.subtitle}}" class="sub">{{course.subtitle}}</text>
       <rich-text wx:if="{{course.description}}" nodes="{{course.description}}" class="desc"></rich-text>
-      <block wx:for="{{videos}}" wx:key="*this">
+      <block wx:for="{{videos}}" wx:for-index="idx" wx:key="idx">
         <video class="vid" src="{{item}}" controls show-center-play-btn></video>
       </block>
     </view>
