@@ -31,6 +31,10 @@ func Connect(cfg *config.Config) error {
 }
 
 func AutoMigrate() error {
+	// 课程中心表优先迁移：主列表中若后续某表因历史结构不一致失败，GORM 会提前返回，导致该表从未创建（曾出现 1146 course_center_items 不存在）
+	if err := DB.AutoMigrate(&models.CourseCenterItem{}); err != nil {
+		return err
+	}
 	return DB.AutoMigrate(
 		&models.User{},
 		&models.OutletUser{},
@@ -43,7 +47,6 @@ func AutoMigrate() error {
 		&models.ProductCategory{},
 		&models.HomeConfig{},
 		&models.DeviceGuide{},
-		&models.CourseCenterItem{},
 		&models.Address{},
 		&models.OutletAddress{},
 		&models.Message{},
