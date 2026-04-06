@@ -108,10 +108,39 @@ func videosToJSON(urls []string) datatypes.JSON {
 	return datatypes.JSON(b)
 }
 
-// GET /api/course-categories 公开树（仅 active）
+// GET /api/course-categories 公开树：默认仅 active；若某二级分类下挂有「启用」课程，则该二级及其一级父类也会出现在树中（避免分类被禁用后前台完全看不到课程入口）
 func courseCenterCategoriesTree(c *gin.Context) {
+	var withCourses []int
+	_ = db.DB.Model(&models.CourseCenterItem{}).
+		Distinct("courseCategoryId").
+		Where("status = ? AND courseCategoryId > ?", "active", 0).
+		Pluck("courseCategoryId", &withCourses)
+	needed := map[int]struct{}{}
+	for _, id := range withCourses {
+		if id > 0 {
+			needed[id] = struct{}{}
+		}
+	}
+	if len(withCourses) > 0 {
+		var link []models.CourseCenterCategory
+		db.DB.Where("id IN ?", withCourses).Find(&link)
+		for _, r := range link {
+			if r.Level == 2 && productCategoryHasParent(r.ParentID) {
+				needed[*r.ParentID] = struct{}{}
+			}
+		}
+	}
+	var unionIDs []int
+	for id := range needed {
+		unionIDs = append(unionIDs, id)
+	}
+
 	var all []models.CourseCenterCategory
-	db.DB.Where("status = ?", "active").Order("sortOrder ASC, id ASC").Find(&all)
+	if len(unionIDs) == 0 {
+		db.DB.Where("status = ?", "active").Order("sortOrder ASC, id ASC").Find(&all)
+	} else {
+		db.DB.Where("status = ? OR id IN ?", "active", unionIDs).Order("sortOrder ASC, id ASC").Find(&all)
+	}
 	childrenOf := map[int][]models.CourseCenterCategory{}
 	for _, cat := range all {
 		if cat.Level == 2 && productCategoryHasParent(cat.ParentID) {

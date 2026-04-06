@@ -18,11 +18,15 @@
       <div class="products-layout">
         <aside class="product-sidebar" v-if="sidebarItems.length">
           <button
-            v-for="cat in sidebarItems"
+            v-for="cat in visibleSidebarItems"
             :key="cat._key"
             type="button"
             class="sidebar-item"
-            :class="{ active: selectedCategoryId === cat.id, sub: cat.depth === 1, header: cat.isHeader }"
+            :class="{
+              active: isRowActive(cat),
+              sub: cat.depth === 1,
+              header: cat.isHeader,
+            }"
             @click="selectCategory(cat)"
           >
             <span class="sidebar-item-inner">
@@ -75,6 +79,11 @@ import { useRouter } from 'vue-router';
 import { courseApi, homeConfigApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import { sortCategoriesForSidebar } from '@/utils/productGuideOrder';
+import {
+  findExpandedL1IdFromTree,
+  filterVisibleSidebarItems,
+  isSidebarRowActive,
+} from '@/utils/categorySidebar';
 
 const router = useRouter();
 
@@ -91,6 +100,7 @@ function mapCourseTree(nodes) {
 
 const categories = ref([]);
 const selectedCategoryId = ref(null);
+const expandedL1Id = ref(null);
 const courses = ref([]);
 const listLoading = ref(false);
 const searchKeyword = ref('');
@@ -113,6 +123,8 @@ function flattenSidebarTree(tree) {
       out.push({
         _key: `sc-${p.id}-${c0.id}`,
         id: c0.id,
+        parentL1Id: p.id,
+        mergedSingle: true,
         name: p.name,
         thumb: '',
         depth: 0,
@@ -125,6 +137,7 @@ function flattenSidebarTree(tree) {
       out.push({
         _key: `p-${p.id}`,
         id: p.id,
+        parentL1Id: p.id,
         name: p.name,
         thumb: '',
         depth: 0,
@@ -137,6 +150,7 @@ function flattenSidebarTree(tree) {
         out.push({
           _key: `c-${c.id}`,
           id: c.id,
+          parentL1Id: p.id,
           name: c.name,
           thumb: '',
           depth: 1,
@@ -150,6 +164,7 @@ function flattenSidebarTree(tree) {
       out.push({
         _key: `p-${p.id}`,
         id: p.id,
+        parentL1Id: p.id,
         name: p.name,
         thumb: '',
         depth: 0,
@@ -164,6 +179,14 @@ function flattenSidebarTree(tree) {
 }
 
 const sidebarItems = computed(() => flattenSidebarTree(categories.value));
+
+const visibleSidebarItems = computed(() =>
+  filterVisibleSidebarItems(sidebarItems.value, expandedL1Id.value)
+);
+
+function isRowActive(cat) {
+  return isSidebarRowActive(cat, selectedCategoryId.value, expandedL1Id.value);
+}
 
 const filteredCourses = computed(() => {
   const list = courses.value || [];
@@ -180,12 +203,14 @@ function openCourse(d) {
 const selectCategory = async (cat) => {
   if (!cat) return;
   if (cat.isHeader && cat.hasChildren && cat.firstChildId) {
+    expandedL1Id.value = Number(cat.id);
     const child = sidebarItems.value.find((x) => Number(x.id) === Number(cat.firstChildId));
     if (child) return selectCategory(child);
     selectedCategoryId.value = cat.firstChildId;
   }
   if (selectedCategoryId.value === cat.id) return;
   selectedCategoryId.value = cat.id;
+  expandedL1Id.value = findExpandedL1IdFromTree(categories.value, cat.id);
   searchKeyword.value = '';
   listLoading.value = true;
   try {
@@ -214,6 +239,7 @@ onMounted(async () => {
     if (items.length) {
       const first = items[0];
       selectedCategoryId.value = first.id;
+      expandedL1Id.value = findExpandedL1IdFromTree(categories.value, first.id);
       listLoading.value = true;
       try {
         const listRes = await courseApi.list({ categoryId: first.id });

@@ -9,8 +9,8 @@
   <view class="products-layout-mp" wx:if="{{sidebarItems.length}}">
     <scroll-view scroll-y class="product-sidebar-mp">
       <view
-        class="sidebar-item-mp {{selectedCategoryId === item.id ? 'active' : ''}} {{item.isSub ? 'sub' : ''}} {{item.isHeader ? 'header' : ''}}"
-        wx:for="{{sidebarItems}}"
+        class="sidebar-item-mp {{item.rowActive ? 'active' : ''}} {{item.isSub ? 'sub' : ''}} {{item.isHeader ? 'header' : ''}}"
+        wx:for="{{visibleSidebarItems}}"
         wx:key="rowKey"
         data-idx="{{index}}"
         bindtap="selectCategory"
