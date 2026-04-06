@@ -1,0 +1,42 @@
+<view class="page">
+  <view class="products-search-wrap">
+    <view class="products-search-inner">
+      <text class="products-search-icon">🔍</text>
+      <input class="products-search-input" placeholder="搜索课程" value="{{searchKeyword}}" bindinput="onSearchInput" />
+    </view>
+  </view>
+
+  <view class="products-layout-mp" wx:if="{{sidebarItems.length}}">
+    <scroll-view scroll-y class="product-sidebar-mp">
+      <view
+        class="sidebar-item-mp {{selectedCategoryId === item.id ? 'active' : ''}} {{item.isSub ? 'sub' : ''}} {{item.isHeader ? 'header' : ''}}"
+        wx:for="{{sidebarItems}}"
+        wx:key="rowKey"
+        data-idx="{{index}}"
+        bindtap="selectCategory"
+      >
+        <text class="sidebar-name-mp only">{{item.name}}</text>
+      </view>
+    </scroll-view>
+
+    <scroll-view scroll-y class="course-main-mp">
+      <view wx:if="{{loading}}" class="loading">加载中...</view>
+      <view wx:elif="{{filteredCourses.length}}" class="course-grid">
+        <view
+          class="course-card"
+          wx:for="{{filteredCourses}}"
+          wx:key="id"
+          data-item="{{item}}"
+          bindtap="openCourse"
+        >
+          <image wx:if="{{item.coverImage}}" class="course-cover" src="{{item.coverImageFull}}" mode="aspectFill" />
+          <view wx:else class="course-icon-fallback">📚</view>
+          <text class="course-name">{{item.name}}</text>
+        </view>
+      </view>
+      <view wx:else class="empty">该分类下暂无课程</view>
+    </scroll-view>
+  </view>
+
+  <view wx:else class="empty-page">暂无课程分类</view>
+</view>

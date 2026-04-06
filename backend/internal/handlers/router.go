@@ -71,13 +71,23 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		sc.DELETE("/:id", middleware.Auth(cfg), middleware.Admin(), scatRemove)
 	}
 
+	ccat := api.Group("/course-categories")
+	{
+		ccat.GET("/", courseCenterCategoriesTree)
+		ccat.GET("/admin/list", middleware.Auth(cfg), middleware.Admin(), courseCenterCategoryAdminList)
+		ccat.POST("/admin", middleware.Auth(cfg), middleware.Admin(), courseCenterCategoryCreate)
+		ccat.PUT("/admin/:id", middleware.Auth(cfg), middleware.Admin(), courseCenterCategoryUpdate)
+		ccat.DELETE("/admin/:id", middleware.Auth(cfg), middleware.Admin(), courseCenterCategoryRemove)
+	}
+
 	courses := api.Group("/courses")
 	{
-		courses.GET("/", courseCenterPublicList)
 		courses.GET("/admin/list", middleware.Auth(cfg), middleware.Admin(), courseCenterAdminList)
 		courses.POST("/admin", middleware.Auth(cfg), middleware.Admin(), courseCenterCreate)
 		courses.PUT("/admin/:id", middleware.Auth(cfg), middleware.Admin(), courseCenterUpdate)
 		courses.DELETE("/admin/:id", middleware.Auth(cfg), middleware.Admin(), courseCenterRemove)
+		courses.GET("/", courseCenterPublicList)
+		courses.GET("/:id", courseCenterPublicDetail)
 	}
 
 	guides := api.Group("/guides")

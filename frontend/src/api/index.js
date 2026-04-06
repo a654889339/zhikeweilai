@@ -36,6 +36,12 @@ export const guideApi = {
   detail: (id) => request.get(`/guides/${id}`),
 };
 
+export const courseApi = {
+  categories: () => request.get('/course-categories'),
+  list: (params) => request.get('/courses', { params }),
+  detail: (idOrSlug) => request.get(`/courses/${encodeURIComponent(idOrSlug)}`),
+};
+
 export const chatGroupApi = {
   mine: () => request.get('/chat-groups/mine'),
   create: (data) => request.post('/chat-groups', data),

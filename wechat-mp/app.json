@@ -2,6 +2,7 @@
   "pages": [
     "pages/index/index",
     "pages/products/products",
+    "pages/courses/courses",
     "pages/chatgroup/chatgroup",
     "pages/service/service",
     "pages/orders/orders",
@@ -22,7 +23,7 @@
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#E8E8ED",
-    "navigationBarTitleText": "智科未来",
+    "navigationBarTitleText": "科必学",
     "navigationBarTextStyle": "black"
   },
   "tabBar": {
@@ -38,6 +39,10 @@
       {
         "pagePath": "pages/products/products",
         "text": "产品"
+      },
+      {
+        "pagePath": "pages/courses/courses",
+        "text": "课程"
       },
       {
         "pagePath": "pages/chatgroup/chatgroup",

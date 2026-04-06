@@ -23,7 +23,7 @@ App({
     baseUrl: 'http://106.54.50.88:5302/api',
     userInfo: null,
     token: '',
-    companyName: '智科未来',
+    companyName: '科必学',
   },
 
   onLaunch() {

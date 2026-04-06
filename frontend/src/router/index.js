@@ -11,6 +11,16 @@ const routes = [
     name: 'Products',
     component: () => import('@/views/Products.vue'),
   },
+  {
+    path: '/courses',
+    name: 'Courses',
+    component: () => import('@/views/Courses.vue'),
+  },
+  {
+    path: '/course/:id',
+    name: 'CourseDetail',
+    component: () => import('@/views/CourseDetail.vue'),
+  },
   { path: '/services', redirect: '/products' },
   { path: '/service/:id', redirect: '/products' },
   {

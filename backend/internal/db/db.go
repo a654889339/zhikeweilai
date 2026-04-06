@@ -31,6 +31,10 @@ func Connect(cfg *config.Config) error {
 }
 
 func AutoMigrate() error {
+	// 课程分类表须在课程条目之前
+	if err := DB.AutoMigrate(&models.CourseCenterCategory{}); err != nil {
+		return err
+	}
 	// 课程中心表优先迁移：主列表中若后续某表因历史结构不一致失败，GORM 会提前返回，导致该表从未创建（曾出现 1146 course_center_items 不存在）
 	if err := DB.AutoMigrate(&models.CourseCenterItem{}); err != nil {
 		return err
@@ -63,6 +67,8 @@ func AutoMigrate() error {
 		&models.OutletHomeConfig{},
 		&models.PageVisitDaily{},
 		&models.I18nText{},
+		&models.CourseCenterCategory{},
+		&models.CourseCenterItem{},
 		&models.ChatGroup{},
 		&models.ChatGroupMember{},
 		&models.GroupMessage{},

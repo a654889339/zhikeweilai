@@ -7,7 +7,7 @@
           <img
             v-if="logoUrl && !imageError"
             :src="logoUrl"
-            :alt="splashConfig?.title || '智科未来'"
+            :alt="splashConfig?.title || '科必学'"
             class="splash-logo-image"
             @error="onImageError"
           />

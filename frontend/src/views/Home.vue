@@ -97,7 +97,7 @@ const shareUrl = window.location.origin;
 const allItems = ref([]);
 const companyName = computed(() => {
   const it = allItems.value.find((i) => i.section === 'companyName' && i.status === 'active');
-  return (it && it.title && String(it.title).trim()) || '智科未来';
+  return (it && it.title && String(it.title).trim()) || '科必学';
 });
 const myProducts = ref([]);
 const addProductLoading = ref(false);

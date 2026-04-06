@@ -22,6 +22,7 @@ const route = useRoute();
 const DEFAULT_TABBAR = [
   { title: '首页', icon: 'wap-home-o', path: '/' },
   { title: '产品', icon: 'label-o', path: '/products' },
+  { title: '课程', icon: 'records', path: '/courses' },
   { title: '群组', icon: 'friends-o', path: '/chatgroup' },
   { title: '我的', icon: 'contact-o', path: '/mine' },
 ];
@@ -59,14 +60,14 @@ async function loadTabbarConfig() {
 
 onMounted(loadTabbarConfig);
 
-const hiddenTabRoutes = ['/login', '/register', '/address', '/guide/'];
+const hiddenTabRoutes = ['/login', '/register', '/address', '/guide/', '/course/'];
 const showTabbar = computed(() => {
   return !hiddenTabRoutes.some((r) => route.path.startsWith(r));
 });
 // 首页、产品页、我的页面不显示聊天悬浮按钮（与小程序一致）；组件始终挂载以便「意见反馈」可打开聊天
 const hideChatFab = computed(() => {
   const p = route.path;
-  if (p === '/' || p === '/products' || p === '/chatgroup' || p === '/mine') return true;
+  if (p === '/' || p === '/products' || p === '/courses' || p === '/chatgroup' || p === '/mine') return true;
   if (p.startsWith('/login') || p.startsWith('/register')) return true;
   return false;
 });

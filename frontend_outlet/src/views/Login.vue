@@ -112,7 +112,7 @@ const splashImageUrl = ref('');
 const splashDesc = ref('');
 const splashImageError = ref(false);
 const headerLogoDesc = ref('');
-const companyName = ref('智科未来');
+const companyName = ref('科必学');
 
 onMounted(async () => {
   try {

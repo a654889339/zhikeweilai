@@ -1,0 +1,71 @@
+@import '../products/products.wxss';
+
+.course-main-mp {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  background: #fafafa;
+  max-height: calc(100vh - 120px);
+}
+
+.course-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.course-card {
+  width: calc(50% - 5px);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 8px;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.course-cover {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #f3f4f6;
+}
+
+.course-icon-fallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.course-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  text-align: center;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.empty-page {
+  padding: 48px 16px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.empty {
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}

@@ -372,12 +372,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-page" id="page-courseCenter">
       <div class="dash-section">
         <div class="section-header">
+          <h3>课程分类</h3>
+          <button class="refresh-btn" style="background:#059669" onclick="openCourseCategoryEditor()">+ 新增分类</button>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">两级分类：先建一级，再建二级（需选择父级）。课程条目必须挂在<strong>二级分类</strong>下。</p>
+        <table class="order-table">
+          <thead><tr><th>ID</th><th>层级</th><th>父ID</th><th>英文标识</th><th>标题</th><th>描述</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="courseCategoryTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="courseCategoryEmpty" style="display:none">暂无分类，请先新增一级/二级分类</div>
+      </div>
+      <div class="dash-section">
+        <div class="section-header">
           <h3>课程管理</h3>
           <button class="refresh-btn" style="background:#059669" onclick="openCourseCenterEditor()">+ 新增课程</button>
         </div>
-        <p style="font-size:13px;color:#666;margin-bottom:12px">配置课程中心展示条目（名称、slug、封面、视频等），与「商品配置」中的设备指南相互独立；前台可通过 <code>/api/courses</code> 拉取启用项。</p>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">配置课程中心展示条目（须选择二级课程分类）；前台 <code>/api/courses?categoryId=</code>、<code>/api/course-categories</code>。</p>
         <table class="order-table">
-          <thead><tr><th>排序</th><th>名称</th><th>slug</th><th>副标题</th><th>图标</th><th>封面</th><th>视频</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>排序</th><th>课程分类</th><th>名称</th><th>slug</th><th>副标题</th><th>图标</th><th>封面</th><th>视频</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="courseCenterTableBody"></tbody>
         </table>
         <div class="order-empty" id="courseCenterEmpty" style="display:none">暂无课程</div>
@@ -1124,6 +1136,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- 课程分类：编辑弹窗 -->
+    <div class="modal-overlay" id="courseCategoryModal" style="display:none" onclick="if(event.target===this)closeCourseCategoryEditor()">
+      <div class="modal-content" style="max-width:520px;max-height:90vh">
+        <div class="modal-header">
+          <h3 id="courseCategoryModalTitle">新增课程分类</h3>
+          <span class="modal-close" onclick="closeCourseCategoryEditor()">&times;</span>
+        </div>
+        <div class="modal-body" style="max-height:calc(90vh - 120px);overflow-y:auto">
+          <input type="hidden" id="courseCategoryEditId" />
+          <div class="form-group"><label>层级 *</label>
+            <select class="form-input" id="courseCategoryLevel" onchange="onCourseCategoryLevelChange()">
+              <option value="1">一级</option>
+              <option value="2">二级</option>
+            </select>
+          </div>
+          <div class="form-group" id="courseCategoryParentWrap" style="display:none"><label>父级（一级）*</label>
+            <select class="form-input" id="courseCategoryParentId"></select>
+          </div>
+          <div class="form-group"><label>英文标识 *</label><input class="form-input" id="courseCategoryKey" placeholder="如 stem-lab" /></div>
+          <div class="form-group"><label>标题 *</label><input class="form-input" id="courseCategoryTitle" /></div>
+          <div class="form-group"><label>描述</label><textarea class="form-input" id="courseCategoryDesc" rows="2" style="resize:vertical"></textarea></div>
+          <div class="form-group"><label>排序</label><input type="number" class="form-input" id="courseCategorySort" value="0" /></div>
+          <div class="form-group"><label>状态</label><select class="form-input" id="courseCategoryStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
+          <button class="submit-btn" onclick="saveCourseCategory()">保存</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 课程中心：编辑弹窗 -->
     <div class="modal-overlay" id="courseCenterModal" style="display:none" onclick="if(event.target===this)closeCourseCenterEditor()">
       <div class="modal-content" style="max-width:520px;max-height:90vh">
@@ -1133,6 +1173,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="modal-body" style="max-height:calc(90vh - 120px);overflow-y:auto">
           <input type="hidden" id="courseCenterEditId" />
+          <div class="form-group"><label>课程分类（二级）*</label>
+            <select class="form-input" id="courseCenterCategoryId"></select>
+          </div>
           <div class="form-group"><label>名称 *</label><input class="form-input" id="courseCenterName" placeholder="如：入门课程" /></div>
           <div class="form-group"><label>slug * <span style="color:#999;font-size:12px">唯一标识</span></label><input class="form-input" id="courseCenterSlug" placeholder="如 intro-course" /></div>
           <div class="form-group"><label>副标题</label><input class="form-input" id="courseCenterSubtitle" /></div>
@@ -1627,7 +1670,7 @@ function switchPage(page) {
   if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'serviceConfig') { loadServiceCategories(); loadServices(); }
   if (page === 'inventory') { invProductPage = 1; loadCategories().then(function () { loadInventoryCategories(); loadInventoryProducts(); }); }
-  if (page === 'courseCenter') loadCourseCenterItems();
+  if (page === 'courseCenter') { loadCourseCenterCategories(); loadCourseCenterItems(); }
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); loadGuides(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'pageThemeConfig') { currentHCPage = 'pageTheme'; loadHomeConfig(); }
@@ -2968,8 +3011,121 @@ async function deleteGuide(id) {
 
 /* ===== 课程中心配置 ===== */
 let allCourseCenterItems = [];
+let allCourseCenterCategories = [];
 /** @type {string[]} */
 var courseCenterVideos = [];
+
+function getCourseL2Categories() {
+  return (allCourseCenterCategories || []).filter(function (x) { return x.level === 2; });
+}
+
+function fillCourseCenterCategorySelect(selectedId) {
+  var sel = document.getElementById('courseCenterCategoryId');
+  if (!sel) return;
+  var l2 = getCourseL2Categories();
+  sel.innerHTML = '<option value="">请选择二级课程分类</option>' + l2.map(function (o) {
+    return '<option value="' + o.id + '">' + o.id + ' — ' + escCourseCell(o.title) + '</option>';
+  }).join('');
+  if (selectedId) sel.value = String(selectedId);
+}
+
+function fillCourseCategoryParentSelect(selectedId) {
+  var sel = document.getElementById('courseCategoryParentId');
+  if (!sel) return;
+  var l1 = (allCourseCenterCategories || []).filter(function (x) { return x.level === 1; });
+  sel.innerHTML = '<option value="">请选择一级分类</option>' + l1.map(function (o) {
+    return '<option value="' + o.id + '">' + o.id + ' — ' + escCourseCell(o.title) + '</option>';
+  }).join('');
+  if (selectedId) sel.value = String(selectedId);
+}
+
+function onCourseCategoryLevelChange() {
+  var lv = parseInt(document.getElementById('courseCategoryLevel').value, 10) || 1;
+  var wrap = document.getElementById('courseCategoryParentWrap');
+  if (wrap) wrap.style.display = lv === 2 ? 'block' : 'none';
+}
+
+async function loadCourseCenterCategories() {
+  var tbody = document.getElementById('courseCategoryTableBody');
+  var empty = document.getElementById('courseCategoryEmpty');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:#999">加载中...</td></tr>';
+  try {
+    const res = await api('/course-categories/admin/list');
+    allCourseCenterCategories = res.data || [];
+    if (!allCourseCenterCategories.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      fillCourseCenterCategorySelect(null);
+      fillCourseCategoryParentSelect(null);
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    tbody.innerHTML = allCourseCenterCategories.map(function (r) {
+      var pid = r.parentId != null ? r.parentId : '—';
+      var lv = r.level === 2 ? '二级' : '一级';
+      return '<tr><td>' + r.id + '</td><td>' + lv + '</td><td>' + pid + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(r.key) + '</td><td>' + escCourseCell(r.title) + '</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis" title="' + escCourseCell(r.description || '') + '">' + escCourseCell(r.description || '') + '</td><td>' + (r.sortOrder != null ? r.sortOrder : 0) + '</td><td>' + (r.status === 'active' ? '启用' : '禁用') + '</td><td><button class="detail-btn" onclick="openCourseCategoryEditor(' + r.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCategory(' + r.id + ')">删除</button></td></tr>';
+    }).join('');
+    fillCourseCenterCategorySelect(null);
+    fillCourseCategoryParentSelect(null);
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#B91C1C">加载失败</td></tr>';
+  }
+}
+
+function openCourseCategoryEditor(id) {
+  var isEdit = id != null && id !== '';
+  document.getElementById('courseCategoryModalTitle').textContent = isEdit ? '编辑课程分类' : '新增课程分类';
+  document.getElementById('courseCategoryEditId').value = isEdit ? String(id) : '';
+  var r = isEdit ? allCourseCenterCategories.find(function (x) { return String(x.id) === String(id); }) : null;
+  fillCourseCategoryParentSelect(r && r.level === 2 && r.parentId != null ? r.parentId : null);
+  document.getElementById('courseCategoryLevel').value = r && r.level === 2 ? '2' : '1';
+  onCourseCategoryLevelChange();
+  document.getElementById('courseCategoryKey').value = r ? (r.key || '') : '';
+  document.getElementById('courseCategoryTitle').value = r ? (r.title || '') : '';
+  document.getElementById('courseCategoryDesc').value = r ? (r.description || '') : '';
+  document.getElementById('courseCategorySort').value = r && r.sortOrder != null ? r.sortOrder : 0;
+  document.getElementById('courseCategoryStatus').value = r && r.status === 'inactive' ? 'inactive' : 'active';
+  document.getElementById('courseCategoryModal').style.display = 'flex';
+}
+
+function closeCourseCategoryEditor() {
+  document.getElementById('courseCategoryModal').style.display = 'none';
+}
+
+async function saveCourseCategory() {
+  var idStr = document.getElementById('courseCategoryEditId').value;
+  var level = parseInt(document.getElementById('courseCategoryLevel').value, 10) || 1;
+  var pidStr = document.getElementById('courseCategoryParentId').value;
+  var parentId = level === 2 && pidStr ? parseInt(pidStr, 10) : null;
+  var body = {
+    level: level,
+    parentId: parentId,
+    key: document.getElementById('courseCategoryKey').value.trim(),
+    title: document.getElementById('courseCategoryTitle').value.trim(),
+    description: document.getElementById('courseCategoryDesc').value.trim(),
+    sortOrder: parseInt(document.getElementById('courseCategorySort').value, 10) || 0,
+    status: document.getElementById('courseCategoryStatus').value
+  };
+  try {
+    var res;
+    if (idStr) res = await api('/course-categories/admin/' + idStr, { method: 'PUT', body: body });
+    else res = await api('/course-categories/admin', { method: 'POST', body: body });
+    if (res.code === 0) { closeCourseCategoryEditor(); loadCourseCenterCategories(); loadCourseCenterItems(); }
+    else alert(res.message || '保存失败');
+  } catch (e) {
+    alert('保存失败：' + (e.message || String(e)));
+  }
+}
+
+async function deleteCourseCategory(id) {
+  if (!confirm('确定删除该分类？（无子分类、无关联课程时方可删除）')) return;
+  try {
+    const res = await api('/course-categories/admin/' + id, { method: 'DELETE' });
+    if (res.code === 0) { loadCourseCenterCategories(); loadCourseCenterItems(); }
+    else alert(res.message || '删除失败');
+  } catch (e) { alert('删除失败'); }
+}
 
 function escCourseCell(s) {
   if (s == null || s === '') return '';
@@ -3034,7 +3190,7 @@ async function loadCourseCenterItems() {
   const tbody = document.getElementById('courseCenterTableBody');
   const empty = document.getElementById('courseCenterEmpty');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#999">加载中...</td></tr>';
   try {
     const res = await api('/courses/admin/list');
     allCourseCenterItems = res.data || [];
@@ -3049,10 +3205,11 @@ async function loadCourseCenterItems() {
       var vcount = vids.length;
       var safeCov = c.coverImage ? String(c.coverImage).replace(/"/g, '') : '';
       var cov = safeCov ? '<img src="' + safeCov + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #eee" alt="" />' : '—';
-      return '<tr><td>' + c.sortOrder + '</td><td>' + escCourseCell(c.name) + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(c.slug) + '</td><td>' + escCourseCell(c.subtitle) + '</td><td>' + escCourseCell(c.icon) + '</td><td>' + cov + '</td><td>' + vcount + ' 个</td><td>' + (c.status === 'active' ? '启用' : '禁用') + '</td><td><button class="detail-btn" onclick="openCourseCenterEditor(' + c.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCenterItem(' + c.id + ')">删除</button></td></tr>';
+      var catLabel = (c.courseCategoryId && (c.courseCategoryTitle || c.courseCategoryId)) ? (escCourseCell(String(c.courseCategoryId)) + ' — ' + escCourseCell(c.courseCategoryTitle || '')) : '—';
+      return '<tr><td>' + c.sortOrder + '</td><td>' + catLabel + '</td><td>' + escCourseCell(c.name) + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(c.slug) + '</td><td>' + escCourseCell(c.subtitle) + '</td><td>' + escCourseCell(c.icon) + '</td><td>' + cov + '</td><td>' + vcount + ' 个</td><td>' + (c.status === 'active' ? '启用' : '禁用') + '</td><td><button class="detail-btn" onclick="openCourseCenterEditor(' + c.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCenterItem(' + c.id + ')">删除</button></td></tr>';
     }).join('');
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#B91C1C">加载失败</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#B91C1C">加载失败</td></tr>';
   }
 }
 
@@ -3060,7 +3217,9 @@ function openCourseCenterEditor(id) {
   var isEdit = id != null && id !== '';
   document.getElementById('courseCenterModalTitle').textContent = isEdit ? '编辑课程' : '新增课程';
   document.getElementById('courseCenterEditId').value = isEdit ? String(id) : '';
+  fillCourseCenterCategorySelect(null);
   var c = isEdit ? allCourseCenterItems.find(function (x) { return String(x.id) === String(id); }) : null;
+  fillCourseCenterCategorySelect(c && c.courseCategoryId ? c.courseCategoryId : null);
   document.getElementById('courseCenterName').value = c ? (c.name || '') : '';
   document.getElementById('courseCenterSlug').value = c ? (c.slug || '') : '';
   document.getElementById('courseCenterSubtitle').value = c ? (c.subtitle || '') : '';
@@ -3088,7 +3247,10 @@ function closeCourseCenterEditor() {
 
 async function saveCourseCenterItem() {
   var idStr = document.getElementById('courseCenterEditId').value;
+  var ccid = parseInt(document.getElementById('courseCenterCategoryId').value, 10);
+  if (!ccid) { alert('请选择二级课程分类'); return; }
   var body = {
+    courseCategoryId: ccid,
     name: document.getElementById('courseCenterName').value.trim(),
     slug: document.getElementById('courseCenterSlug').value.trim(),
     subtitle: document.getElementById('courseCenterSubtitle').value.trim(),

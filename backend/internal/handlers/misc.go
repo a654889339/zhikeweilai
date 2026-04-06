@@ -22,7 +22,7 @@ import (
 )
 
 func Health(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "智科未来服务运行中", "timestamp": time.Now().UTC().Format(time.RFC3339)})
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "科必学服务运行中", "timestamp": time.Now().UTC().Format(time.RFC3339)})
 }
 
 func AnalyticsPageView(c *gin.Context) {

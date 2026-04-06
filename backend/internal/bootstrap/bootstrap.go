@@ -56,8 +56,42 @@ func Run() error {
 	if err := ensureHomeConfigI18nColumns(); err != nil {
 		log.Printf("[zkwl] ensureHomeConfigI18nColumns: %v", err)
 	}
+	if err := ensureDeviceGuideManualPdfUrlColumn(); err != nil {
+		log.Printf("[zkwl] ensureDeviceGuideManualPdfUrlColumn: %v", err)
+	}
+	if err := ensureCourseCenterItemCourseCategoryIdColumn(); err != nil {
+		log.Printf("[zkwl] ensureCourseCenterItemCourseCategoryIdColumn: %v", err)
+	}
 
 	return seedDefaultsIfEmpty()
+}
+
+func ensureDeviceGuideManualPdfUrlColumn() error {
+	var n int64
+	if err := db.DB.Raw(`
+		SELECT COUNT(*) FROM information_schema.COLUMNS
+		WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'device_guides' AND COLUMN_NAME = 'manualPdfUrl'
+	`).Scan(&n).Error; err != nil {
+		return err
+	}
+	if n > 0 {
+		return nil
+	}
+	return db.DB.Exec("ALTER TABLE `device_guides` ADD COLUMN `manualPdfUrl` VARCHAR(500) NOT NULL DEFAULT ''").Error
+}
+
+func ensureCourseCenterItemCourseCategoryIdColumn() error {
+	var n int64
+	if err := db.DB.Raw(`
+		SELECT COUNT(*) FROM information_schema.COLUMNS
+		WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'course_center_items' AND COLUMN_NAME = 'courseCategoryId'
+	`).Scan(&n).Error; err != nil {
+		return err
+	}
+	if n > 0 {
+		return nil
+	}
+	return db.DB.Exec("ALTER TABLE `course_center_items` ADD COLUMN `courseCategoryId` INT NOT NULL DEFAULT 0").Error
 }
 
 // ensureHomeConfigI18nColumns 旧库 home_configs 可能无英文列，GORM Save 会报 Unknown column 'titleEn'。

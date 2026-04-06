@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
   <rect width="200" height="80" rx="8" fill="#111"/>
-  <text x="20" y="58" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="48" fill="#B91C1C" letter-spacing="2">智科未来</text>
+  <text x="20" y="58" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="48" fill="#B91C1C" letter-spacing="2">科必学</text>
   <circle cx="170" cy="38" r="14" stroke="#B91C1C" stroke-width="4" fill="none"/>
   <path d="M165 32 C167 28, 175 27, 176 32 C177 37, 170 40, 168 44 C166 48, 172 51, 176 48 C173 53, 164 50, 164 45 C164 40, 170 38, 172 34 C173 31, 168 30, 166 34Z" fill="#B91C1C"/>
 </svg>
