@@ -14,6 +14,9 @@ type User struct {
 	Phone       string     `gorm:"size:20" json:"phone"`
 	LastLoginIP *string    `gorm:"column:lastLoginIp;size:100" json:"lastLoginIp"`
 	LastLoginAt *time.Time `gorm:"column:lastLoginAt" json:"lastLoginAt"`
+	Points        int     `gorm:"column:points;default:0" json:"points"`
+	CouponCount   int     `gorm:"column:coupon_count;default:0" json:"couponCount"`
+	WalletBalance float64 `gorm:"column:wallet_balance;type:decimal(10,2);default:0" json:"walletBalance"`
 	Role        string     `gorm:"type:enum('user','admin');default:user" json:"role"`
 	Status      string     `gorm:"type:enum('active','disabled');default:active" json:"status"`
 	CreatedAt   time.Time  `json:"createdAt"`

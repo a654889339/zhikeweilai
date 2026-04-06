@@ -40,7 +40,15 @@ func pcUpdate(c *gin.Context) {
 		resp.Err(c, 404, 404, "种类不存在")
 		return
 	}
-	var body models.ProductCategory
+	var body struct {
+		Name           string  `json:"name"`
+		NameEn         string  `json:"nameEn"`
+		ThumbnailURL   *string `json:"thumbnailUrl"`
+		ThumbnailURLEn *string `json:"thumbnailUrlEn"`
+		SortOrder      int     `json:"sortOrder"`
+		Points         *int    `json:"points"`
+		Status         string  `json:"status"`
+	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		resp.Err(c, 400, 400, "参数错误")
 		return
@@ -56,6 +64,9 @@ func pcUpdate(c *gin.Context) {
 		cat.ThumbnailURLEn = body.ThumbnailURLEn
 	}
 	cat.SortOrder = body.SortOrder
+	if body.Points != nil {
+		cat.Points = *body.Points
+	}
 	if body.Status != "" {
 		cat.Status = body.Status
 	}

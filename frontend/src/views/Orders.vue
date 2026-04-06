@@ -44,12 +44,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { orderApi } from '@/api';
 import { showToast, showConfirmDialog } from 'vant';
 
 const router = useRouter();
+const route = useRoute();
 const activeTab = ref(0);
 const firstLoading = ref(true);
 const refreshing = ref(false);
@@ -65,7 +66,16 @@ const tabs = [
   { key: 'paid', name: '已支付' },
   { key: 'processing', name: '进行中' },
   { key: 'completed', name: '已完成' },
+  { key: 'cancelled', name: '已取消' },
 ];
+
+function applyStatusTab() {
+  const q = route.query.status;
+  if (q && typeof q === 'string') {
+    const idx = tabs.findIndex((t) => t.key === q);
+    if (idx >= 0) activeTab.value = idx;
+  }
+}
 
 const iconColors = {
   'setting-o': '#B91C1C', 'location-o': '#DC2626', 'phone-o': '#EF4444',
@@ -138,7 +148,18 @@ const cancelOrder = async (order) => {
   } catch { /* user cancelled dialog */ }
 };
 
-onMounted(loadInitial);
+onMounted(async () => {
+  applyStatusTab();
+  await loadInitial();
+});
+
+watch(
+  () => route.query.status,
+  async () => {
+    applyStatusTab();
+    await loadInitial();
+  }
+);
 </script>
 
 <style scoped>

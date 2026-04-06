@@ -32,6 +32,27 @@ var orderStatusMap = map[string]struct {
 	"cancelled":  {Text: "已取消", TextEn: "Cancelled", Type: "default"},
 }
 
+func orderPointsFromGuideID(guideID *int) int {
+	if guideID == nil || *guideID <= 0 {
+		return 0
+	}
+	var g models.DeviceGuide
+	if err := db.DB.First(&g, *guideID).Error; err != nil {
+		return 0
+	}
+	if g.CategoryID == nil || *g.CategoryID <= 0 {
+		return 0
+	}
+	var pc models.ProductCategory
+	if err := db.DB.First(&pc, *g.CategoryID).Error; err != nil {
+		return 0
+	}
+	if pc.Points < 0 {
+		return 0
+	}
+	return pc.Points
+}
+
 func genOrderNo() string {
 	now := time.Now()
 	r := rand.Intn(10000)
@@ -80,6 +101,7 @@ func orderCreate(c *gin.Context) {
 			appt = &t
 		}
 	}
+	points := orderPointsFromGuideID(gid)
 	o := models.Order{
 		OrderNo:         genOrderNo(),
 		UserID:          u.ID,
@@ -95,6 +117,7 @@ func orderCreate(c *gin.Context) {
 		Remark:          body.Remark,
 		ProductSerial:   serial,
 		GuideID:         gid,
+		Points:          points,
 		Status:          "pending",
 	}
 	if err := db.DB.Create(&o).Error; err != nil {
@@ -138,6 +161,27 @@ func orderMyOrders(c *gin.Context) {
 		list = append(list, h)
 	}
 	resp.OK(c, gin.H{"list": list, "total": total, "page": page, "pageSize": pageSize})
+}
+
+func orderMineStats(c *gin.Context) {
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	uid := u.ID
+	var pending, paid, processing, completed, cancelled int64
+	db.DB.Model(&models.Order{}).Where("userId = ? AND status = ?", uid, "pending").Count(&pending)
+	db.DB.Model(&models.Order{}).Where("userId = ? AND status = ?", uid, "paid").Count(&paid)
+	db.DB.Model(&models.Order{}).Where("userId = ? AND status = ?", uid, "processing").Count(&processing)
+	db.DB.Model(&models.Order{}).Where("userId = ? AND status = ?", uid, "completed").Count(&completed)
+	db.DB.Model(&models.Order{}).Where("userId = ? AND status = ?", uid, "cancelled").Count(&cancelled)
+	resp.OK(c, gin.H{
+		"pending":    pending,
+		"paid":       paid,
+		"processing": processing,
+		"completed":  completed,
+		"cancelled":  cancelled,
+	})
 }
 
 func orderPayWechatPrepay(c *gin.Context, cfg *config.Config) {
@@ -352,6 +396,14 @@ func orderAdminUpdateStatus(c *gin.Context) {
 			NewValue:   firstNonEmptyStr(newS, body.Status),
 			Operator:   u.Username,
 		})
+	}
+	if body.Status == "completed" && old != "completed" && o.Points > 0 && !o.PointsAwarded {
+		if err := db.DB.Model(&models.User{}).Where("id = ?", o.UserID).
+			UpdateColumn("points", gorm.Expr("COALESCE(points, 0) + ?", o.Points)).Error; err != nil {
+			resp.Err(c, 500, 500, "发放积分失败")
+			return
+		}
+		o.PointsAwarded = true
 	}
 	o.Status = body.Status
 	db.DB.Save(&o)

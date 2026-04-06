@@ -41,6 +41,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	{
 		orders.POST("/", middleware.Auth(cfg), orderCreate)
 		orders.GET("/mine", middleware.Auth(cfg), orderMyOrders)
+		orders.GET("/mine/stats", middleware.Auth(cfg), orderMineStats)
 		orders.POST("/:id/pay-wechat", middleware.Auth(cfg), func(c *gin.Context) { orderPayWechatPrepay(c, cfg) })
 		orders.GET("/admin/list", middleware.Auth(cfg), middleware.Admin(), orderAdminList)
 		orders.GET("/admin/stats", middleware.Auth(cfg), middleware.Admin(), orderAdminStats)

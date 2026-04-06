@@ -25,6 +25,7 @@ export const authApi = {
 export const orderApi = {
   create: (data) => request.post('/orders', data),
   mine: (params) => request.get('/orders/mine', { params }),
+  mineStats: () => request.get('/orders/mine/stats'),
   detail: (id) => request.get(`/orders/${id}`),
   cancel: (id) => request.put(`/orders/${id}/cancel`),
 };

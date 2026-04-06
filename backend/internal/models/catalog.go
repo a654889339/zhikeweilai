@@ -51,6 +51,7 @@ type ProductCategory struct {
 	ThumbnailURL    *string   `gorm:"column:thumbnail_url;size:1024" json:"thumbnailUrl"`
 	NameEn          string    `gorm:"size:100" json:"nameEn"`
 	ThumbnailURLEn  *string   `gorm:"column:thumbnailUrlEn;size:1024" json:"thumbnailUrlEn"`
+	Points          int       `gorm:"column:points;default:0" json:"points"`
 	SortOrder       int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status          string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt       time.Time `json:"createdAt"`

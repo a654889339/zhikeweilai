@@ -20,6 +20,8 @@ type Order struct {
 	AdminRemark     string     `gorm:"column:adminRemark;type:text" json:"adminRemark"`
 	ProductSerial   string     `gorm:"column:productSerial;size:128" json:"productSerial"`
 	GuideID         *int       `gorm:"column:guideId" json:"guideId"`
+	Points          int        `gorm:"column:points;default:0" json:"points"`
+	PointsAwarded   bool       `gorm:"column:points_awarded;default:false" json:"pointsAwarded"`
 	CreatedAt       time.Time  `json:"createdAt"`
 	UpdatedAt       time.Time  `json:"updatedAt"`
 	User            *User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
