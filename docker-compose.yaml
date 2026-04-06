@@ -23,6 +23,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # 后端为 Go（Gin），与本地 Vino_test/backend 同源结构；镜像由 backend/Dockerfile 多阶段构建
   zkwl-backend:
     build: ./backend
     container_name: zkwl-backend
@@ -30,6 +31,7 @@ services:
     ports:
       - "5302:5302"
     environment:
+      # 仍供配置读取运行模式（Gin Release、日志等），与 Node 时代变量名兼容
       NODE_ENV: production
       PORT: 5302
       DB_HOST: zkwl-mysql

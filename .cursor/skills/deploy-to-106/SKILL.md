@@ -1,6 +1,6 @@
 ---
 name: deploy-to-106
-description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存（zkwl-* 容器、530x/3310 MySQL 映射、独立 MySQL 卷）。使用 SSH + ghfast 镜像拉代码 + docker compose。在用户要求发布/部署/上 106 时执行本 skill。
+description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存（zkwl-* 容器、530x/3310 MySQL 映射、独立 MySQL 卷）。后端为 Go（Gin，`backend/Dockerfile` 构建）。使用 SSH + ghfast 镜像拉代码 + docker compose。在用户要求发布/部署/上 106 时执行本 skill。
 ---
 
 # Deploy zhikeweilai to 106
@@ -14,6 +14,13 @@ description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存
 
 - 容器名：`zkwl-mysql`、`zkwl-backend`、`zkwl-frontend`、`zkwl-frontend-outlet`（禁止再用 `vino-*`，会与 Vino 冲突）。
 - 数据卷：`zkwl-mysql-data`（与 `vino-mysql-data` 独立）。
+
+## 后端说明（Go）
+
+- **技术栈**：Go 1.22 + Gin + GORM + MySQL，目录 `backend/`，入口 `cmd/server/main.go`（与 `F:\Vino_test\backend` 对齐）。
+- **镜像**：`backend/Dockerfile` 多阶段构建（`golang:1.22-alpine` → `alpine`），产物二进制 `/app/zkwl-server`，监听 **`PORT`（默认 5302）**。
+- **构建提示**：首次在服务器构建会拉取 Go 模块，可能较慢；已设置 `GOPROXY=https://goproxy.cn,direct`（见 Dockerfile）。
+- **环境变量**：`docker-compose.yaml` 中仍使用 `NODE_ENV`、`PORT` 等名称，与旧 Node 部署兼容，供配置读取运行模式（如 `NODE_ENV=production` 时 Gin 为 Release 模式）。
 
 ## 连接与变量
 
