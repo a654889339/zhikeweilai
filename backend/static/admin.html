@@ -375,9 +375,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <h3>课程管理</h3>
           <button class="refresh-btn" style="background:#059669" onclick="openCourseCenterEditor()">+ 新增课程</button>
         </div>
-        <p style="font-size:13px;color:#666;margin-bottom:12px">配置课程中心展示条目（名称、slug、封面、跳转路径等），与「商品配置」中的设备指南相互独立；前台可通过 <code>/api/courses</code> 拉取启用项。</p>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">配置课程中心展示条目（名称、slug、封面、视频等），与「商品配置」中的设备指南相互独立；前台可通过 <code>/api/courses</code> 拉取启用项。</p>
         <table class="order-table">
-          <thead><tr><th>排序</th><th>名称</th><th>slug</th><th>副标题</th><th>图标</th><th>跳转</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>排序</th><th>名称</th><th>slug</th><th>副标题</th><th>图标</th><th>封面</th><th>视频</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="courseCenterTableBody"></tbody>
         </table>
         <div class="order-empty" id="courseCenterEmpty" style="display:none">暂无课程</div>
@@ -1115,19 +1115,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <!-- 课程中心：编辑弹窗 -->
     <div class="modal-overlay" id="courseCenterModal" style="display:none" onclick="if(event.target===this)closeCourseCenterEditor()">
-      <div class="modal-content" style="max-width:520px">
+      <div class="modal-content" style="max-width:520px;max-height:90vh">
         <div class="modal-header">
           <h3 id="courseCenterModalTitle">新增课程</h3>
           <span class="modal-close" onclick="closeCourseCenterEditor()">&times;</span>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="max-height:calc(90vh - 120px);overflow-y:auto">
           <input type="hidden" id="courseCenterEditId" />
           <div class="form-group"><label>名称 *</label><input class="form-input" id="courseCenterName" placeholder="如：入门课程" /></div>
           <div class="form-group"><label>slug * <span style="color:#999;font-size:12px">唯一标识</span></label><input class="form-input" id="courseCenterSlug" placeholder="如 intro-course" /></div>
           <div class="form-group"><label>副标题</label><input class="form-input" id="courseCenterSubtitle" /></div>
           <div class="form-group"><label>图标（Vant 图标名）</label><input class="form-input" id="courseCenterIcon" placeholder="records" /></div>
-          <div class="form-group"><label>封面图 URL</label><input class="form-input" id="courseCenterCover" placeholder="https://…" /></div>
-          <div class="form-group"><label>跳转路径</label><input class="form-input" id="courseCenterPath" placeholder="/products" /></div>
+          <div class="form-group">
+            <label>封面图</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+              <input type="file" id="courseCenterCoverFile" accept="image/*" style="display:none" onchange="uploadCourseCoverInput(this)" />
+              <button type="button" class="btn" style="padding:8px 14px;background:#059669;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px" onclick="document.getElementById('courseCenterCoverFile').click()">上传封面</button>
+              <img id="courseCenterCoverPreview" alt="" style="max-width:140px;max-height:90px;border-radius:8px;border:1px solid #eee;display:none;object-fit:cover" />
+            </div>
+            <p style="font-size:12px;color:#999;margin-top:6px">上传时全屏转圈等待；上传后自动填入 URL，也可手动修改。</p>
+            <input class="form-input" id="courseCenterCover" placeholder="封面图 URL" style="margin-top:6px" />
+          </div>
+          <div class="form-group">
+            <label>视频（支持多文件上传）</label>
+            <input type="file" id="courseCenterVideoFiles" accept="video/*" multiple style="display:none" onchange="uploadCourseVideosInput(this)" />
+            <button type="button" class="btn" style="padding:8px 14px;background:#2563EB;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px" onclick="document.getElementById('courseCenterVideoFiles').click()">添加视频</button>
+            <div id="courseCenterVideoList" style="margin-top:10px;font-size:12px"></div>
+          </div>
           <div class="form-group"><label>描述</label><textarea class="form-input" id="courseCenterDesc" rows="3" style="resize:vertical"></textarea></div>
           <div class="form-group"><label>排序</label><input type="number" class="form-input" id="courseCenterSort" value="0" /></div>
           <div class="form-group"><label>状态</label><select class="form-input" id="courseCenterStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
@@ -2883,17 +2897,73 @@ async function deleteGuide(id) {
 
 /* ===== 课程中心配置 ===== */
 let allCourseCenterItems = [];
+/** @type {string[]} */
+var courseCenterVideos = [];
 
 function escCourseCell(s) {
   if (s == null || s === '') return '';
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 }
 
+function renderCourseCenterVideoList() {
+  var wrap = document.getElementById('courseCenterVideoList');
+  if (!wrap) return;
+  if (!courseCenterVideos.length) {
+    wrap.innerHTML = '<span style="color:#999">暂无视频，点击「添加视频」可多选上传</span>';
+    return;
+  }
+  wrap.innerHTML = courseCenterVideos.map(function (url, idx) {
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:#f9f9f9;border-radius:6px"><span style="flex:1;word-break:break-all;font-family:monospace;font-size:11px">' + escCourseCell(url) + '</span><button type="button" class="history-btn" onclick="removeCourseVideo(' + idx + ')">删除</button></div>';
+  }).join('');
+}
+
+function removeCourseVideo(idx) {
+  courseCenterVideos.splice(idx, 1);
+  renderCourseCenterVideoList();
+}
+
+async function uploadCourseCoverInput(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  if (file.size > 100 * 1024 * 1024) { alert('文件不能超过 100MB'); input.value = ''; return; }
+  await runWithUploadOverlay(file.name, async function () {
+    try {
+      var res = await doUpload(file);
+      if (res.code === 0 && res.data && res.data.url) {
+        var el = document.getElementById('courseCenterCover');
+        if (el) el.value = res.data.url;
+        var prev = document.getElementById('courseCenterCoverPreview');
+        if (prev) { prev.src = res.data.url; prev.style.display = 'block'; }
+      } else alert(res.message || '上传失败');
+    } catch (e) { alert('上传失败'); }
+  });
+  input.value = '';
+}
+
+async function uploadCourseVideosInput(input) {
+  if (!input.files || !input.files.length) return;
+  var files = Array.prototype.slice.call(input.files);
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    if (file.size > 200 * 1024 * 1024) { alert(file.name + ' 超过 200MB，已跳过'); continue; }
+    await runWithUploadOverlay(file.name, async function () {
+      try {
+        var res = await doUpload(file);
+        if (res.code === 0 && res.data && res.data.url) {
+          courseCenterVideos.push(res.data.url);
+          renderCourseCenterVideoList();
+        } else alert(res.message || '上传失败');
+      } catch (e) { alert('上传失败'); }
+    });
+  }
+  input.value = '';
+}
+
 async function loadCourseCenterItems() {
   const tbody = document.getElementById('courseCenterTableBody');
   const empty = document.getElementById('courseCenterEmpty');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:#999">加载中...</td></tr>';
   try {
     const res = await api('/courses/admin/list');
     allCourseCenterItems = res.data || [];
@@ -2904,10 +2974,14 @@ async function loadCourseCenterItems() {
     }
     if (empty) empty.style.display = 'none';
     tbody.innerHTML = allCourseCenterItems.map(function (c) {
-      return '<tr><td>' + c.sortOrder + '</td><td>' + escCourseCell(c.name) + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(c.slug) + '</td><td>' + escCourseCell(c.subtitle) + '</td><td>' + escCourseCell(c.icon) + '</td><td style="font-size:12px">' + escCourseCell(c.path) + '</td><td>' + (c.status === 'active' ? '启用' : '禁用') + '</td><td><button class="detail-btn" onclick="openCourseCenterEditor(' + c.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCenterItem(' + c.id + ')">删除</button></td></tr>';
+      var vids = Array.isArray(c.videos) ? c.videos : [];
+      var vcount = vids.length;
+      var safeCov = c.coverImage ? String(c.coverImage).replace(/"/g, '') : '';
+      var cov = safeCov ? '<img src="' + safeCov + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #eee" alt="" />' : '—';
+      return '<tr><td>' + c.sortOrder + '</td><td>' + escCourseCell(c.name) + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(c.slug) + '</td><td>' + escCourseCell(c.subtitle) + '</td><td>' + escCourseCell(c.icon) + '</td><td>' + cov + '</td><td>' + vcount + ' 个</td><td>' + (c.status === 'active' ? '启用' : '禁用') + '</td><td><button class="detail-btn" onclick="openCourseCenterEditor(' + c.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCenterItem(' + c.id + ')">删除</button></td></tr>';
     }).join('');
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#B91C1C">加载失败</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#B91C1C">加载失败</td></tr>';
   }
 }
 
@@ -2921,10 +2995,19 @@ function openCourseCenterEditor(id) {
   document.getElementById('courseCenterSubtitle').value = c ? (c.subtitle || '') : '';
   document.getElementById('courseCenterIcon').value = c ? (c.icon || '') : '';
   document.getElementById('courseCenterCover').value = c ? (c.coverImage || '') : '';
-  document.getElementById('courseCenterPath').value = c ? (c.path || '') : '';
   document.getElementById('courseCenterDesc').value = c ? (c.description || '') : '';
   document.getElementById('courseCenterSort').value = c && c.sortOrder != null ? c.sortOrder : 0;
   document.getElementById('courseCenterStatus').value = c && c.status === 'inactive' ? 'inactive' : 'active';
+  var prev = document.getElementById('courseCenterCoverPreview');
+  if (prev) {
+    if (c && c.coverImage) { prev.src = c.coverImage; prev.style.display = 'block'; }
+    else { prev.style.display = 'none'; prev.removeAttribute('src'); }
+  }
+  courseCenterVideos = [];
+  if (c && c.videos && Array.isArray(c.videos)) {
+    courseCenterVideos = c.videos.slice();
+  }
+  renderCourseCenterVideoList();
   document.getElementById('courseCenterModal').style.display = 'flex';
 }
 
@@ -2940,7 +3023,7 @@ async function saveCourseCenterItem() {
     subtitle: document.getElementById('courseCenterSubtitle').value.trim(),
     icon: document.getElementById('courseCenterIcon').value.trim(),
     coverImage: document.getElementById('courseCenterCover').value.trim(),
-    path: document.getElementById('courseCenterPath').value.trim(),
+    videos: courseCenterVideos.slice(),
     description: document.getElementById('courseCenterDesc').value.trim(),
     sortOrder: parseInt(document.getElementById('courseCenterSort').value, 10) || 0,
     status: document.getElementById('courseCenterStatus').value

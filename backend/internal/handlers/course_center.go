@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -9,22 +10,78 @@ import (
 	"zhikeweilai/backend/internal/resp"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/datatypes"
 )
+
+type courseCenterPayload struct {
+	Name        string   `json:"name"`
+	Subtitle    string   `json:"subtitle"`
+	Slug        string   `json:"slug"`
+	Icon        string   `json:"icon"`
+	CoverImage  string   `json:"coverImage"`
+	Videos      []string `json:"videos"`
+	Description string   `json:"description"`
+	SortOrder   int      `json:"sortOrder"`
+	Status      string   `json:"status"`
+}
+
+func courseItemToMap(c models.CourseCenterItem) gin.H {
+	var videos []string
+	if len(c.Videos) > 0 {
+		_ = json.Unmarshal(c.Videos, &videos)
+	}
+	if videos == nil {
+		videos = []string{}
+	}
+	return gin.H{
+		"id":          c.ID,
+		"name":        c.Name,
+		"subtitle":    c.Subtitle,
+		"slug":        c.Slug,
+		"icon":        c.Icon,
+		"coverImage":  c.CoverImage,
+		"videos":      videos,
+		"description": c.Description,
+		"sortOrder":   c.SortOrder,
+		"status":      c.Status,
+		"createdAt":   c.CreatedAt,
+		"updatedAt":   c.UpdatedAt,
+	}
+}
+
+func videosToJSON(urls []string) datatypes.JSON {
+	if len(urls) == 0 {
+		return datatypes.JSON("[]")
+	}
+	b, err := json.Marshal(urls)
+	if err != nil {
+		return datatypes.JSON("[]")
+	}
+	return datatypes.JSON(b)
+}
 
 func courseCenterPublicList(c *gin.Context) {
 	var rows []models.CourseCenterItem
 	db.DB.Where("status = ?", "active").Order("sortOrder ASC, id ASC").Find(&rows)
-	resp.OK(c, rows)
+	out := make([]gin.H, 0, len(rows))
+	for i := range rows {
+		out = append(out, courseItemToMap(rows[i]))
+	}
+	resp.OK(c, out)
 }
 
 func courseCenterAdminList(c *gin.Context) {
 	var rows []models.CourseCenterItem
 	db.DB.Order("sortOrder ASC, id ASC").Find(&rows)
-	resp.OK(c, rows)
+	out := make([]gin.H, 0, len(rows))
+	for i := range rows {
+		out = append(out, courseItemToMap(rows[i]))
+	}
+	resp.OK(c, out)
 }
 
 func courseCenterCreate(c *gin.Context) {
-	var body models.CourseCenterItem
+	var body courseCenterPayload
 	if err := c.ShouldBindJSON(&body); err != nil {
 		resp.Err(c, 400, 400, "参数错误")
 		return
@@ -48,11 +105,22 @@ func courseCenterCreate(c *gin.Context) {
 	if body.Status == "" {
 		body.Status = "active"
 	}
-	if err := db.DB.Create(&body).Error; err != nil {
+	row := models.CourseCenterItem{
+		Name:        body.Name,
+		Subtitle:    body.Subtitle,
+		Slug:        body.Slug,
+		Icon:        body.Icon,
+		CoverImage:  body.CoverImage,
+		Videos:      videosToJSON(body.Videos),
+		Description: body.Description,
+		SortOrder:   body.SortOrder,
+		Status:      body.Status,
+	}
+	if err := db.DB.Create(&row).Error; err != nil {
 		resp.Err(c, 500, 500, err.Error())
 		return
 	}
-	resp.OK(c, body)
+	resp.OK(c, courseItemToMap(row))
 }
 
 func courseCenterUpdate(c *gin.Context) {
@@ -66,7 +134,7 @@ func courseCenterUpdate(c *gin.Context) {
 		resp.Err(c, 404, 404, "不存在")
 		return
 	}
-	var body models.CourseCenterItem
+	var body courseCenterPayload
 	if err := c.ShouldBindJSON(&body); err != nil {
 		resp.Err(c, 400, 400, "参数错误")
 		return
@@ -89,13 +157,23 @@ func courseCenterUpdate(c *gin.Context) {
 			return
 		}
 	}
-	body.ID = id
-	body.CreatedAt = row.CreatedAt
-	if err := db.DB.Save(&body).Error; err != nil {
+	if body.Status == "" {
+		body.Status = "active"
+	}
+	row.Name = body.Name
+	row.Subtitle = body.Subtitle
+	row.Slug = body.Slug
+	row.Icon = body.Icon
+	row.CoverImage = body.CoverImage
+	row.Videos = videosToJSON(body.Videos)
+	row.Description = body.Description
+	row.SortOrder = body.SortOrder
+	row.Status = body.Status
+	if err := db.DB.Save(&row).Error; err != nil {
 		resp.Err(c, 500, 500, err.Error())
 		return
 	}
-	resp.OK(c, body)
+	resp.OK(c, courseItemToMap(row))
 }
 
 func courseCenterRemove(c *gin.Context) {

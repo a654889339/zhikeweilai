@@ -1,9 +1,11 @@
 <template>
   <SplashScreen v-if="showSplash" />
   <router-view />
-  <van-tabbar v-if="showTabbar && tabbarItems.length" route active-color="var(--vino-primary)">
-    <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ item.title }}</van-tabbar-item>
-  </van-tabbar>
+  <div v-if="showTabbar && tabbarItems.length" class="app-tabbar-shell">
+    <van-tabbar route active-color="var(--vino-primary)" class="app-tabbar-bar">
+      <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ item.title }}</van-tabbar-item>
+    </van-tabbar>
+  </div>
   <ChatWidget ref="chatWidgetRef" :hide-fab="hideChatFab" />
 </template>
 
@@ -84,18 +86,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 提高 z-index，避免被页面内 fixed 或聊天 FAB 下方的触摸层遮挡，解决手机端「产品」等按钮无法点击 */
-:deep(.van-tabbar) {
-  left: 12px;
-  right: 12px;
+.app-tabbar-shell {
+  position: fixed;
   bottom: 0;
-  width: auto;
-  max-width: min(750px, calc(100vw - 24px));
+  left: 0;
+  right: 0;
+  max-width: 750px;
+  width: 100%;
   margin: 0 auto;
+  padding: 0 12px;
   box-sizing: border-box;
+  z-index: 3000;
+  pointer-events: none;
+}
+.app-tabbar-shell .app-tabbar-bar {
+  pointer-events: auto;
+}
+:deep(.app-tabbar-bar.van-tabbar) {
+  position: relative !important;
+  max-width: 100%;
+  margin: 0 auto;
   border-radius: 12px 12px 0 0;
   overflow: hidden;
-  z-index: 100;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.06);
 }
 :deep(.van-tabbar-item) {
   touch-action: manipulation;

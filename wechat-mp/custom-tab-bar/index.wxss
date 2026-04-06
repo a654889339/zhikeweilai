@@ -1,13 +1,13 @@
-/* 与页面主内容卡片左右边距一致（约 24rpx ≈ 12px） */
+/* 与 Vino_test / H5 app-tabbar-shell 一致：750 设计宽内居中，左右各约 12px 留白 */
 .tab-bar {
   position: fixed;
   bottom: 0;
-  left: 24rpx;
-  right: 24rpx;
-  width: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 48rpx);
+  max-width: 750rpx;
   height: 100rpx;
-  max-width: 702rpx;
-  margin: 0 auto;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
