@@ -59,6 +59,12 @@ func Run() error {
 	if err := ensureDeviceGuideManualPdfUrlColumn(); err != nil {
 		log.Printf("[zkwl] ensureDeviceGuideManualPdfUrlColumn: %v", err)
 	}
+	if err := ensureDeviceGuideI18nColumns(); err != nil {
+		log.Printf("[zkwl] ensureDeviceGuideI18nColumns: %v", err)
+	}
+	if err := ensureProductCategoryI18nColumns(); err != nil {
+		log.Printf("[zkwl] ensureProductCategoryI18nColumns: %v", err)
+	}
 	if err := ensureCourseCenterItemCourseCategoryIdColumn(); err != nil {
 		log.Printf("[zkwl] ensureCourseCenterItemCourseCategoryIdColumn: %v", err)
 	}
@@ -78,6 +84,82 @@ func ensureDeviceGuideManualPdfUrlColumn() error {
 		return nil
 	}
 	return db.DB.Exec("ALTER TABLE `device_guides` ADD COLUMN `manualPdfUrl` VARCHAR(500) NOT NULL DEFAULT ''").Error
+}
+
+// ensureDeviceGuideI18nColumns 旧库 device_guides 可能无英文等列，GORM Save 会报 Unknown column 'name_en'。
+func ensureDeviceGuideI18nColumns() error {
+	type colDDL struct {
+		name string
+		ddl  string
+	}
+	steps := []colDDL{
+		{"name_en", "ALTER TABLE `device_guides` ADD COLUMN `name_en` VARCHAR(100) NOT NULL DEFAULT ''"},
+		{"subtitle_en", "ALTER TABLE `device_guides` ADD COLUMN `subtitle_en` VARCHAR(200) NOT NULL DEFAULT ''"},
+		{"badge_en", "ALTER TABLE `device_guides` ADD COLUMN `badge_en` VARCHAR(20) NOT NULL DEFAULT ''"},
+		{"description_en", "ALTER TABLE `device_guides` ADD COLUMN `description_en` TEXT"},
+		{"iconUrlEn", "ALTER TABLE `device_guides` ADD COLUMN `iconUrlEn` VARCHAR(500) NOT NULL DEFAULT ''"},
+		{"iconUrlThumbEn", "ALTER TABLE `device_guides` ADD COLUMN `iconUrlThumbEn` VARCHAR(500) NOT NULL DEFAULT ''"},
+		{"coverImageEn", "ALTER TABLE `device_guides` ADD COLUMN `coverImageEn` VARCHAR(500) NOT NULL DEFAULT ''"},
+		{"coverImageThumbEn", "ALTER TABLE `device_guides` ADD COLUMN `coverImageThumbEn` VARCHAR(500) NOT NULL DEFAULT ''"},
+		{"emoji_en", "ALTER TABLE `device_guides` ADD COLUMN `emoji_en` VARCHAR(20) NOT NULL DEFAULT ''"},
+		{"gradient_en", "ALTER TABLE `device_guides` ADD COLUMN `gradient_en` VARCHAR(300) NOT NULL DEFAULT ''"},
+	}
+	added := 0
+	for _, step := range steps {
+		var n int64
+		if err := db.DB.Raw(`
+			SELECT COUNT(*) FROM information_schema.COLUMNS
+			WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'device_guides' AND COLUMN_NAME = ?
+		`, step.name).Scan(&n).Error; err != nil {
+			return err
+		}
+		if n > 0 {
+			continue
+		}
+		if err := db.DB.Exec(step.ddl).Error; err != nil {
+			log.Printf("[zkwl] ensureDeviceGuideI18nColumns ADD %s: %v", step.name, err)
+			continue
+		}
+		added++
+	}
+	if added > 0 {
+		log.Printf("[zkwl] ensureDeviceGuideI18nColumns: added %d column(s)", added)
+	}
+	return nil
+}
+
+// ensureProductCategoryI18nColumns 旧库 product_categories 可能无 name_en / thumbnailUrlEn。
+func ensureProductCategoryI18nColumns() error {
+	type colDDL struct {
+		name string
+		ddl  string
+	}
+	steps := []colDDL{
+		{"name_en", "ALTER TABLE `product_categories` ADD COLUMN `name_en` VARCHAR(100) NOT NULL DEFAULT ''"},
+		{"thumbnailUrlEn", "ALTER TABLE `product_categories` ADD COLUMN `thumbnailUrlEn` VARCHAR(1024) NULL"},
+	}
+	added := 0
+	for _, step := range steps {
+		var n int64
+		if err := db.DB.Raw(`
+			SELECT COUNT(*) FROM information_schema.COLUMNS
+			WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_categories' AND COLUMN_NAME = ?
+		`, step.name).Scan(&n).Error; err != nil {
+			return err
+		}
+		if n > 0 {
+			continue
+		}
+		if err := db.DB.Exec(step.ddl).Error; err != nil {
+			log.Printf("[zkwl] ensureProductCategoryI18nColumns ADD %s: %v", step.name, err)
+			continue
+		}
+		added++
+	}
+	if added > 0 {
+		log.Printf("[zkwl] ensureProductCategoryI18nColumns: added %d column(s)", added)
+	}
+	return nil
 }
 
 func ensureCourseCenterItemCourseCategoryIdColumn() error {
