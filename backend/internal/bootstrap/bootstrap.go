@@ -1,6 +1,8 @@
 package bootstrap
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"log"
 
 	"zhikeweilai/backend/internal/db"
@@ -96,9 +98,179 @@ func migrateLegacyProductCategoryHierarchy() error {
 	return nil
 }
 
+// ensureL2UnderEveryL1 为每个一级分类补一条默认二级，避免前端侧栏用一级 ID 请求 /guides 而指南已全部挂在二级下导致空白。
+func ensureL2UnderEveryL1() error {
+	var l1s []models.ProductCategory
+	if err := db.DB.Where("level = ? AND status = ?", 1, "active").Order("sortOrder ASC, id ASC").Find(&l1s).Error; err != nil {
+		return err
+	}
+	created := 0
+	for _, p := range l1s {
+		var n int64
+		if err := db.DB.Model(&models.ProductCategory{}).Where("parentId = ? AND level = ?", p.ID, 2).Count(&n).Error; err != nil {
+			return err
+		}
+		if n > 0 {
+			continue
+		}
+		pid := p.ID
+		child := models.ProductCategory{
+			Name:      p.Name + "·系列",
+			Level:     2,
+			ParentID:  &pid,
+			SortOrder: 0,
+			Status:    "active",
+			Points:    p.Points,
+		}
+		if err := db.DB.Create(&child).Error; err != nil {
+			log.Printf("[zkwl] ensureL2UnderEveryL1 L1 id=%d: %v", p.ID, err)
+			continue
+		}
+		created++
+	}
+	if created > 0 {
+		log.Printf("[zkwl] ensureL2UnderEveryL1: created %d default L2 row(s)", created)
+	}
+	return nil
+}
+
+// promoteGuidesStillOnL1 在补全二级后，把仍指向一级的指南改到该一级下第一个二级（与前端 /guides?categoryId=二级 一致）。
+func promoteGuidesStillOnL1() error {
+	var guides []models.DeviceGuide
+	if err := db.DB.Where("categoryId IS NOT NULL").Find(&guides).Error; err != nil {
+		return err
+	}
+	fixed := 0
+	for _, g := range guides {
+		if g.CategoryID == nil {
+			continue
+		}
+		var pc models.ProductCategory
+		if err := db.DB.First(&pc, *g.CategoryID).Error; err != nil {
+			continue
+		}
+		if pc.Level == 2 {
+			continue
+		}
+		var l2s []models.ProductCategory
+		db.DB.Where("parentId = ? AND level = ?", pc.ID, 2).Order("sortOrder ASC, id ASC").Find(&l2s)
+		if len(l2s) == 0 {
+			continue
+		}
+		tid := l2s[0].ID
+		if err := db.DB.Model(&models.DeviceGuide{}).Where("id = ?", g.ID).Update("categoryId", tid).Error; err != nil {
+			log.Printf("[zkwl] promoteGuidesStillOnL1 guide id=%d: %v", g.ID, err)
+			continue
+		}
+		fixed++
+	}
+	if fixed > 0 {
+		log.Printf("[zkwl] promoteGuidesStillOnL1: moved %d guide(s) from L1 to L2", fixed)
+	}
+	return nil
+}
+
+func fixInventoryProductCategoryPlaceholders() error {
+	var nBad int64
+	if err := db.DB.Model(&models.InventoryProduct{}).Where("productCategoryId = ?", 0).Count(&nBad).Error; err != nil {
+		return err
+	}
+	if nBad == 0 {
+		return nil
+	}
+	var l2 []models.ProductCategory
+	if err := db.DB.Where("level = ? AND status = ?", 2, "active").Order("id ASC").Find(&l2).Error; err != nil {
+		return err
+	}
+	if len(l2) == 0 {
+		return nil
+	}
+	var rows []models.InventoryProduct
+	if err := db.DB.Where("productCategoryId = ?", 0).Find(&rows).Error; err != nil {
+		return err
+	}
+	for i := range rows {
+		pid := l2[i%len(l2)].ID
+		if err := db.DB.Model(&models.InventoryProduct{}).Where("id = ?", rows[i].ID).Update("productCategoryId", pid).Error; err != nil {
+			log.Printf("[zkwl] fixInventoryProductCategoryPlaceholders id=%d: %v", rows[i].ID, err)
+		}
+	}
+	log.Printf("[zkwl] fixInventoryProductCategoryPlaceholders: reassigned %d row(s)", len(rows))
+	return nil
+}
+
+func randInventorySerial() string {
+	b := make([]byte, 8)
+	_, _ = rand.Read(b)
+	return "ZKWL-" + hex.EncodeToString(b)
+}
+
+func seedInventorySamplesIfSparse() error {
+	var invCount int64
+	if err := db.DB.Model(&models.InventoryProduct{}).Count(&invCount).Error; err != nil {
+		return err
+	}
+	const target = 18
+	if invCount >= target {
+		return nil
+	}
+	var l2 []models.ProductCategory
+	if err := db.DB.Where("level = ? AND status = ?", 2, "active").Order("sortOrder ASC, id ASC").Find(&l2).Error; err != nil {
+		return err
+	}
+	if len(l2) == 0 {
+		return nil
+	}
+	names := []string{
+		"演示样机 α", "演示样机 β", "渠道展示机 01", "渠道展示机 02", "备机 A", "备机 B",
+		"周转机 #1", "周转机 #2", "测试机 T1", "测试机 T2", "展厅样机 S1", "展厅样机 S2",
+		"库存单元 X1", "库存单元 X2", "抽检留样 01", "抽检留样 02", "随机样机 R1", "随机样机 R2",
+	}
+	need := int(target - invCount)
+	if need > len(names) {
+		need = len(names)
+	}
+	added := 0
+	for i := 0; i < need; i++ {
+		cat := l2[i%len(l2)]
+		var serial string
+		for attempt := 0; attempt < 8; attempt++ {
+			serial = randInventorySerial()
+			var ex int64
+			db.DB.Model(&models.InventoryProduct{}).Where("serialNumber = ?", serial).Count(&ex)
+			if ex == 0 {
+				break
+			}
+		}
+		row := models.InventoryProduct{
+			ProductCategoryID: cat.ID,
+			Name:              names[i],
+			SerialNumber:      serial,
+			SortOrder:         i + 1,
+			Status:            "active",
+			Tags:              "演示,种子",
+		}
+		if err := db.DB.Create(&row).Error; err != nil {
+			log.Printf("[zkwl] seedInventorySamplesIfSparse: %v", err)
+			continue
+		}
+		added++
+	}
+	if added > 0 {
+		log.Printf("[zkwl] seedInventorySamplesIfSparse: inserted %d demo inventory row(s)", added)
+	}
+	return nil
+}
+
 func seedDefaultsIfEmpty() error {
 	if err := migrateLegacyProductCategoryHierarchy(); err != nil {
 		log.Printf("[zkwl] migrateLegacyProductCategoryHierarchy: %v", err)
+	}
+	if err := ensureL2UnderEveryL1(); err != nil {
+		log.Printf("[zkwl] ensureL2UnderEveryL1: %v", err)
+	}
+	if err := promoteGuidesStillOnL1(); err != nil {
+		log.Printf("[zkwl] promoteGuidesStillOnL1: %v", err)
 	}
 	var pc int64
 	if err := db.DB.Model(&models.ProductCategory{}).Count(&pc).Error; err != nil {
@@ -200,6 +372,13 @@ func seedDefaultsIfEmpty() error {
 			}
 			log.Println("[DB] Default device guides (partial) created.")
 		}
+	}
+
+	if err := fixInventoryProductCategoryPlaceholders(); err != nil {
+		log.Printf("[zkwl] fixInventoryProductCategoryPlaceholders: %v", err)
+	}
+	if err := seedInventorySamplesIfSparse(); err != nil {
+		log.Printf("[zkwl] seedInventorySamplesIfSparse: %v", err)
 	}
 
 	return nil
