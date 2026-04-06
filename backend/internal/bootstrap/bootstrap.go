@@ -170,6 +170,18 @@ func promoteGuidesStillOnL1() error {
 	return nil
 }
 
+// normalizeMislabeledProductCategories 将「已有 parentId 却仍标为一级」的行纠正为二级（后台误操作数据）。
+func normalizeMislabeledProductCategories() error {
+	res := db.DB.Exec("UPDATE product_categories SET `level` = 2 WHERE `parentId` IS NOT NULL AND `parentId` > 0 AND `level` = 1")
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected > 0 {
+		log.Printf("[zkwl] normalizeMislabeledProductCategories: fixed %d row(s)", res.RowsAffected)
+	}
+	return nil
+}
+
 func ensureInventoryProductCategoryIDColumn() error {
 	var n int64
 	if err := db.DB.Raw(`
@@ -212,7 +224,7 @@ func fixInventoryProductCategoryPlaceholders() error {
 	}
 	for i := range rows {
 		pid := l2[i%len(l2)].ID
-		if err := db.DB.Model(&models.InventoryProduct{}).Where("id = ?", rows[i].ID).Update("productCategoryId", pid).Error; err != nil {
+		if err := db.DB.Model(&models.InventoryProduct{}).Where("id = ?", rows[i].ID).UpdateColumn("productCategoryId", pid).Error; err != nil {
 			log.Printf("[zkwl] fixInventoryProductCategoryPlaceholders id=%d: %v", rows[i].ID, err)
 		}
 	}
@@ -226,7 +238,28 @@ func randInventorySerial() string {
 	return "ZKWL-" + hex.EncodeToString(b)
 }
 
+func firstInventoryCategoryIDForSeed() (int, error) {
+	var ic models.InventoryCategory
+	err := db.DB.Where("status = ?", "active").Order("id ASC").First(&ic).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			row := models.InventoryCategory{Name: "默认", SortOrder: 0, Status: "active"}
+			if err := db.DB.Create(&row).Error; err != nil {
+				return 0, err
+			}
+			return row.ID, nil
+		}
+		return 0, err
+	}
+	return ic.ID, nil
+}
+
 func seedInventorySamplesIfSparse() error {
+	legacyInvCatID, err := firstInventoryCategoryIDForSeed()
+	if err != nil || legacyInvCatID <= 0 {
+		log.Printf("[zkwl] seedInventorySamplesIfSparse: skip inventory legacy category: %v", err)
+		return nil
+	}
 	var invCount int64
 	if err := db.DB.Model(&models.InventoryProduct{}).Count(&invCount).Error; err != nil {
 		return err
@@ -265,7 +298,7 @@ func seedInventorySamplesIfSparse() error {
 		}
 		row := models.InventoryProduct{
 			ProductCategoryID:         cat.ID,
-			InventoryCategoryIDLegacy: 0,
+			InventoryCategoryIDLegacy: legacyInvCatID,
 			Name:                      names[i],
 			SerialNumber:              serial,
 			SortOrder:                 i + 1,
@@ -290,6 +323,9 @@ func seedDefaultsIfEmpty() error {
 	}
 	if err := ensureL2UnderEveryL1(); err != nil {
 		log.Printf("[zkwl] ensureL2UnderEveryL1: %v", err)
+	}
+	if err := normalizeMislabeledProductCategories(); err != nil {
+		log.Printf("[zkwl] normalizeMislabeledProductCategories: %v", err)
 	}
 	if err := promoteGuidesStillOnL1(); err != nil {
 		log.Printf("[zkwl] promoteGuidesStillOnL1: %v", err)

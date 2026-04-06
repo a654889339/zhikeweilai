@@ -7,8 +7,8 @@ type InventoryCategory struct {
 	Name      string    `gorm:"size:100;not null" json:"name"`
 	SortOrder int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status    string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (InventoryCategory) TableName() string { return "inventory_categories" }

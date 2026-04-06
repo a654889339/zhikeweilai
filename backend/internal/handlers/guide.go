@@ -25,14 +25,28 @@ import (
 
 var guideIDNumeric = regexp.MustCompile(`^\d+$`)
 
+// productCategoryHasParent 历史数据可能把「无父级」存成 parentId=0（非 NULL），与 nil 一样视为一级根节点。
+func productCategoryHasParent(parentID *int) bool {
+	if parentID == nil {
+		return false
+	}
+	return *parentID != 0
+}
+
 func categoryToGuideTree(cat models.ProductCategory) gin.H {
+	var parentOut interface{}
+	if productCategoryHasParent(cat.ParentID) {
+		parentOut = *cat.ParentID
+	} else {
+		parentOut = nil
+	}
 	h := gin.H{
 		"id":        cat.ID,
 		"name":      cat.Name,
 		"nameEn":    cat.NameEn,
 		"sortOrder": cat.SortOrder,
 		"level":     cat.Level,
-		"parentId":  cat.ParentID,
+		"parentId":  parentOut,
 	}
 	if cat.ThumbnailURL != nil {
 		h["thumbnailUrl"] = *cat.ThumbnailURL
@@ -52,14 +66,14 @@ func guideCategories(c *gin.Context) {
 	db.DB.Where("status = ?", "active").Order("sortOrder ASC, id ASC").Find(&all)
 	childrenOf := map[int][]models.ProductCategory{}
 	for _, cat := range all {
-		if cat.Level == 2 && cat.ParentID != nil {
+		if cat.Level == 2 && productCategoryHasParent(cat.ParentID) {
 			pid := *cat.ParentID
 			childrenOf[pid] = append(childrenOf[pid], cat)
 		}
 	}
 	out := make([]gin.H, 0)
 	for _, cat := range all {
-		if cat.ParentID != nil {
+		if productCategoryHasParent(cat.ParentID) {
 			continue
 		}
 		if cat.Level != 1 && cat.Level != 0 {
@@ -86,7 +100,7 @@ func validateGuideProductCategoryID(cid *int) error {
 	if err := db.DB.First(&pc, *cid).Error; err != nil {
 		return fmt.Errorf("商品种类不存在")
 	}
-	if pc.Level != 2 || pc.ParentID == nil {
+	if pc.Level != 2 || !productCategoryHasParent(pc.ParentID) {
 		return fmt.Errorf("商品种类必须选择二级分类")
 	}
 	return nil
