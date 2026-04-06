@@ -1562,12 +1562,10 @@ const outletNavItems = [
   {page:'outletMineConfig',label:'个人中心配置'},{page:'outletMessages',label:'留言板'}
 ];
 
+/** 顶栏展示全部 To C 菜单项；敏感操作仍由后端 Admin 中间件校验。此前按 adminOnlyPages 隐藏会导致非 admin 账号看不到「商品配置」等入口。 */
 function renderTopNav(items, activePage) {
   const nav = document.getElementById('dashTopNav');
-  const adminOnlyPages = ['guides','serviceConfig','inventory','courseCenter'];
-  const isAdmin = currentUser && currentUser.role === 'admin';
   nav.innerHTML = items.map(it => {
-    if (adminOnlyPages.includes(it.page) && !isAdmin) return '';
     return `<div class="dash-nav-item${it.page===activePage?' active':''}" data-page="${it.page}" onclick="switchPage('${it.page}')">${it.label}</div>`;
   }).join('');
 }
