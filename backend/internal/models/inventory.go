@@ -16,6 +16,8 @@ func (InventoryCategory) TableName() string { return "inventory_categories" }
 type InventoryProduct struct {
 	ID                int       `gorm:"primaryKey" json:"id"`
 	ProductCategoryID int       `gorm:"column:productCategoryId;not null;default:0;index" json:"productCategoryId"` // 商品配置中的二级种类 ID
+	// 旧「库存种类」列，历史表多为 NOT NULL；新逻辑固定写 0，业务以 ProductCategoryID 为准
+	InventoryCategoryIDLegacy int `gorm:"column:categoryId;not null;default:0" json:"-"`
 	Name              string    `gorm:"size:200;not null" json:"name"`
 	SerialNumber      string    `gorm:"column:serialNumber;size:100;not null;uniqueIndex:serialNumber" json:"serialNumber"`
 	GuideSlug         string    `gorm:"column:guideSlug;size:200" json:"guideSlug"`

@@ -40,8 +40,8 @@ type DeviceGuide struct {
 	EmojiEn            string         `gorm:"size:20" json:"emojiEn"`
 	GradientEn         string         `gorm:"size:300" json:"gradientEn"`
 	Status             string         `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	CreatedAt          time.Time      `json:"createdAt"`
-	UpdatedAt          time.Time      `json:"updatedAt"`
+	CreatedAt          time.Time      `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt          time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
 	Category           *ProductCategory `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
 }
 

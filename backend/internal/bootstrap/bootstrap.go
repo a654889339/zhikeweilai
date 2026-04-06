@@ -93,7 +93,7 @@ func migrateLegacyProductCategoryHierarchy() error {
 			}
 			targetID = child.ID
 		}
-		_ = db.DB.Model(&models.DeviceGuide{}).Where("id = ?", g.ID).Update("categoryId", targetID).Error
+		_ = db.DB.Model(&models.DeviceGuide{}).Where("id = ?", g.ID).UpdateColumn("categoryId", targetID).Error
 	}
 	return nil
 }
@@ -158,7 +158,7 @@ func promoteGuidesStillOnL1() error {
 			continue
 		}
 		tid := l2s[0].ID
-		if err := db.DB.Model(&models.DeviceGuide{}).Where("id = ?", g.ID).Update("categoryId", tid).Error; err != nil {
+		if err := db.DB.Model(&models.DeviceGuide{}).Where("id = ?", g.ID).UpdateColumn("categoryId", tid).Error; err != nil {
 			log.Printf("[zkwl] promoteGuidesStillOnL1 guide id=%d: %v", g.ID, err)
 			continue
 		}
@@ -264,12 +264,13 @@ func seedInventorySamplesIfSparse() error {
 			}
 		}
 		row := models.InventoryProduct{
-			ProductCategoryID: cat.ID,
-			Name:              names[i],
-			SerialNumber:      serial,
-			SortOrder:         i + 1,
-			Status:            "active",
-			Tags:              "演示,种子",
+			ProductCategoryID:         cat.ID,
+			InventoryCategoryIDLegacy: 0,
+			Name:                      names[i],
+			SerialNumber:              serial,
+			SortOrder:                 i + 1,
+			Status:                    "active",
+			Tags:                      "演示,种子",
 		}
 		if err := db.DB.Create(&row).Error; err != nil {
 			log.Printf("[zkwl] seedInventorySamplesIfSparse: %v", err)
