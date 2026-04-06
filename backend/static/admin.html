@@ -3064,7 +3064,9 @@ async function loadCourseCenterCategories() {
     tbody.innerHTML = allCourseCenterCategories.map(function (r) {
       var pid = r.parentId != null ? r.parentId : '—';
       var lv = r.level === 2 ? '二级' : '一级';
-      return '<tr><td>' + r.id + '</td><td>' + lv + '</td><td>' + pid + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(r.key) + '</td><td>' + escCourseCell(r.title) + '</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis" title="' + escCourseCell(r.description || '') + '">' + escCourseCell(r.description || '') + '</td><td>' + (r.sortOrder != null ? r.sortOrder : 0) + '</td><td>' + (r.status === 'active' ? '启用' : '禁用') + '</td><td><button class="detail-btn" onclick="openCourseCategoryEditor(' + r.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCategory(' + r.id + ')">删除</button></td></tr>';
+      var st = r.status === 'active' ? 'active' : 'inactive';
+      var stStyle = r.status === 'active' ? 'background:#D1FAE5;color:#059669' : 'background:#F3F4F6;color:#999';
+      return '<tr><td>' + r.id + '</td><td>' + lv + '</td><td>' + pid + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(r.key) + '</td><td>' + escCourseCell(r.title) + '</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis" title="' + escCourseCell(r.description || '') + '">' + escCourseCell(r.description || '') + '</td><td>' + (r.sortOrder != null ? r.sortOrder : 0) + '</td><td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;' + stStyle + '" onclick="toggleCourseCategoryStatus(' + r.id + ',\'' + st + '\')">' + (r.status === 'active' ? '启用' : '禁用') + '</span></td><td><button class="detail-btn" onclick="openCourseCategoryEditor(' + r.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCategory(' + r.id + ')">删除</button></td></tr>';
     }).join('');
     fillCourseCenterCategorySelect(null);
     fillCourseCategoryParentSelect(null);
@@ -3125,6 +3127,52 @@ async function deleteCourseCategory(id) {
     if (res.code === 0) { loadCourseCenterCategories(); loadCourseCenterItems(); }
     else alert(res.message || '删除失败');
   } catch (e) { alert('删除失败'); }
+}
+
+async function toggleCourseCategoryStatus(id, currentStatus) {
+  var r = (allCourseCenterCategories || []).find(function (x) { return String(x.id) === String(id); });
+  if (!r) return;
+  var newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  var body = {
+    level: r.level,
+    parentId: r.parentId != null ? r.parentId : null,
+    key: r.key || '',
+    title: r.title || '',
+    description: r.description || '',
+    sortOrder: r.sortOrder != null ? r.sortOrder : 0,
+    status: newStatus
+  };
+  try {
+    var res = await api('/course-categories/admin/' + id, { method: 'PUT', body: body });
+    if (res.code === 0) { loadCourseCenterCategories(); loadCourseCenterItems(); }
+    else alert(res.message || '操作失败');
+  } catch (e) { alert('操作失败：' + (e.message || String(e))); }
+}
+
+async function toggleCourseCenterItemStatus(id, currentStatus) {
+  var c = (allCourseCenterItems || []).find(function (x) { return String(x.id) === String(id); });
+  if (!c) return;
+  var newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  var ccid = parseInt(c.courseCategoryId, 10);
+  if (!ccid) { alert('请先编辑该课程并选择二级课程分类后再改状态'); return; }
+  var vids = Array.isArray(c.videos) ? c.videos.slice() : [];
+  var body = {
+    courseCategoryId: ccid,
+    name: c.name || '',
+    slug: c.slug || '',
+    subtitle: c.subtitle || '',
+    icon: c.icon || '',
+    coverImage: c.coverImage || '',
+    videos: vids,
+    description: c.description || '',
+    sortOrder: c.sortOrder != null ? c.sortOrder : 0,
+    status: newStatus
+  };
+  try {
+    var res = await api('/courses/admin/' + id, { method: 'PUT', body: body });
+    if (res.code === 0) loadCourseCenterItems();
+    else alert(res.message || '操作失败');
+  } catch (e) { alert('操作失败：' + (e.message || String(e))); }
 }
 
 function escCourseCell(s) {
@@ -3206,7 +3254,9 @@ async function loadCourseCenterItems() {
       var safeCov = c.coverImage ? String(c.coverImage).replace(/"/g, '') : '';
       var cov = safeCov ? '<img src="' + safeCov + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #eee" alt="" />' : '—';
       var catLabel = (c.courseCategoryId && (c.courseCategoryTitle || c.courseCategoryId)) ? (escCourseCell(String(c.courseCategoryId)) + ' — ' + escCourseCell(c.courseCategoryTitle || '')) : '—';
-      return '<tr><td>' + c.sortOrder + '</td><td>' + catLabel + '</td><td>' + escCourseCell(c.name) + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(c.slug) + '</td><td>' + escCourseCell(c.subtitle) + '</td><td>' + escCourseCell(c.icon) + '</td><td>' + cov + '</td><td>' + vcount + ' 个</td><td>' + (c.status === 'active' ? '启用' : '禁用') + '</td><td><button class="detail-btn" onclick="openCourseCenterEditor(' + c.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCenterItem(' + c.id + ')">删除</button></td></tr>';
+      var cst = c.status === 'active' ? 'active' : 'inactive';
+      var cstStyle = c.status === 'active' ? 'background:#D1FAE5;color:#059669' : 'background:#F3F4F6;color:#999';
+      return '<tr><td>' + c.sortOrder + '</td><td>' + catLabel + '</td><td>' + escCourseCell(c.name) + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(c.slug) + '</td><td>' + escCourseCell(c.subtitle) + '</td><td>' + escCourseCell(c.icon) + '</td><td>' + cov + '</td><td>' + vcount + ' 个</td><td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;' + cstStyle + '" onclick="toggleCourseCenterItemStatus(' + c.id + ',\'' + cst + '\')">' + (c.status === 'active' ? '启用' : '禁用') + '</span></td><td><button class="detail-btn" onclick="openCourseCenterEditor(' + c.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCenterItem(' + c.id + ')">删除</button></td></tr>';
     }).join('');
   } catch (e) {
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#B91C1C">加载失败</td></tr>';

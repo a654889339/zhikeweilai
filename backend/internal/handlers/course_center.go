@@ -87,6 +87,7 @@ func courseCategoryToTree(cat models.CourseCenterCategory) gin.H {
 		"description": cat.Description,
 		"sortOrder":   cat.SortOrder,
 		"level":       cat.Level,
+		"status":      cat.Status,
 	}
 	if productCategoryHasParent(cat.ParentID) {
 		h["parentId"] = *cat.ParentID
@@ -270,7 +271,8 @@ func courseCenterCategoryUpdate(c *gin.Context) {
 	row.Description = body.Description
 	row.SortOrder = body.SortOrder
 	row.Status = body.Status
-	if err := db.DB.Save(&row).Error; err != nil {
+	// 旧库可能存在 createdAt 为 0000-00-00，读入 Go 为零值后 Save 会触发 MySQL 1292
+	if err := db.DB.Omit("CreatedAt").Save(&row).Error; err != nil {
 		resp.Err(c, 500, 500, err.Error())
 		return
 	}
@@ -445,7 +447,7 @@ func courseCenterUpdate(c *gin.Context) {
 	row.Description = body.Description
 	row.SortOrder = body.SortOrder
 	row.Status = body.Status
-	if err := db.DB.Save(&row).Error; err != nil {
+	if err := db.DB.Omit("CreatedAt").Save(&row).Error; err != nil {
 		resp.Err(c, 500, 500, err.Error())
 		return
 	}

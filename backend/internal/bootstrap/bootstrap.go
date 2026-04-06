@@ -68,6 +68,9 @@ func Run() error {
 	if err := ensureCourseCenterItemCourseCategoryIdColumn(); err != nil {
 		log.Printf("[zkwl] ensureCourseCenterItemCourseCategoryIdColumn: %v", err)
 	}
+	if err := ensureCourseCenterValidTimestamps(); err != nil {
+		log.Printf("[zkwl] ensureCourseCenterValidTimestamps: %v", err)
+	}
 
 	return seedDefaultsIfEmpty()
 }
@@ -174,6 +177,23 @@ func ensureCourseCenterItemCourseCategoryIdColumn() error {
 		return nil
 	}
 	return db.DB.Exec("ALTER TABLE `course_center_items` ADD COLUMN `courseCategoryId` INT NOT NULL DEFAULT 0").Error
+}
+
+// ensureCourseCenterValidTimestamps 将 0000-00-00 等无效时间修正为当前时间，避免 GORM 读入后写回触发 1292。
+func ensureCourseCenterValidTimestamps() error {
+	for _, tbl := range []string{"course_center_items", "course_center_categories"} {
+		if err := db.DB.Exec(
+			"UPDATE `" + tbl + "` SET `createdAt` = CURRENT_TIMESTAMP(3) WHERE `createdAt` IS NULL OR `createdAt` < '1971-01-02'",
+		).Error; err != nil {
+			log.Printf("[zkwl] ensureCourseCenterValidTimestamps createdAt %s: %v", tbl, err)
+		}
+		if err := db.DB.Exec(
+			"UPDATE `" + tbl + "` SET `updatedAt` = CURRENT_TIMESTAMP(3) WHERE `updatedAt` IS NULL OR `updatedAt` < '1971-01-02'",
+		).Error; err != nil {
+			log.Printf("[zkwl] ensureCourseCenterValidTimestamps updatedAt %s: %v", tbl, err)
+		}
+	}
+	return nil
 }
 
 // ensureHomeConfigI18nColumns 旧库 home_configs 可能无英文列，GORM Save 会报 Unknown column 'titleEn'。
