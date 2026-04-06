@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vino 管理后台</title>
+<title>科必学管理后台</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;min-height:100vh}
@@ -170,7 +170,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="dashboard" id="dashboard">
   <div class="dash-header">
     <div class="dash-header-logo" id="dashHeaderLogoWrap">
-      <span class="dash-header-brand">Vino 管理后台</span>
+      <span class="dash-header-brand">科必学管理后台</span>
     </div>
     <div class="dash-user">
       <span id="dashUsername"></span>
@@ -189,8 +189,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-nav-item" data-page="orders" onclick="switchPage('orders')">订单管理</div>
     <div class="dash-nav-item" data-page="users" onclick="switchPage('users')">用户管理</div>
     <div class="dash-nav-item" data-page="guides" onclick="switchPage('guides')">商品配置</div>
+    <div class="dash-nav-item" data-page="inventory" onclick="switchPage('inventory')">库存商品配置</div>
+    <div class="dash-nav-item" data-page="courseCenter" onclick="switchPage('courseCenter')">课程中心配置</div>
     <div class="dash-nav-item" data-page="serviceConfig" onclick="switchPage('serviceConfig')">服务配置</div>
-    <div class="dash-nav-item" data-page="inventory" onclick="switchPage('inventory')">商品库存</div>
     <div class="dash-nav-item" data-page="homeConfig" onclick="switchPage('homeConfig')">首页配置</div>
     <div class="dash-nav-item" data-page="homeAnimConfig" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
     <div class="dash-nav-item" data-page="pageThemeConfig" onclick="switchPage('pageThemeConfig')">页面基础配置</div>
@@ -367,6 +368,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- 课程中心配置 Page -->
+    <div class="dash-page" id="page-courseCenter">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>课程管理</h3>
+          <button class="refresh-btn" style="background:#059669" onclick="openCourseCenterEditor()">+ 新增课程</button>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">配置课程中心展示条目（名称、slug、封面、跳转路径等），与「商品配置」中的设备指南相互独立；前台可通过 <code>/api/courses</code> 拉取启用项。</p>
+        <table class="order-table">
+          <thead><tr><th>排序</th><th>名称</th><th>slug</th><th>副标题</th><th>图标</th><th>跳转</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="courseCenterTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="courseCenterEmpty" style="display:none">暂无课程</div>
+      </div>
+    </div>
+
     <!-- 商品配置 Page -->
     <div class="dash-page" id="page-guides">
       <div class="dash-section">
@@ -498,10 +515,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <p style="font-size:13px;color:#666;margin-bottom:0">前台「我的商品」区块的容器背景；条目数据请在上方首页配置中筛选「我的商品」编辑。</p>
       </div>
 
-      <!-- Vino产品（与底部栏同层，选品来自「商品配置 → 商品管理」） -->
+      <!-- 科必学产品（与底部栏同层，选品来自「商品配置 → 商品管理」） -->
       <div class="dash-section" style="margin-top:32px">
         <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
-          <h3>Vino产品 配置</h3>
+          <h3>科必学产品 配置</h3>
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;margin-left:auto;max-width:100%">
             <span style="color:#666;white-space:nowrap">栏目外观·宫格区</span>
             <input type="text" id="hcSkin_vinoProduct_imageUrl" class="form-input" style="width:min(220px,42vw);padding:6px 8px;font-size:12px" placeholder="背景图 URL" />
@@ -522,7 +539,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="order-empty" id="vinoHomeProductEmpty" style="display:none">暂未添加，请从商品管理中选择商品</div>
       </div>
 
-      <!-- 甄选推荐（与 Vino 产品同级，选品与配置方式相同，前台用商品「展示大图」横滑展示） -->
+      <!-- 甄选推荐（与科必学产品同级，选品与配置方式相同，前台用商品「展示大图」横滑展示） -->
       <div class="dash-section" style="margin-top:32px">
         <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
           <h3>甄选推荐 配置</h3>
@@ -535,7 +552,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <button type="button" class="btn" onclick="saveHomeSectionSkin('featuredRecommend')" style="font-size:12px;padding:6px 10px">保存外观</button>
           </div>
         </div>
-        <p style="font-size:13px;color:#666;margin-bottom:16px">从<strong>商品管理</strong>挑选商品，与 Vino 产品配置方式相同；前台展示在「Vino产品」下方，使用商品的<strong>展示大图</strong>（非小图标），支持左右滑动浏览。</p>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">从<strong>商品管理</strong>挑选商品，与科必学产品配置方式相同；前台展示在「科必学产品」下方，使用商品的<strong>展示大图</strong>（非小图标），支持左右滑动浏览。</p>
         <div style="margin-bottom:16px">
           <button class="btn" onclick="openVinoHomeProductEditor(null, 'featuredRecommend')" style="background:#059669;color:#fff">+ 添加商品</button>
         </div>
@@ -546,12 +563,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="order-empty" id="featuredRecommendEmpty" style="display:none">暂未添加甄选推荐商品</div>
       </div>
 
-      <!-- 探索 VINO：单条配置，首页最下方展示 -->
+      <!-- 探索科必学：单条配置，首页最下方展示 -->
       <div class="dash-section" style="margin-top:32px">
         <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
-          <h3>探索 VINO</h3>
+          <h3>探索科必学</h3>
         </div>
-        <p style="font-size:13px;color:#666;margin-bottom:16px">与 Vino 产品、甄选推荐同级；前台展示在<strong>首页最下方</strong>。先选语种，再分别配置标题和背景图。</p>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">与科必学产品、甄选推荐同级；前台展示在<strong>首页最下方</strong>。先选语种，再分别配置标题和背景图。</p>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
           <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">语种</span>
           <select class="form-input" id="exploreVino_lang" style="width:140px" onchange="onExploreVinoLangChange()"><option value="zh">中文</option><option value="en">English</option></select>
@@ -559,11 +576,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div id="exploreVino_zhFields">
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
             <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">栏目标题</span>
-            <input type="text" id="exploreVino_barTitle" class="form-input" style="flex:1;min-width:200px" placeholder="探索VINO" />
+            <input type="text" id="exploreVino_barTitle" class="form-input" style="flex:1;min-width:200px" placeholder="探索科必学" />
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
             <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">卡片大标题</span>
-            <input type="text" id="exploreVino_mainTitle" class="form-input" style="flex:1;min-width:200px" placeholder="VINO" />
+            <input type="text" id="exploreVino_mainTitle" class="form-input" style="flex:1;min-width:200px" placeholder="科必学" />
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
             <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">卡片副标题</span>
@@ -585,11 +602,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div id="exploreVino_enFields" style="display:none">
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
             <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">Bar Title</span>
-            <input type="text" id="exploreVino_barTitleEn" class="form-input" style="flex:1;min-width:200px" placeholder="Explore VINO" />
+            <input type="text" id="exploreVino_barTitleEn" class="form-input" style="flex:1;min-width:200px" placeholder="Explore Kebixue" />
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
             <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">Card Title</span>
-            <input type="text" id="exploreVino_mainTitleEn" class="form-input" style="flex:1;min-width:200px" placeholder="VINO" />
+            <input type="text" id="exploreVino_mainTitleEn" class="form-input" style="flex:1;min-width:200px" placeholder="科必学" />
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
             <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">Subtitle</span>
@@ -612,7 +629,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">跳转链接</span>
           <input type="text" id="exploreVino_link" class="form-input" style="flex:1;min-width:200px" placeholder="https://… 或 /products 等站内路径" />
         </div>
-        <button type="button" class="btn" onclick="saveExploreVinoConfig()" style="background:#059669;color:#fff">保存探索 VINO</button>
+        <button type="button" class="btn" onclick="saveExploreVinoConfig()" style="background:#059669;color:#fff">保存探索科必学</button>
       </div>
     </div>
 
@@ -869,11 +886,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!-- Vino首页产品（选商品管理中的商品） -->
+    <!-- 科必学首页产品（选商品管理中的商品） -->
     <div class="modal-overlay" id="vinoHomeProductModal" style="display:none" onclick="if(event.target===this)closeVinoHomeProductEditor()">
       <div class="modal-content" style="max-width:480px">
         <div class="modal-header">
-          <h3 id="vinoHomeProductModalTitle">添加 Vino 首页商品</h3>
+          <h3 id="vinoHomeProductModalTitle">添加科必学首页商品</h3>
           <span class="modal-close" onclick="closeVinoHomeProductEditor()">&times;</span>
         </div>
         <div class="modal-body">
@@ -1092,6 +1109,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div class="form-group"><label>状态</label><select class="form-input" id="invProductStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
           <div class="form-group"><label>标签 <span style="font-weight:normal;color:#999;font-size:12px">（多个用英文逗号分隔，用于筛选）</span></label><input class="form-input" id="invProductTags" placeholder="如：常用,新品" /></div>
           <button class="submit-btn" onclick="saveInvProduct()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 课程中心：编辑弹窗 -->
+    <div class="modal-overlay" id="courseCenterModal" style="display:none" onclick="if(event.target===this)closeCourseCenterEditor()">
+      <div class="modal-content" style="max-width:520px">
+        <div class="modal-header">
+          <h3 id="courseCenterModalTitle">新增课程</h3>
+          <span class="modal-close" onclick="closeCourseCenterEditor()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="courseCenterEditId" />
+          <div class="form-group"><label>名称 *</label><input class="form-input" id="courseCenterName" placeholder="如：入门课程" /></div>
+          <div class="form-group"><label>slug * <span style="color:#999;font-size:12px">唯一标识</span></label><input class="form-input" id="courseCenterSlug" placeholder="如 intro-course" /></div>
+          <div class="form-group"><label>副标题</label><input class="form-input" id="courseCenterSubtitle" /></div>
+          <div class="form-group"><label>图标（Vant 图标名）</label><input class="form-input" id="courseCenterIcon" placeholder="records" /></div>
+          <div class="form-group"><label>封面图 URL</label><input class="form-input" id="courseCenterCover" placeholder="https://…" /></div>
+          <div class="form-group"><label>跳转路径</label><input class="form-input" id="courseCenterPath" placeholder="/products" /></div>
+          <div class="form-group"><label>描述</label><textarea class="form-input" id="courseCenterDesc" rows="3" style="resize:vertical"></textarea></div>
+          <div class="form-group"><label>排序</label><input type="number" class="form-input" id="courseCenterSort" value="0" /></div>
+          <div class="form-group"><label>状态</label><select class="form-input" id="courseCenterStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
+          <button class="submit-btn" onclick="saveCourseCenterItem()">保存</button>
         </div>
       </div>
     </div>
@@ -1506,12 +1546,13 @@ async function api(path, options = {}) {
 let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
-const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
+const tocPages = ['overview','orders','users','guides','inventory','courseCenter','serviceConfig','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
-  {page:'guides',label:'商品配置'},{page:'serviceConfig',label:'服务配置'},{page:'inventory',label:'商品库存'},
+  {page:'guides',label:'商品配置'},{page:'inventory',label:'库存商品配置'},{page:'courseCenter',label:'课程中心配置'},
+  {page:'serviceConfig',label:'服务配置'},
   {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
   {page:'pageThemeConfig',label:'页面基础配置'},{page:'i18nConfig',label:'语言翻译'},{page:'messages',label:'留言板'}
 ];
@@ -1523,7 +1564,7 @@ const outletNavItems = [
 
 function renderTopNav(items, activePage) {
   const nav = document.getElementById('dashTopNav');
-  const adminOnlyPages = ['guides','serviceConfig','inventory'];
+  const adminOnlyPages = ['guides','serviceConfig','inventory','courseCenter'];
   const isAdmin = currentUser && currentUser.role === 'admin';
   nav.innerHTML = items.map(it => {
     if (adminOnlyPages.includes(it.page) && !isAdmin) return '';
@@ -1563,6 +1604,7 @@ function switchPage(page) {
   if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'serviceConfig') { loadServiceCategories(); loadServices(); }
   if (page === 'inventory') { invProductPage = 1; loadInventoryCategories(); loadInventoryProducts(); }
+  if (page === 'courseCenter') loadCourseCenterItems();
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); loadGuides(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'pageThemeConfig') { currentHCPage = 'pageTheme'; loadHomeConfig(); }
@@ -2841,6 +2883,90 @@ async function deleteGuide(id) {
   } catch { alert('删除失败'); }
 }
 
+/* ===== 课程中心配置 ===== */
+let allCourseCenterItems = [];
+
+function escCourseCell(s) {
+  if (s == null || s === '') return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+}
+
+async function loadCourseCenterItems() {
+  const tbody = document.getElementById('courseCenterTableBody');
+  const empty = document.getElementById('courseCenterEmpty');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#999">加载中...</td></tr>';
+  try {
+    const res = await api('/courses/admin/list');
+    allCourseCenterItems = res.data || [];
+    if (!allCourseCenterItems.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    tbody.innerHTML = allCourseCenterItems.map(function (c) {
+      return '<tr><td>' + c.sortOrder + '</td><td>' + escCourseCell(c.name) + '</td><td style="font-family:monospace;font-size:12px">' + escCourseCell(c.slug) + '</td><td>' + escCourseCell(c.subtitle) + '</td><td>' + escCourseCell(c.icon) + '</td><td style="font-size:12px">' + escCourseCell(c.path) + '</td><td>' + (c.status === 'active' ? '启用' : '禁用') + '</td><td><button class="detail-btn" onclick="openCourseCenterEditor(' + c.id + ')">编辑</button> <button class="history-btn" onclick="deleteCourseCenterItem(' + c.id + ')">删除</button></td></tr>';
+    }).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#B91C1C">加载失败</td></tr>';
+  }
+}
+
+function openCourseCenterEditor(id) {
+  var isEdit = id != null && id !== '';
+  document.getElementById('courseCenterModalTitle').textContent = isEdit ? '编辑课程' : '新增课程';
+  document.getElementById('courseCenterEditId').value = isEdit ? String(id) : '';
+  var c = isEdit ? allCourseCenterItems.find(function (x) { return String(x.id) === String(id); }) : null;
+  document.getElementById('courseCenterName').value = c ? (c.name || '') : '';
+  document.getElementById('courseCenterSlug').value = c ? (c.slug || '') : '';
+  document.getElementById('courseCenterSubtitle').value = c ? (c.subtitle || '') : '';
+  document.getElementById('courseCenterIcon').value = c ? (c.icon || '') : '';
+  document.getElementById('courseCenterCover').value = c ? (c.coverImage || '') : '';
+  document.getElementById('courseCenterPath').value = c ? (c.path || '') : '';
+  document.getElementById('courseCenterDesc').value = c ? (c.description || '') : '';
+  document.getElementById('courseCenterSort').value = c && c.sortOrder != null ? c.sortOrder : 0;
+  document.getElementById('courseCenterStatus').value = c && c.status === 'inactive' ? 'inactive' : 'active';
+  document.getElementById('courseCenterModal').style.display = 'flex';
+}
+
+function closeCourseCenterEditor() {
+  document.getElementById('courseCenterModal').style.display = 'none';
+}
+
+async function saveCourseCenterItem() {
+  var idStr = document.getElementById('courseCenterEditId').value;
+  var body = {
+    name: document.getElementById('courseCenterName').value.trim(),
+    slug: document.getElementById('courseCenterSlug').value.trim(),
+    subtitle: document.getElementById('courseCenterSubtitle').value.trim(),
+    icon: document.getElementById('courseCenterIcon').value.trim(),
+    coverImage: document.getElementById('courseCenterCover').value.trim(),
+    path: document.getElementById('courseCenterPath').value.trim(),
+    description: document.getElementById('courseCenterDesc').value.trim(),
+    sortOrder: parseInt(document.getElementById('courseCenterSort').value, 10) || 0,
+    status: document.getElementById('courseCenterStatus').value
+  };
+  try {
+    var res;
+    if (idStr) res = await api('/courses/admin/' + idStr, { method: 'PUT', body: body });
+    else res = await api('/courses/admin', { method: 'POST', body: body });
+    if (res.code === 0) { closeCourseCenterEditor(); loadCourseCenterItems(); }
+    else alert(res.message || '保存失败');
+  } catch (e) {
+    alert('保存失败：' + (e.message || String(e)));
+  }
+}
+
+async function deleteCourseCenterItem(id) {
+  if (!confirm('确定删除该课程？')) return;
+  try {
+    const res = await api('/courses/admin/' + id, { method: 'DELETE' });
+    if (res.code === 0) loadCourseCenterItems();
+    else alert(res.message || '删除失败');
+  } catch { alert('删除失败'); }
+}
+
 /* ===== 商品库存 ===== */
 let allInvCategories = [];
 let allInvProducts = [];
@@ -3152,9 +3278,9 @@ let hcAnimFilterSection = 'all';
 const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'myProducts'];
 const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
 const PAGE_THEME_PATH_LABELS = { '/': '首页', '/services': '服务', '/products': '产品', '/orders': '订单', '/mine': '我的' };
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', vinoProduct: 'Vino产品', featuredRecommend: '甄选推荐', exploreVino: '探索VINO', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种', homeSectionSkin: '栏目外观', homeSectionOffset: '板块整体偏移' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', vinoProduct: '科必学产品', featuredRecommend: '甄选推荐', exploreVino: '探索科必学', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种', homeSectionSkin: '栏目外观', homeSectionOffset: '板块整体偏移' };
 /** path → 后台保存用标题 */
-const SECTION_SKIN_PATH_LABELS = { homeScroll: '首页内容区', tabbar: '底部栏', vinoProduct: 'Vino产品', featuredRecommend: '甄选推荐', myProducts: '我的商品' };
+const SECTION_SKIN_PATH_LABELS = { homeScroll: '首页内容区', tabbar: '底部栏', vinoProduct: '科必学产品', featuredRecommend: '甄选推荐', myProducts: '我的商品' };
 const SECTION_SKIN_PATHS = ['homeScroll', 'tabbar', 'vinoProduct', 'featuredRecommend', 'myProducts'];
 
 function adminResolvePublicUrl(u) {
@@ -3277,8 +3403,8 @@ async function saveExploreVinoConfig() {
   const existing = (allHCItems || []).find(function (i) { return i.section === 'exploreVino'; });
   const body = {
     section: 'exploreVino',
-    title: el('exploreVino_barTitle') || '探索VINO',
-    icon: el('exploreVino_mainTitle') || 'VINO',
+    title: el('exploreVino_barTitle') || '探索科必学',
+    icon: el('exploreVino_mainTitle') || '科必学',
     desc: el('exploreVino_subTitle'),
     path: el('exploreVino_link'),
     imageUrl: el('exploreVino_imageUrl'),
@@ -3615,8 +3741,8 @@ async function openVinoHomeProductEditor(id, section) {
   document.getElementById('vinoHomePickSection').value = sec;
   document.getElementById('vinoHomeProductEditId').value = id ? String(id) : '';
   document.getElementById('vinoHomeProductModalTitle').textContent = id
-    ? ('编辑 ' + (sec === 'featuredRecommend' ? '甄选推荐' : 'Vino 首页商品'))
-    : ('添加 ' + (sec === 'featuredRecommend' ? '甄选推荐' : 'Vino 首页商品'));
+    ? ('编辑 ' + (sec === 'featuredRecommend' ? '甄选推荐' : '科必学首页商品'))
+    : ('添加 ' + (sec === 'featuredRecommend' ? '甄选推荐' : '科必学首页商品'));
   const sel = document.getElementById('vinoHomeGuideSelect');
   const taken = new Set();
   (allHCItems || []).forEach(function (i) {

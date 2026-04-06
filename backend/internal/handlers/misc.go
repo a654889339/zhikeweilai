@@ -239,7 +239,7 @@ func fetchImageBuffer(ctx context.Context, u string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "Vino-Backend/1.0")
+	req.Header.Set("User-Agent", "Kebixue-Backend/1.0")
 	respHTTP, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err

@@ -1,13 +1,19 @@
+/* 与页面主内容卡片左右边距一致（约 24rpx ≈ 12px） */
 .tab-bar {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 24rpx;
+  right: 24rpx;
+  width: auto;
   height: 100rpx;
+  max-width: 702rpx;
+  margin: 0 auto;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   display: flex;
+  border-radius: 24rpx 24rpx 0 0;
+  overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom);
   box-shadow: 0 -1rpx 0 rgba(0, 0, 0, 0.08);
   z-index: 9999;

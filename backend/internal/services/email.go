@@ -29,9 +29,9 @@ func SendEmailCode(cfg *config.Config, to string) error {
 	}
 	m.SetHeader("From", from)
 	m.SetHeader("To", to)
-	m.SetHeader("Subject", "Vino服务 - 邮箱验证码")
+	m.SetHeader("Subject", "科必学服务 - 邮箱验证码")
 	body := fmt.Sprintf(`<div style="max-width:480px;margin:0 auto;font-family:sans-serif;">
-<div style="background:#B91C1C;color:#fff;padding:20px 24px;border-radius:8px 8px 0 0;"><h2 style="margin:0;">Vino 服务站</h2></div>
+<div style="background:#B91C1C;color:#fff;padding:20px 24px;border-radius:8px 8px 0 0;"><h2 style="margin:0;">科必学服务站</h2></div>
 <div style="border:1px solid #eee;border-top:none;padding:24px;border-radius:0 0 8px 8px;">
 <p>您好，您的邮箱验证码为：</p>
 <div style="text-align:center;margin:24px 0;"><span style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#B91C1C;">%s</span></div>

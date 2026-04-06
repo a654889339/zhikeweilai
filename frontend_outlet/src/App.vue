@@ -86,8 +86,15 @@ onMounted(() => {
 <style scoped>
 /* 提高 z-index，避免被页面内 fixed 或聊天 FAB 下方的触摸层遮挡，解决手机端「产品」等按钮无法点击 */
 :deep(.van-tabbar) {
-  max-width: 750px;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  width: auto;
+  max-width: min(750px, calc(100vw - 24px));
   margin: 0 auto;
+  box-sizing: border-box;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
   z-index: 100;
 }
 :deep(.van-tabbar-item) {

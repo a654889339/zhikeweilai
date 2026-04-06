@@ -43,6 +43,7 @@ func AutoMigrate() error {
 		&models.ProductCategory{},
 		&models.HomeConfig{},
 		&models.DeviceGuide{},
+		&models.CourseCenterItem{},
 		&models.Address{},
 		&models.OutletAddress{},
 		&models.Message{},

@@ -1,28 +1,32 @@
 const app = getApp();
 
+const ORDER_SHORTCUTS = [
+  { key: 'pending', badgeKey: 'pending', label: '待付款', iconChar: '付' },
+  { key: 'paid', badgeKey: 'paid', label: '待发货', iconChar: '发' },
+  { key: 'processing', badgeKey: 'processing', label: '待收货', iconChar: '收' },
+  { key: 'completed', badgeKey: 'completed', label: '待评价', iconChar: '评' },
+  { key: 'cancelled', badgeKey: 'cancelled', label: '退款/售后', iconChar: '退' },
+];
+
 Page({
   data: {
     userInfo: null,
     isLoggedIn: false,
-    avatarInitial: 'V',
+    avatarInitial: '用',
     avatarUrl: '',
-    maskedPhone: '',
+    profileSubtitle: '',
     profileHeaderStyle: 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);',
-    stats: [
-      { label: '待支付', value: 0 },
-      { label: '进行中', value: 0 },
-      { label: '待评价', value: 0 },
-      { label: '售后', value: 0 },
-    ],
-    menus: [
-      { title: '我的订单', icon: '/images/icons/mine-orders.svg', url: '/pages/orders/orders' },
-      { title: '我的商品', icon: '/images/icons/mine-bag.svg', url: '/pages/my-products/my-products' },
-      { title: '地址管理', icon: '/images/icons/mine-location.svg', url: '/pages/address/address' },
-      { title: '优惠券', icon: '/images/icons/mine-bag.svg', url: '' },
-      { title: '意见反馈', icon: '/images/icons/mine-comment.svg', url: '', chat: true },
-      { title: '关于' + (getApp().globalData.companyName || '服务'), icon: '/images/icons/mine-info.svg', url: '', webUrl: 'www.vinotech.cn' },
-      { title: '联系我们', icon: '/images/icons/mine-phone.svg', url: '', contact: true },
-    ],
+    assetPoints: '—',
+    assetCoupons: '—',
+    assetWallet: '—',
+    orderShortcuts: ORDER_SHORTCUTS,
+    orderStats: {
+      pending: 0,
+      paid: 0,
+      processing: 0,
+      completed: 0,
+      cancelled: 0,
+    },
   },
 
   onShow() {
@@ -34,12 +38,12 @@ Page({
   },
 
   loadMineBg() {
-    app.request({ url: '/home-config' }).then(res => {
+    app.request({ url: '/home-config?all=1' }).then((res) => {
       const list = res.data || [];
-      const mineBg = list.find(i => i.section === 'mineBg' && i.status === 'active');
+      const mineBg = list.find((i) => i.section === 'mineBg' && i.status === 'active');
       const style = mineBg && mineBg.imageUrl
         ? 'background-image: url(' + mineBg.imageUrl + '); background-size: cover; background-position: center;'
-        : 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);';
+        : 'background: linear-gradient(160deg, #1d1d1f 0%, #B91C1C 100%);';
       this.setData({ profileHeaderStyle: style });
     }).catch(() => {});
   },
@@ -49,30 +53,90 @@ Page({
     if (isLoggedIn && !app.globalData.userInfo) {
       app
         .request({ url: '/auth/profile' })
-        .then(res => {
+        .then((res) => {
           const user = res.data || {};
           app.globalData.userInfo = user;
           this.applyUserData(user);
+          this.loadOrderStats();
         })
         .catch(() => {
           app.clearToken();
-          this.setData({ userInfo: null, isLoggedIn: false, avatarUrl: '', avatarInitial: 'V' });
+          this.setData({
+            userInfo: null,
+            isLoggedIn: false,
+            avatarUrl: '',
+            avatarInitial: '用',
+            profileSubtitle: '',
+            orderStats: { pending: 0, paid: 0, processing: 0, completed: 0, cancelled: 0 },
+          });
+          this.resetAssets();
         });
     } else {
       const user = app.globalData.userInfo || null;
       if (user) {
         this.applyUserData(user);
+        this.loadOrderStats();
       } else {
-        this.setData({ userInfo: null, isLoggedIn: isLoggedIn, avatarUrl: '', avatarInitial: 'V' });
+        this.setData({
+          userInfo: null,
+          isLoggedIn,
+          avatarUrl: '',
+          avatarInitial: '用',
+          profileSubtitle: '',
+          orderStats: { pending: 0, paid: 0, processing: 0, completed: 0, cancelled: 0 },
+        });
+        this.resetAssets();
       }
     }
   },
 
+  resetAssets() {
+    this.setData({ assetPoints: '—', assetCoupons: '—', assetWallet: '—' });
+  },
+
   applyUserData(user) {
-    const initial = (user.nickname || user.username || 'V').charAt(0);
+    const initial = (user.nickname || user.username || '用').charAt(0);
     const avatarUrl = user.avatar || '';
-    const maskedPhone = user.phone ? user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '';
-    this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial, avatarUrl, maskedPhone });
+    let profileSubtitle = '未绑定手机';
+    if (user.phone) {
+      profileSubtitle = user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+    } else if (user.email) {
+      profileSubtitle = user.email;
+    }
+    const points = user.points != null ? user.points : 0;
+    const coupons = user.couponCount != null ? user.couponCount : 0;
+    const w = user.walletBalance;
+    const n = Number(w);
+    const wallet = Number.isFinite(n) ? n.toFixed(2) : '0.00';
+    this.setData({
+      userInfo: user,
+      isLoggedIn: true,
+      avatarInitial: initial,
+      avatarUrl,
+      profileSubtitle,
+      assetPoints: points,
+      assetCoupons: coupons,
+      assetWallet: wallet,
+    });
+  },
+
+  loadOrderStats() {
+    if (!app.isLoggedIn()) return;
+    app
+      .request({ url: '/orders/mine/stats' })
+      .then((res) => {
+        const d = res.data || {};
+        this.setData({
+          orderStats: {
+            pending: d.pending || 0,
+            paid: d.paid || 0,
+            processing: d.processing || 0,
+            completed: d.completed || 0,
+            cancelled: d.cancelled || 0,
+          },
+        });
+      })
+      .catch(() => {});
   },
 
   onProfileTap() {
@@ -83,42 +147,109 @@ Page({
     }
   },
 
-  onMenuTap(e) {
-    const idx = parseInt(e.currentTarget.dataset.index, 10);
-    const item = this.data.menus[idx] || {};
-    if (item.chat) {
-      wx.navigateTo({ url: '/pages/chat/chat' });
-    } else if (item.webUrl) {
-      wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(item.webUrl) });
-    } else if (item.contact) {
-      wx.showModal({
-        title: '联系我们',
-        content: '客服电话：400-8030-683',
-        cancelText: '复制',
-        confirmText: '立刻拨打',
-        success: (res) => {
-          if (res.confirm) {
-            wx.makePhoneCall({ phoneNumber: '4008030683' });
-          } else {
-            wx.setClipboardData({ data: '400-8030-683', success: () => wx.showToast({ title: '已复制' }) });
-          }
-        },
-      });
-    } else if (item.url) {
-      wx.navigateTo({ url: item.url, fail() { wx.switchTab({ url: item.url }); } });
-    } else {
-      wx.showToast({ title: '功能开发中', icon: 'none' });
+  onAssetTap(e) {
+    const type = e.currentTarget.dataset.type;
+    if (!app.isLoggedIn()) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
     }
+    if (type === 'coupon') {
+      wx.showToast({ title: '购物券详情敬请期待', icon: 'none' });
+    } else if (type === 'wallet') {
+      wx.showToast({ title: '钱包功能敬请期待', icon: 'none' });
+    }
+  },
+
+  goLogin() {
+    wx.navigateTo({ url: '/pages/login/login' });
+  },
+
+  goOrdersAll() {
+    if (!app.isLoggedIn()) {
+      this.goLogin();
+      return;
+    }
+    wx.navigateTo({ url: '/pages/orders/orders' });
+  },
+
+  goOrderShortcut(e) {
+    const key = e.currentTarget.dataset.key;
+    if (!app.isLoggedIn()) {
+      this.goLogin();
+      return;
+    }
+    wx.navigateTo({ url: '/pages/orders/orders?status=' + key });
+  },
+
+  goProducts() {
+    wx.switchTab({ url: '/pages/products/products' });
+  },
+
+  goService() {
+    wx.navigateTo({ url: '/pages/chat/chat' });
+  },
+
+  goSecurity() {
+    if (!app.isLoggedIn()) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
+    wx.navigateTo({ url: '/pages/profile-edit/profile-edit' });
+  },
+
+  /** 我的班级 → 群组 tab（与 H5 /chatgroup 一致） */
+  goMyClass() {
+    if (!app.isLoggedIn()) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
+    wx.switchTab({ url: '/pages/chatgroup/chatgroup' });
+  },
+
+  goMyProducts() {
+    wx.navigateTo({ url: '/pages/my-products/my-products' });
+  },
+
+  goAddress() {
+    wx.navigateTo({ url: '/pages/address/address' });
+  },
+
+  goFeedback() {
+    wx.navigateTo({ url: '/pages/chat/chat' });
+  },
+
+  goContact() {
+    wx.showModal({
+      title: '联系我们',
+      content: '客服电话：400-8030-683',
+      cancelText: '复制',
+      confirmText: '立刻拨打',
+      success: (res) => {
+        if (res.confirm) {
+          wx.makePhoneCall({ phoneNumber: '4008030683' });
+        } else {
+          wx.setClipboardData({ data: '400-8030-683', success: () => wx.showToast({ title: '已复制' }) });
+        }
+      },
+    });
   },
 
   logout() {
     wx.showModal({
       title: '退出登录',
       content: '确定要退出登录吗？',
-      success: res => {
+      success: (res) => {
         if (res.confirm) {
           app.clearToken();
-          this.setData({ userInfo: null, isLoggedIn: false, avatarUrl: '', avatarInitial: 'V' });
+          this.setData({
+            userInfo: null,
+            isLoggedIn: false,
+            avatarUrl: '',
+            avatarInitial: '用',
+            profileSubtitle: '',
+            orderStats: { pending: 0, paid: 0, processing: 0, completed: 0, cancelled: 0 },
+          });
+          this.resetAssets();
           wx.showToast({ title: '已退出', icon: 'success' });
         }
       },

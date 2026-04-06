@@ -1,4 +1,4 @@
-# Vino 服务
+# 科必学服务
 
 一站式服务管理平台，包含 **Web 前端**、**后端 API**、**微信小程序**和**支付宝小程序**，支持服务预约、设备指南、订单管理、收货地址、产品绑定与客服消息等能力。
 
@@ -14,7 +14,7 @@ https://docs.qq.com/doc/DSmtWcm9vZ3RTSkto?no_promotion=1&is_blank_or_template=bl
 ## 项目结构
 
 ```
-Vino_test/
+zhikeweilai/
 ├── frontend/           # Vue3 + Vite 前端（移动端优先）
 │   ├── src/
 │   │   ├── views/      # 页面组件（首页、服务、订单、我的、地址、绑定产品等）

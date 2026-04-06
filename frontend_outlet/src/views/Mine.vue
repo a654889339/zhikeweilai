@@ -31,7 +31,6 @@
 
     <van-cell-group inset class="menu-group">
       <van-cell title="意见反馈" icon="comment-o" is-link @click="openFeedback" />
-      <van-cell :title="`关于${companyName}`" icon="info-o" is-link @click="openAbout" />
       <van-cell title="联系我们" icon="phone-o" is-link @click="openContact" />
     </van-cell-group>
 
@@ -68,7 +67,6 @@ const onProfileHeaderClick = () => {
 };
 
 const mineBgImageUrl = ref('');
-const companyName = ref('智科未来');
 const profileHeaderStyle = computed(() => {
   if (mineBgImageUrl.value) {
     return { backgroundImage: `url(${mineBgImageUrl.value})`, backgroundSize: 'cover', backgroundPosition: 'center' };
@@ -79,8 +77,6 @@ const profileHeaderStyle = computed(() => {
 const openFeedback = () => {
   if (chatWidgetRef.value) chatWidgetRef.value.openWithAutoMessage('');
 };
-const openAbout = () => window.open('https://www.vinotech.cn/', '_blank');
-
 const CONTACT_PHONE = '400-8030-683';
 const openContact = () => {
   showDialog({
@@ -105,8 +101,6 @@ onMounted(async () => {
   try {
     const res = await homeConfigApi.list({ all: 1 });
     const items = res.data || [];
-    const cn = items.find(i => i.section === 'companyName' && i.status === 'active');
-    if (cn && cn.title) companyName.value = String(cn.title).trim() || companyName.value;
     const mineBg = items.find(i => i.section === 'mineBg' && i.status === 'active');
     if (mineBg && mineBg.imageUrl) mineBgImageUrl.value = mineBg.imageUrl;
   } catch (_) {}

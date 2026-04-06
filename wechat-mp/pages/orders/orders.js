@@ -18,10 +18,20 @@ Page({
       { key: 'paid', name: '已支付' },
       { key: 'processing', name: '进行中' },
       { key: 'completed', name: '已完成' },
+      { key: 'cancelled', name: '已取消' },
     ],
     orders: [],
     loading: true,
     statusMap,
+  },
+
+  onLoad(options) {
+    if (options.status) {
+      const idx = this.data.tabs.findIndex((t) => t.key === options.status);
+      if (idx >= 0) {
+        this.setData({ activeTab: idx });
+      }
+    }
   },
 
   onShow() {

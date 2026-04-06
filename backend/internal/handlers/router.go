@@ -71,6 +71,15 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		sc.DELETE("/:id", middleware.Auth(cfg), middleware.Admin(), scatRemove)
 	}
 
+	courses := api.Group("/courses")
+	{
+		courses.GET("/", courseCenterPublicList)
+		courses.GET("/admin/list", middleware.Auth(cfg), middleware.Admin(), courseCenterAdminList)
+		courses.POST("/admin", middleware.Auth(cfg), middleware.Admin(), courseCenterCreate)
+		courses.PUT("/admin/:id", middleware.Auth(cfg), middleware.Admin(), courseCenterUpdate)
+		courses.DELETE("/admin/:id", middleware.Auth(cfg), middleware.Admin(), courseCenterRemove)
+	}
+
 	guides := api.Group("/guides")
 	{
 		guides.GET("/categories", guideCategories)

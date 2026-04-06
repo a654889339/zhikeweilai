@@ -71,7 +71,7 @@
       <div class="tool-item" @click="goProducts"><van-icon name="records" size="22" /><span>我的课程</span></div>
       <div class="tool-item" @click="openFeedback"><van-icon name="service-o" size="22" /><span>客服</span></div>
       <div class="tool-item" @click="goSecurity"><van-icon name="shield-o" size="22" /><span>账号安全</span></div>
-      <div class="tool-item" @click="toastSoon"><van-icon name="friends-o" size="22" /><span>我的班级</span></div>
+      <div class="tool-item" @click="goMyClass"><van-icon name="friends-o" size="22" /><span>我的班级</span></div>
     </div>
 
     <van-cell-group inset class="menu-group">
@@ -81,7 +81,6 @@
 
     <van-cell-group inset class="menu-group">
       <van-cell title="意见反馈" icon="comment-o" is-link @click="openFeedback" />
-      <van-cell :title="`关于${companyName}`" icon="info-o" is-link @click="openAbout" />
       <van-cell title="联系我们" icon="phone-o" is-link @click="openContact" />
     </van-cell-group>
 
@@ -148,7 +147,6 @@ const onProfileHeaderClick = () => {
 };
 
 const mineBgImageUrl = ref('');
-const companyName = ref('智科未来');
 const profileHeaderStyle = computed(() => {
   if (mineBgImageUrl.value) {
     return {
@@ -166,8 +164,6 @@ const loadMineData = async () => {
   try {
     const res = await homeConfigApi.list({ all: 1 });
     const items = res.data || [];
-    const cn = items.find((i) => i.section === 'companyName' && i.status === 'active');
-    if (cn && cn.title) companyName.value = String(cn.title).trim() || companyName.value;
     const mineBg = items.find((i) => i.section === 'mineBg' && i.status === 'active');
     if (mineBg && mineBg.imageUrl) mineBgImageUrl.value = mineBg.imageUrl;
   } catch (_) {}
@@ -206,7 +202,14 @@ const goSecurity = () => {
   router.push('/mine/profile');
 };
 
-const toastSoon = () => showToast('敬请期待');
+/** 我的班级 → 群组（与小程序 tab「群组」一致） */
+const goMyClass = () => {
+  if (!userStore.isLoggedIn) {
+    router.push('/login');
+    return;
+  }
+  router.push('/chatgroup');
+};
 
 const onAssetClick = (type) => {
   if (!userStore.isLoggedIn) {
@@ -221,10 +224,6 @@ const openFeedback = () => {
   if (chatWidgetRef.value) {
     chatWidgetRef.value.openWithAutoMessage('');
   }
-};
-
-const openAbout = () => {
-  window.open('https://www.vinotech.cn/', '_blank');
 };
 
 const CONTACT_PHONE = '400-8030-683';

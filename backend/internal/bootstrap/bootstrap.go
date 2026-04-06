@@ -91,7 +91,7 @@ func seedDefaultsIfEmpty() error {
 	}
 	if hc == 0 {
 		seed := []models.HomeConfig{
-			{Section: "banner", Title: "Vino 品质服务", Desc: "专业·高效·可信赖", Color: "linear-gradient(135deg, #B91C1C, #7F1D1D)", SortOrder: 1, Status: "active"},
+			{Section: "banner", Title: "科必学 品质服务", Desc: "专业·高效·可信赖", Color: "linear-gradient(135deg, #B91C1C, #7F1D1D)", SortOrder: 1, Status: "active"},
 			{Section: "nav", Title: "全部服务", Icon: "apps-o", Path: "/services", Color: "#B91C1C", SortOrder: 1, Status: "active"},
 		}
 		if err := db.DB.Create(&seed).Error; err != nil {

@@ -6,27 +6,102 @@
     </view>
     <view class="profile-info">
       <text class="profile-name">{{isLoggedIn ? (userInfo.nickname || userInfo.username || '用户') : '点击登录'}}</text>
-      <text class="profile-desc">{{isLoggedIn ? (maskedPhone || userInfo.email || '') : '登录享更多权益'}}</text>
+      <text class="profile-desc">{{isLoggedIn ? profileSubtitle : '登录享更多权益'}}</text>
     </view>
   </view>
 
-  <view class="stats-row">
-    <view class="stat-item" wx:for="{{stats}}" wx:key="label">
-      <text class="stat-num">{{item.value}}</text>
-      <text class="stat-label">{{item.label}}</text>
+  <!-- 积分 / 购物券 / 钱包（与 H5 一致） -->
+  <view class="asset-bar">
+    <view class="asset-item" bindtap="onAssetTap" data-type="points">
+      <text class="asset-num">{{assetPoints}}</text>
+      <text class="asset-label">积分</text>
+    </view>
+    <view class="asset-divider" />
+    <view class="asset-item" bindtap="onAssetTap" data-type="coupon">
+      <text class="asset-num">{{assetCoupons}}</text>
+      <text class="asset-label">购物券</text>
+    </view>
+    <view class="asset-divider" />
+    <view class="asset-item" bindtap="onAssetTap" data-type="wallet">
+      <text class="asset-num wallet-num">¥{{assetWallet}}</text>
+      <text class="asset-label">钱包</text>
+    </view>
+  </view>
+
+  <!-- 我的订单 -->
+  <view class="orders-card">
+    <view class="orders-card-head">
+      <text class="orders-title">我的订单</text>
+      <view wx:if="{{isLoggedIn}}" class="orders-all" bindtap="goOrdersAll">
+        <text>查看全部订单</text>
+        <text class="orders-all-arrow">›</text>
+      </view>
+      <view wx:else class="orders-all muted" bindtap="goLogin">
+        <text>查看全部订单</text>
+        <text class="orders-all-arrow">›</text>
+      </view>
+    </view>
+    <view class="orders-shortcuts">
+      <view
+        class="os-item"
+        wx:for="{{orderShortcuts}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        bindtap="goOrderShortcut"
+      >
+        <view class="os-icon-wrap">
+          <view wx:if="{{isLoggedIn && orderStats[item.badgeKey] > 0}}" class="os-badge">
+            {{orderStats[item.badgeKey] > 99 ? '99+' : orderStats[item.badgeKey]}}
+          </view>
+          <text class="os-icon">{{item.iconChar}}</text>
+        </view>
+        <text class="os-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能宫格 -->
+  <view class="tool-grid">
+    <view class="tool-item" bindtap="goProducts">
+      <text class="tool-icon">课</text>
+      <text class="tool-label">我的课程</text>
+    </view>
+    <view class="tool-item" bindtap="goService">
+      <text class="tool-icon">客</text>
+      <text class="tool-label">客服</text>
+    </view>
+    <view class="tool-item" bindtap="goSecurity">
+      <text class="tool-icon">安</text>
+      <text class="tool-label">账号安全</text>
+    </view>
+    <view class="tool-item" bindtap="goMyClass">
+      <text class="tool-icon">班</text>
+      <text class="tool-label">我的班级</text>
     </view>
   </view>
 
   <view class="menu-card">
-    <view
-      class="menu-item"
-      wx:for="{{menus}}"
-      wx:key="title"
-      data-index="{{index}}"
-      bindtap="onMenuTap"
-    >
-      <image class="menu-icon-img" src="{{item.icon}}" mode="aspectFit" />
-      <text class="menu-title">{{item.title}}</text>
+    <view class="menu-item" bindtap="goMyProducts">
+      <image class="menu-icon-img" src="/images/icons/mine-bag.svg" mode="aspectFit" />
+      <text class="menu-title">我的商品</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goAddress">
+      <image class="menu-icon-img" src="/images/icons/mine-location.svg" mode="aspectFit" />
+      <text class="menu-title">地址管理</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="menu-card">
+    <view class="menu-item" bindtap="goFeedback">
+      <image class="menu-icon-img" src="/images/icons/mine-comment.svg" mode="aspectFit" />
+      <text class="menu-title">意见反馈</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goContact">
+      <image class="menu-icon-img" src="/images/icons/mine-phone.svg" mode="aspectFit" />
+      <text class="menu-title">联系我们</text>
       <text class="menu-arrow">›</text>
     </view>
   </view>
