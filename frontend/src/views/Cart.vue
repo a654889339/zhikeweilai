@@ -37,31 +37,11 @@
           合计 <strong>¥ {{ Number(totalPrice).toFixed(2) }}</strong>
           <span class="cart-pts">· 积分 {{ totalPoints }}</span>
         </div>
-        <van-button type="primary" color="#B91C1C" block round class="cart-submit" @click="checkoutOpen = true">
-          下单
+        <van-button type="primary" color="#B91C1C" block round class="cart-submit" @click="goCheckout">
+          去结算
         </van-button>
       </div>
     </template>
-
-    <van-dialog
-      v-model:show="checkoutOpen"
-      title="填写收货与联系信息"
-      :show-confirm-button="false"
-      :show-cancel-button="false"
-    >
-      <div class="checkout-dialog">
-        <van-field v-model="checkoutForm.contactName" label="联系人" placeholder="必填" />
-        <van-field v-model="checkoutForm.contactPhone" label="电话" type="tel" placeholder="必填" />
-        <van-field v-model="checkoutForm.address" label="地址" type="textarea" rows="2" autosize placeholder="选填" />
-        <van-field v-model="checkoutForm.remark" label="备注" type="textarea" rows="2" autosize placeholder="选填" />
-        <div class="checkout-btns">
-          <van-button round block @click="checkoutOpen = false">取消</van-button>
-          <van-button type="primary" color="#B91C1C" round block :loading="submitting" @click="submitOrder">
-            提交订单
-          </van-button>
-        </div>
-      </div>
-    </van-dialog>
   </div>
 </template>
 
@@ -69,21 +49,13 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
-import { authApi, orderApi } from '@/api';
+import { authApi } from '@/api';
 
 const router = useRouter();
 const loading = ref(true);
 const lines = ref([]);
 const totalPrice = ref(0);
 const totalPoints = ref(0);
-const checkoutOpen = ref(false);
-const submitting = ref(false);
-const checkoutForm = ref({
-  contactName: '',
-  contactPhone: '',
-  address: '',
-  remark: '',
-});
 
 async function load() {
   const token = localStorage.getItem('vino_token');
@@ -107,7 +79,7 @@ async function load() {
 }
 
 async function pushCartFromLines() {
-  const items = lines.value.map((x) => ({ guideId: x.guideId, qty: x.qty }));
+  const items = lines.value.map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
   const res = await authApi.putCart({ items });
   const d = res.data || {};
   lines.value = Array.isArray(d.items) ? d.items : [];
@@ -123,29 +95,12 @@ function onQtyChange() {
   }, 300);
 }
 
-async function submitOrder() {
-  const name = checkoutForm.value.contactName.trim();
-  const phone = checkoutForm.value.contactPhone.trim();
-  if (!name || !phone) {
-    showToast('请填写联系人和电话');
+function goCheckout() {
+  if (!lines.value.length) {
+    showToast('购物车为空');
     return;
   }
-  submitting.value = true;
-  try {
-    await orderApi.cartCheckout({
-      contactName: name,
-      contactPhone: phone,
-      address: checkoutForm.value.address.trim(),
-      remark: checkoutForm.value.remark.trim(),
-    });
-    checkoutOpen.value = false;
-    showToast('订单已创建');
-    router.push('/orders');
-  } catch (e) {
-    showToast(e.message || '下单失败');
-  } finally {
-    submitting.value = false;
-  }
+  router.push('/checkout');
 }
 
 onMounted(load);
@@ -198,14 +153,5 @@ onMounted(load);
   max-width: 280px;
   margin-left: auto;
   margin-right: auto;
-}
-.checkout-dialog {
-  padding: 8px 0 0;
-}
-.checkout-btns {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 16px 16px;
 }
 </style>

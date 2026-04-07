@@ -1,0 +1,46 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <block wx:elif="{{!lines.length}}">
+    <view class="empty">购物车是空的</view>
+    <button class="btn" bindtap="goProducts">去选购</button>
+  </block>
+  <scroll-view wx:else scroll-y class="scroll" enhanced show-scrollbar="{{false}}">
+    <view class="block">
+      <text class="bt">商品明细</text>
+      <view wx:for="{{lines}}" wx:key="guideId" class="line">
+        <text class="ln">{{item.name}}</text>
+        <text class="lm">¥{{item.listPrice}} × {{item.qty}} · 积分{{item.rewardPoints}}/件</text>
+        <text class="lt">¥{{item.lineTotal}}</text>
+      </view>
+      <view class="sum">
+        <text>合计 ¥{{totalPrice}}</text>
+        <text class="pts">总积分 {{totalPoints}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{addresses.length}}" class="block">
+      <text class="bt">收货地址</text>
+      <view
+        wx:for="{{addresses}}"
+        wx:key="id"
+        class="addr {{selectedId === item.id ? 'on' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="pickAddr"
+      >
+        <text class="at">{{item.contactName}} {{item.contactPhone}} {{item.isDefault ? '【默认】' : ''}}</text>
+        <text class="ad">{{item._fmt}}</text>
+      </view>
+    </view>
+
+    <view class="block fields">
+      <input class="field" placeholder="收货人（必填）" value="{{contactName}}" data-k="contactName" bindinput="onField" />
+      <input class="field" type="number" placeholder="手机号（必填）" value="{{contactPhone}}" data-k="contactPhone" bindinput="onField" />
+      <textarea class="area" placeholder="收货地址（选填）" value="{{address}}" data-k="address" bindinput="onField" />
+      <textarea class="area" placeholder="备注（选填）" value="{{remark}}" data-k="remark" bindinput="onField" />
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{lines.length}}" class="foot">
+    <button class="submit" loading="{{submitting}}" bindtap="submit">提交订单</button>
+  </view>
+</view>

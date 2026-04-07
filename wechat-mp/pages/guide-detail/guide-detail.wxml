@@ -74,22 +74,11 @@
     </view>
   </block>
 
-  <view class="footer-bar" wx:if="{{guide.id}}">
-    <button class="fb-btn fb-cart" bindtap="goCart">购物车</button>
-    <button class="fb-btn fb-buy" bindtap="openBuy">购买</button>
-    <button class="fb-btn fb-add" bindtap="addToCart">加入购物车</button>
-  </view>
-
-  <view class="buy-mask" wx:if="{{buyShow}}" bindtap="closeBuy">
-    <view class="buy-panel" catchtap="noop">
-      <text class="buy-title">填写订单信息</text>
-      <input class="buy-field" placeholder="联系人（必填）" value="{{buyName}}" data-k="buyName" bindinput="onBuyField" />
-      <input class="buy-field" type="number" placeholder="电话（必填）" value="{{buyPhone}}" data-k="buyPhone" bindinput="onBuyField" />
-      <textarea class="buy-area" placeholder="地址（选填）" value="{{buyAddr}}" data-k="buyAddr" bindinput="onBuyField" />
-      <view class="buy-btns">
-        <button class="buy-cancel" bindtap="closeBuy">取消</button>
-        <button class="buy-ok" bindtap="submitBuy">提交订单</button>
-      </view>
+  <view class="footer-shell" wx:if="{{guide.id}}">
+    <view class="footer-inner">
+      <button class="fb-btn fb-cart" bindtap="goCart">购物车</button>
+      <button class="fb-btn fb-buy" bindtap="openBuy">购买</button>
+      <button class="fb-btn fb-add" bindtap="addToCart">加入购物车</button>
     </view>
   </view>
 </view>

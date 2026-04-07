@@ -6,12 +6,6 @@ Page({
     lines: [],
     totalPrice: 0,
     totalPoints: 0,
-    checkoutShow: false,
-    submitting: false,
-    contactName: '',
-    contactPhone: '',
-    address: '',
-    remark: '',
   },
 
   onShow() {
@@ -50,13 +44,21 @@ Page({
     wx.switchTab({ url: '/pages/products/products' });
   },
 
+  goCheckout() {
+    if (!(this.data.lines || []).length) {
+      wx.showToast({ title: '购物车为空', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({ url: '/pages/checkout/checkout' });
+  },
+
   onQtyInput(e) {
-    const id = e.currentTarget.dataset.id;
+    const id = Number(e.currentTarget.dataset.id);
     let v = parseInt(e.detail.value, 10);
     if (Number.isNaN(v) || v < 1) v = 1;
     if (v > 9999) v = 9999;
     const lines = (this.data.lines || []).map((row) =>
-      row.guideId === id ? { ...row, qty: v } : row
+      Number(row.guideId) === id ? { ...row, qty: v } : row
     );
     this.setData({ lines });
     this.syncCartDebounced();
@@ -69,7 +71,10 @@ Page({
   },
 
   syncCart() {
-    const items = (this.data.lines || []).map((x) => ({ guideId: x.guideId, qty: x.qty }));
+    const items = (this.data.lines || []).map((x) => ({
+      guideId: Number(x.guideId),
+      qty: Number(x.qty) || 1,
+    }));
     app
       .request({ url: '/auth/cart', method: 'PUT', data: { items } })
       .then((res) => {
@@ -81,50 +86,5 @@ Page({
         });
       })
       .catch((err) => wx.showToast({ title: err.message || '更新失败', icon: 'none' }));
-  },
-
-  openCheckout() {
-    this.setData({ checkoutShow: true });
-  },
-
-  closeCheckout() {
-    this.setData({ checkoutShow: false });
-  },
-
-  noop() {},
-
-  onField(e) {
-    const k = e.currentTarget.dataset.k;
-    this.setData({ [k]: e.detail.value });
-  },
-
-  submitOrder() {
-    const name = (this.data.contactName || '').trim();
-    const phone = (this.data.contactPhone || '').trim();
-    if (!name || !phone) {
-      wx.showToast({ title: '请填写联系人和电话', icon: 'none' });
-      return;
-    }
-    this.setData({ submitting: true });
-    app
-      .request({
-        url: '/orders/cart-checkout',
-        method: 'POST',
-        data: {
-          contactName: name,
-          contactPhone: phone,
-          address: (this.data.address || '').trim(),
-          remark: (this.data.remark || '').trim(),
-        },
-      })
-      .then(() => {
-        this.setData({ checkoutShow: false, submitting: false });
-        wx.showToast({ title: '订单已创建' });
-        wx.navigateTo({ url: '/pages/orders/orders' });
-      })
-      .catch((err) => {
-        this.setData({ submitting: false });
-        wx.showToast({ title: err.message || '下单失败', icon: 'none' });
-      });
   },
 });

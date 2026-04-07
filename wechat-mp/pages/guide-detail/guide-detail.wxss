@@ -14,24 +14,35 @@
 .pr-val { font-weight: 700; color: #b91c1c; font-size: 18px; }
 .pr-pts { font-weight: 600; color: #111; }
 
-.footer-bar {
+/* 与 H5 底栏一致：max-width 750rpx + 左右留白 */
+.footer-shell {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 99;
+  width: 100%;
+  max-width: 750rpx;
+  margin: 0 auto;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+}
+.footer-inner {
   display: flex;
-  gap: 8px;
-  padding: 10px 12px;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  gap: 16rpx;
+  align-items: stretch;
+  padding: 20rpx 0;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.96);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 24rpx 24rpx 0 0;
+  box-shadow: 0 -1rpx 8rpx rgba(0, 0, 0, 0.06);
 }
 .fb-btn {
   flex: 1;
-  font-size: 14px;
-  padding: 10px 6px;
-  border-radius: 999px;
+  min-width: 0;
+  font-size: 28rpx;
+  padding: 20rpx 12rpx;
+  border-radius: 999rpx;
   border: none;
   margin: 0;
   line-height: 1.3;
@@ -49,71 +60,6 @@
   background: #b91c1c;
   color: #fff;
   font-weight: 600;
-}
-
-.buy-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 200;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-.buy-panel {
-  width: 100%;
-  background: #fff;
-  border-radius: 16px 16px 0 0;
-  padding: 16px;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom));
-  box-sizing: border-box;
-}
-.buy-title {
-  font-size: 17px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  display: block;
-}
-.buy-field {
-  width: 100%;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  font-size: 15px;
-  box-sizing: border-box;
-}
-.buy-area {
-  width: 100%;
-  min-height: 72px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
-  font-size: 15px;
-  box-sizing: border-box;
-}
-.buy-btns {
-  display: flex;
-  gap: 10px;
-}
-.buy-cancel,
-.buy-ok {
-  flex: 1;
-  border-radius: 999px;
-  padding: 12px;
-  font-size: 15px;
-}
-.buy-cancel {
-  background: #f3f4f6;
-  color: #374151;
-}
-.buy-ok {
-  background: #b91c1c;
-  color: #fff;
 }
 .loading { text-align: center; padding: 60px 0; color: #999; }
 

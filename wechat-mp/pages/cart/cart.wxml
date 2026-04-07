@@ -28,21 +28,7 @@
         合计 <text class="cart-total-num">¥ {{totalPrice}}</text>
         <text class="cart-pts"> · 积分 {{totalPoints}}</text>
       </view>
-      <button class="cart-submit" bindtap="openCheckout">下单</button>
+      <button class="cart-submit" bindtap="goCheckout">去结算</button>
     </view>
   </block>
-
-  <view wx:if="{{checkoutShow}}" class="mask" bindtap="closeCheckout">
-    <view class="panel" catchtap="noop">
-      <text class="panel-title">填写联系信息</text>
-      <input class="field" placeholder="联系人（必填）" value="{{contactName}}" data-k="contactName" bindinput="onField" />
-      <input class="field" type="number" placeholder="电话（必填）" value="{{contactPhone}}" data-k="contactPhone" bindinput="onField" />
-      <textarea class="field area" placeholder="地址（选填）" value="{{address}}" data-k="address" bindinput="onField" />
-      <textarea class="field area" placeholder="备注（选填）" value="{{remark}}" data-k="remark" bindinput="onField" />
-      <view class="panel-btns">
-        <button class="btn-cancel" bindtap="closeCheckout">取消</button>
-        <button class="btn-ok" loading="{{submitting}}" bindtap="submitOrder">提交订单</button>
-      </view>
-    </view>
-  </view>
 </view>

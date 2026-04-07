@@ -17,7 +17,7 @@ type User struct {
 	Points        int     `gorm:"column:points;default:0" json:"points"`
 	CouponCount   int     `gorm:"column:coupon_count;default:0" json:"couponCount"`
 	WalletBalance float64 `gorm:"column:wallet_balance;type:decimal(10,2);default:0" json:"walletBalance"`
-	CartJSON      *string    `gorm:"column:cartJson;type:json" json:"cart,omitempty"`
+	CartJSON      *string    `gorm:"column:cartJson;type:longtext" json:"cart,omitempty"`
 	Role        string     `gorm:"type:enum('user','admin');default:user" json:"role"`
 	Status      string     `gorm:"type:enum('active','disabled');default:active" json:"status"`
 	CreatedAt   time.Time  `json:"createdAt"`

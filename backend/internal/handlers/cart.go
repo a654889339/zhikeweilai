@@ -72,6 +72,35 @@ func mergeCartLines(items []cartLineIn) []cartLineIn {
 	return out
 }
 
+func ensureUsersCartJSONColumn() error {
+	var n int64
+	if err := db.DB.Raw(`
+		SELECT COUNT(*) FROM information_schema.COLUMNS
+		WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'cartJson'
+	`).Scan(&n).Error; err != nil {
+		return err
+	}
+	if n > 0 {
+		return nil
+	}
+	// LONGTEXT 兼容所有 MySQL 版本，避免部分环境下 JSON 类型与 GORM 更新不兼容
+	if err := db.DB.Exec("ALTER TABLE `users` ADD COLUMN `cartJson` LONGTEXT NULL").Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func saveUserCartJSON(userID int, jsonStr string) error {
+	err := db.DB.Exec("UPDATE `users` SET `cartJson` = ? WHERE `id` = ?", jsonStr, userID).Error
+	if err == nil {
+		return nil
+	}
+	if err := ensureUsersCartJSONColumn(); err != nil {
+		return err
+	}
+	return db.DB.Exec("UPDATE `users` SET `cartJson` = ? WHERE `id` = ?", jsonStr, userID).Error
+}
+
 // authGetCart GET /auth/cart
 func authGetCart(c *gin.Context) {
 	u, ok := ctxUser(c)
@@ -142,7 +171,7 @@ func authPutCart(c *gin.Context) {
 		return
 	}
 	s := string(b)
-	if err := db.DB.Model(&models.User{}).Where("id = ?", u.ID).Update("cartJson", s).Error; err != nil {
+	if err := saveUserCartJSON(u.ID, s); err != nil {
 		resp.Err(c, 500, 500, "保存失败")
 		return
 	}
@@ -252,7 +281,6 @@ func orderCartCheckout(c *gin.Context) {
 		resp.Err(c, 500, 500, "创建订单失败")
 		return
 	}
-	empty := "[]"
-	_ = db.DB.Model(&models.User{}).Where("id = ?", u.ID).Update("cartJson", empty)
+	_ = saveUserCartJSON(u.ID, "[]")
 	resp.OK(c, o)
 }

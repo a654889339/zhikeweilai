@@ -1,0 +1,132 @@
+.page {
+  min-height: 100vh;
+  background: #e8e8ed;
+  padding-bottom: 120px;
+  box-sizing: border-box;
+}
+.loading,
+.empty {
+  text-align: center;
+  padding: 80px 24px;
+  color: #6b7280;
+}
+.btn {
+  margin: 0 auto;
+  display: block;
+  width: 240px;
+  background: #b91c1c;
+  color: #fff;
+  border-radius: 999px;
+  padding: 20px;
+}
+.scroll {
+  max-height: calc(100vh - 140px);
+  padding: 24px;
+  box-sizing: border-box;
+}
+.block {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.bt {
+  font-size: 32px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 16px;
+}
+.line {
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 28px;
+}
+.ln {
+  display: block;
+  font-weight: 500;
+}
+.lm {
+  font-size: 24px;
+  color: #6b7280;
+  display: block;
+  margin-top: 8px;
+}
+.lt {
+  display: block;
+  text-align: right;
+  color: #b91c1c;
+  font-weight: 600;
+  margin-top: 8px;
+}
+.sum {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e7eb;
+  font-size: 28px;
+}
+.pts {
+  font-size: 24px;
+  color: #6b7280;
+}
+.addr {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.addr.on {
+  border-color: #b91c1c;
+  background: #fef2f2;
+}
+.at {
+  font-size: 28px;
+  font-weight: 500;
+  display: block;
+}
+.ad {
+  font-size: 24px;
+  color: #6b7280;
+  margin-top: 8px;
+  display: block;
+}
+.fields .field {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  font-size: 28px;
+  box-sizing: border-box;
+}
+.area {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  font-size: 28px;
+  box-sizing: border-box;
+}
+.foot {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px 24px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid #eee;
+}
+.submit {
+  width: 100%;
+  background: #b91c1c;
+  color: #fff;
+  border-radius: 999px;
+  padding: 24px;
+  font-size: 32px;
+  font-weight: 600;
+  border: none;
+}
