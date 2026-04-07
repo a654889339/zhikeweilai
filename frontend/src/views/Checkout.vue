@@ -9,60 +9,64 @@
         <van-button type="primary" color="#B91C1C" round @click="$router.replace('/products')">去选购</van-button>
       </van-empty>
 
-      <div v-else class="checkout-body">
-        <div class="ck-block">
-          <div class="ck-block-title">商品明细</div>
-          <div v-for="row in lines" :key="row.guideId" class="ck-line">
-            <div class="ck-line-name">{{ row.name }}</div>
-            <div class="ck-line-meta">
-              <span>¥{{ Number(row.listPrice).toFixed(2) }} × {{ row.qty }}</span>
-              <span class="ck-line-sub">积分 {{ row.rewardPoints }}/件</span>
+      <template v-else>
+        <div class="checkout-body">
+          <div class="ck-block">
+            <div class="ck-block-title">商品明细</div>
+            <div v-for="row in lines" :key="row.guideId" class="ck-line">
+              <div class="ck-line-name">{{ row.name }}</div>
+              <div class="ck-line-meta">
+                <span>¥{{ Number(row.listPrice).toFixed(2) }} × {{ row.qty }}</span>
+                <span class="ck-line-sub">积分 {{ row.rewardPoints }}/件</span>
+              </div>
+              <div class="ck-line-total">¥{{ Number(row.lineTotal).toFixed(2) }}</div>
             </div>
-            <div class="ck-line-total">¥{{ Number(row.lineTotal).toFixed(2) }}</div>
-          </div>
-          <div class="ck-sum">
-            <span>合计 <strong>¥{{ Number(totalPrice).toFixed(2) }}</strong></span>
-            <span class="ck-sum-pts">总积分 {{ totalPoints }}</span>
-          </div>
-        </div>
-
-        <div v-if="savedAddresses.length" class="ck-block">
-          <div class="ck-block-title">选择收货地址</div>
-          <div
-            v-for="addr in savedAddresses"
-            :key="addr.id"
-            class="addr-pick"
-            :class="{ on: selectedAddrId === addr.id }"
-            @click="applyAddress(addr)"
-          >
-            <div class="addr-pick-top">
-              {{ addr.contactName }} {{ addr.contactPhone }}
-              <van-tag v-if="addr.isDefault" type="primary" color="#B91C1C" size="mini">默认</van-tag>
+            <div class="ck-sum">
+              <span>合计 <strong>¥{{ Number(totalPrice).toFixed(2) }}</strong></span>
+              <span class="ck-sum-pts">总积分 {{ totalPoints }}</span>
             </div>
-            <div class="addr-pick-detail">{{ formatAddr(addr) }}</div>
+          </div>
+
+          <div v-if="savedAddresses.length" class="ck-block">
+            <div class="ck-block-title">选择收货地址</div>
+            <div
+              v-for="addr in savedAddresses"
+              :key="addr.id"
+              class="addr-pick"
+              :class="{ on: selectedAddrId === addr.id }"
+              @click="applyAddress(addr)"
+            >
+              <div class="addr-pick-top">
+                {{ addr.contactName }} {{ addr.contactPhone }}
+                <van-tag v-if="addr.isDefault" type="primary" color="#B91C1C" size="mini">默认</van-tag>
+              </div>
+              <div class="addr-pick-detail">{{ formatAddr(addr) }}</div>
+            </div>
+          </div>
+
+          <van-cell-group inset class="ck-fields">
+            <van-field v-model="form.contactName" label="收货人" placeholder="必填" required />
+            <van-field v-model="form.contactPhone" label="手机号" type="tel" placeholder="必填" required />
+            <van-field
+              v-model="form.address"
+              label="收货地址"
+              type="textarea"
+              rows="2"
+              autosize
+              placeholder="选填，可从上方地址选择自动填充"
+            />
+            <van-field v-model="form.remark" label="备注" type="textarea" rows="2" autosize placeholder="选填" />
+          </van-cell-group>
+        </div>
+
+        <div class="app-fixed-bottom-shell checkout-bottom-bar">
+          <div class="ck-footer">
+            <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submit">
+              提交订单
+            </van-button>
           </div>
         </div>
-
-        <van-cell-group inset class="ck-fields">
-          <van-field v-model="form.contactName" label="收货人" placeholder="必填" required />
-          <van-field v-model="form.contactPhone" label="手机号" type="tel" placeholder="必填" required />
-          <van-field
-            v-model="form.address"
-            label="收货地址"
-            type="textarea"
-            rows="2"
-            autosize
-            placeholder="选填，可从上方地址选择自动填充"
-          />
-          <van-field v-model="form.remark" label="备注" type="textarea" rows="2" autosize placeholder="选填" />
-        </van-cell-group>
-
-        <div class="ck-footer">
-          <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submit">
-            提交订单
-          </van-button>
-        </div>
-      </div>
+      </template>
     </template>
   </div>
 </template>
@@ -190,7 +194,10 @@ onMounted(load);
 .checkout-page {
   min-height: 100vh;
   background: var(--vino-bg);
-  padding-bottom: 32px;
+  padding-bottom: 120px;
+}
+.checkout-bottom-bar {
+  z-index: 100;
 }
 .page-loading {
   padding: 80px 0;
@@ -281,6 +288,10 @@ onMounted(load);
   margin-bottom: 16px;
 }
 .ck-footer {
-  padding: 0 4px;
+  padding: 12px 0;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.98), rgba(248, 248, 250, 0.96));
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.06);
 }
 </style>

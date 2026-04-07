@@ -32,14 +32,16 @@
         </van-cell-group>
       </div>
 
-      <div class="cart-bottom">
-        <div class="cart-total">
-          合计 <strong>¥ {{ Number(totalPrice).toFixed(2) }}</strong>
-          <span class="cart-pts">· 积分 {{ totalPoints }}</span>
+      <div class="app-fixed-bottom-shell">
+        <div class="cart-bottom">
+          <div class="cart-total">
+            合计 <strong>¥ {{ Number(totalPrice).toFixed(2) }}</strong>
+            <span class="cart-pts">· 积分 {{ totalPoints }}</span>
+          </div>
+          <van-button type="primary" color="#B91C1C" block round class="cart-submit" @click="goCheckout">
+            去结算
+          </van-button>
         </div>
-        <van-button type="primary" color="#B91C1C" block round class="cart-submit" @click="goCheckout">
-          去结算
-        </van-button>
       </div>
     </template>
   </div>
@@ -121,12 +123,8 @@ onMounted(load);
   color: var(--vino-text-secondary);
 }
 .cart-bottom {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 100;
-  padding: 12px 16px;
+  position: relative;
+  padding: 12px 0;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
   background: linear-gradient(to top, rgba(255, 255, 255, 0.98), rgba(248, 248, 250, 0.96));
   border-top: 0.5px solid rgba(0, 0, 0, 0.06);

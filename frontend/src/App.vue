@@ -94,10 +94,10 @@ onMounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  max-width: 750px;
+  max-width: var(--app-max-width, 750px);
   width: 100%;
   margin: 0 auto;
-  padding: 0 12px;
+  padding: 0 var(--app-h-padding, 12px);
   box-sizing: border-box;
   z-index: 3000;
   pointer-events: none;

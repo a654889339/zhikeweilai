@@ -48,11 +48,13 @@
         </van-steps>
       </div>
 
-      <div class="detail-footer">
-        <van-button icon="chat-o" type="default" size="small" @click="onConsult">咨询</van-button>
-        <van-button type="primary" color="#B91C1C" block round @click="onBookClick">
-          立即预约
-        </van-button>
+      <div class="app-fixed-bottom-shell">
+        <div class="detail-footer">
+          <van-button icon="chat-o" type="default" size="small" @click="onConsult">咨询</van-button>
+          <van-button type="primary" color="#B91C1C" block round @click="onBookClick">
+            立即预约
+          </van-button>
+        </div>
       </div>
 
       <!-- 下单弹窗 -->
@@ -505,18 +507,14 @@ const submitOrder = async () => {
 }
 
 .detail-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-width: 750px;
-  margin: 0 auto;
+  position: relative;
   background: var(--vino-card);
-  padding: 10px 16px;
+  padding: 10px 0;
   display: flex;
   gap: 10px;
   align-items: center;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 12px 12px 0 0;
 }
 
 .detail-footer .van-button--default {

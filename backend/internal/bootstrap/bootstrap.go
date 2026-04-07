@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"log"
+	"strings"
 
 	"zhikeweilai/backend/internal/db"
 	"zhikeweilai/backend/internal/models"
@@ -71,14 +72,15 @@ func Run() error {
 	if err := ensureCourseCenterValidTimestamps(); err != nil {
 		log.Printf("[zkwl] ensureCourseCenterValidTimestamps: %v", err)
 	}
-	if err := ensureShopCartCommerceColumns(); err != nil {
+	if err := EnsureShopCartCommerceColumns(); err != nil {
 		log.Printf("[zkwl] ensureShopCartCommerceColumns: %v", err)
 	}
 
 	return seedDefaultsIfEmpty()
 }
 
-func ensureShopCartCommerceColumns() error {
+// EnsureShopCartCommerceColumns 确保商城/购物车相关列（启动时与下单前均可调用，幂等）。
+func EnsureShopCartCommerceColumns() error {
 	type colDDL struct {
 		table, column, ddl string
 	}
@@ -86,7 +88,9 @@ func ensureShopCartCommerceColumns() error {
 		{"device_guides", "listPrice", "ALTER TABLE `device_guides` ADD COLUMN `listPrice` DECIMAL(10,2) NOT NULL DEFAULT 0"},
 		{"device_guides", "rewardPoints", "ALTER TABLE `device_guides` ADD COLUMN `rewardPoints` INT NOT NULL DEFAULT 0"},
 		{"users", "cartJson", "ALTER TABLE `users` ADD COLUMN `cartJson` LONGTEXT NULL"},
-		{"orders", "cartItems", "ALTER TABLE `orders` ADD COLUMN `cartItems` JSON NULL"},
+		{"orders", "cartItems", "ALTER TABLE `orders` ADD COLUMN `cartItems` LONGTEXT NULL"},
+		{"orders", "points", "ALTER TABLE `orders` ADD COLUMN `points` INT NOT NULL DEFAULT 0"},
+		{"orders", "points_awarded", "ALTER TABLE `orders` ADD COLUMN `points_awarded` TINYINT(1) NOT NULL DEFAULT 0"},
 	} {
 		var n int64
 		if err := db.DB.Raw(`
@@ -102,6 +106,22 @@ func ensureShopCartCommerceColumns() error {
 			return err
 		}
 		log.Printf("[zkwl] ensureShopCartCommerceColumns: added %s.%s", c.table, c.column)
+	}
+	return ensureOrdersCartItemsLongTextIfJSON()
+}
+
+func ensureOrdersCartItemsLongTextIfJSON() error {
+	var dt string
+	err := db.DB.Raw(`
+		SELECT DATA_TYPE FROM information_schema.COLUMNS
+		WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders' AND COLUMN_NAME = 'cartItems'
+	`).Scan(&dt).Error
+	if err != nil || strings.TrimSpace(dt) == "" {
+		return nil
+	}
+	if strings.EqualFold(strings.TrimSpace(dt), "json") {
+		log.Printf("[zkwl] orders.cartItems: migrate JSON -> LONGTEXT")
+		return db.DB.Exec("ALTER TABLE `orders` MODIFY COLUMN `cartItems` LONGTEXT NULL").Error
 	}
 	return nil
 }

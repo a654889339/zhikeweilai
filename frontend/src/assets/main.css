@@ -1,4 +1,7 @@
 :root {
+  /* 与 App.vue 底部 Tabbar 一致：主内容区最大宽度与水平内边距 */
+  --app-max-width: 750px;
+  --app-h-padding: 12px;
   --vino-primary: #B91C1C;
   --vino-primary-light: #DC2626;
   --vino-dark: #1d1d1f;
@@ -28,7 +31,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'kern';
-  max-width: 750px;
+  max-width: var(--app-max-width);
   margin: 0 auto;
   line-height: 1.47059;
   font-size: 14px;
@@ -65,6 +68,24 @@ h1, h2, h3, h4, h5, h6 {
 
 .fade-enter {
   animation: fadeInUp 0.5s var(--vino-transition) both;
+}
+
+/* 固定底栏：与首页 Tabbar（.app-tabbar-shell）同宽、同左右留白，新页面请套在内容按钮外侧 */
+.app-fixed-bottom-shell {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: var(--app-max-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--app-h-padding);
+  box-sizing: border-box;
+  z-index: 200;
+  pointer-events: none;
+}
+.app-fixed-bottom-shell > * {
+  pointer-events: auto;
 }
 
 /* ===== Mobile Responsive ===== */

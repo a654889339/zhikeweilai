@@ -42,10 +42,12 @@
 
     <van-loading v-if="loading" class="page-loading" size="30" vertical>加载中...</van-loading>
 
-    <div class="add-btn-wrap">
-      <van-button type="primary" color="#B91C1C" block round icon="plus" @click="$router.push('/address/add')">
-        新增地址
-      </van-button>
+    <div class="app-fixed-bottom-shell">
+      <div class="add-btn-wrap">
+        <van-button type="primary" color="#B91C1C" block round icon="plus" @click="$router.push('/address/add')">
+          新增地址
+        </van-button>
+      </div>
     </div>
   </div>
 </template>
@@ -165,15 +167,12 @@ onMounted(loadAddresses);
 }
 .addr-btn.delete { color: #ee0a24; }
 .add-btn-wrap {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-width: 750px;
-  margin: 0 auto;
-  padding: 12px 16px;
+  position: relative;
+  padding: 12px 0;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
   background: #fff;
   box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  border-radius: 12px 12px 0 0;
 }
 .swipe-delete { height: 100%; }
 </style>

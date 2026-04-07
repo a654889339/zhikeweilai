@@ -91,7 +91,7 @@
         <div class="video-close" @click="closeVideo()"><van-icon name="cross" size="24" color="#fff" /></div>
       </div>
     </div>
-    <div class="guide-footer-shell">
+    <div class="app-fixed-bottom-shell guide-footer-z">
       <div class="guide-footer-inner guide-footer-actions">
         <van-button class="gf-btn gf-cart" plain hairline type="default" round @click="goCartPage">购物车</van-button>
         <van-button class="gf-btn gf-buy" type="danger" round @click="buyNow">购买</van-button>
@@ -531,22 +531,8 @@ onMounted(async () => {
   color: var(--vino-dark);
 }
 
-/* 与 App.vue 底栏一致：750px 壳 + 左右 12px，三按钮等分 */
-.guide-footer-shell {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-width: 750px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 12px;
-  box-sizing: border-box;
+.guide-footer-z {
   z-index: 150;
-  pointer-events: none;
-}
-.guide-footer-shell .guide-footer-inner {
-  pointer-events: auto;
 }
 .guide-footer-inner {
   padding: 10px 0;

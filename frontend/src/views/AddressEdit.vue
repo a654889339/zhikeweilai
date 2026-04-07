@@ -65,10 +65,12 @@
         <van-switch v-model="form.isDefault" size="20" active-color="#B91C1C" />
       </div>
 
-      <div class="save-btn-wrap">
-        <van-button type="primary" color="#B91C1C" block round :loading="saving" @click="onSave">
-          保存
-        </van-button>
+      <div class="app-fixed-bottom-shell">
+        <div class="save-btn-wrap">
+          <van-button type="primary" color="#B91C1C" block round :loading="saving" @click="onSave">
+            保存
+          </van-button>
+        </div>
       </div>
     </div>
   </div>
@@ -255,14 +257,11 @@ onMounted(async () => {
 }
 
 .save-btn-wrap {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-width: 750px;
-  margin: 0 auto;
-  padding: 12px 16px;
+  position: relative;
+  padding: 12px 0;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
   background: #fff;
   box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  border-radius: 12px 12px 0 0;
 }
 </style>

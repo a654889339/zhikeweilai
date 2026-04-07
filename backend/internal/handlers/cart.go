@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"strings"
 	"time"
 
+	"zhikeweilai/backend/internal/bootstrap"
 	"zhikeweilai/backend/internal/db"
 	"zhikeweilai/backend/internal/models"
 	"zhikeweilai/backend/internal/resp"
@@ -277,7 +279,11 @@ func orderCartCheckout(c *gin.Context) {
 		Points:          totalPoints,
 		Status:          "pending",
 	}
+	if err := bootstrap.EnsureShopCartCommerceColumns(); err != nil {
+		log.Printf("[zkwl] orderCartCheckout EnsureShopCartCommerceColumns: %v", err)
+	}
 	if err := db.DB.Create(&o).Error; err != nil {
+		log.Printf("[zkwl] orderCartCheckout Create: %v", err)
 		resp.Err(c, 500, 500, "创建订单失败")
 		return
 	}
