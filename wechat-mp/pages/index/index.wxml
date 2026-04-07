@@ -15,7 +15,6 @@
     <view class="hero-overlay">
       <view class="hero-header">
         <image wx:if="{{headerLogoUrl}}" src="{{headerLogoUrl}}" class="hero-logo" mode="aspectFit" />
-        <image wx:else src="../../assets/logo.png" class="hero-logo" mode="aspectFit" />
       </view>
     </view>
   </view>

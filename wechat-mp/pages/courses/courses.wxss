@@ -1,11 +1,21 @@
 @import '../products/products.wxss';
 
-.course-main-mp {
+/* 与 products 主区一致：上方子分类 picker + 下方可滚动列表 */
+.course-main-wrap-mp {
   flex: 1;
   min-width: 0;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
   background: #fafafa;
-  max-height: calc(100vh - 120px);
+}
+
+.course-main-mp {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 .course-grid {

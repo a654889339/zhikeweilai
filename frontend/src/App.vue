@@ -60,14 +60,14 @@ async function loadTabbarConfig() {
 
 onMounted(loadTabbarConfig);
 
-const hiddenTabRoutes = ['/login', '/register', '/address', '/guide/', '/course/'];
+const hiddenTabRoutes = ['/login', '/register', '/address', '/guide/', '/course/', '/cart'];
 const showTabbar = computed(() => {
   return !hiddenTabRoutes.some((r) => route.path.startsWith(r));
 });
 // 首页、产品页、我的页面不显示聊天悬浮按钮（与小程序一致）；组件始终挂载以便「意见反馈」可打开聊天
 const hideChatFab = computed(() => {
   const p = route.path;
-  if (p === '/' || p === '/products' || p === '/courses' || p === '/chatgroup' || p === '/mine') return true;
+  if (p === '/' || p === '/products' || p === '/courses' || p === '/chatgroup' || p === '/mine' || p === '/cart') return true;
   if (p.startsWith('/login') || p.startsWith('/register')) return true;
   return false;
 });

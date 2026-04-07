@@ -66,6 +66,25 @@
       </div>
     </div>
 
+    <!-- 我的购物车（与「我的订单」同级） -->
+    <div class="orders-card">
+      <div class="orders-card-head">
+        <span class="orders-title">我的购物车</span>
+        <router-link class="orders-all" to="/cart">
+          查看购物车
+          <van-icon name="arrow" />
+        </router-link>
+      </div>
+      <div class="orders-shortcuts">
+        <div class="os-item" @click="goCart">
+          <div class="os-icon-wrap">
+            <van-icon name="shopping-cart-o" size="24" />
+          </div>
+          <span class="os-label">购物车</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 功能网格（图3） -->
     <div class="tool-grid">
       <div class="tool-item" @click="goProducts"><van-icon name="records" size="22" /><span>我的课程</span></div>
@@ -187,6 +206,10 @@ const goOrderTab = (status) => {
     return;
   }
   router.push({ path: '/orders', query: { status } });
+};
+
+const goCart = () => {
+  router.push('/cart');
 };
 
 const goProducts = () => {

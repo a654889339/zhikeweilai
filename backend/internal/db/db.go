@@ -59,7 +59,6 @@ func AutoMigrate() error {
 		&models.OutletAddress{},
 		&models.Message{},
 		&models.OutletMessage{},
-		&models.InventoryCategory{},
 		&models.InventoryProduct{},
 		&models.UserProduct{},
 		&models.OutletServiceCategory{},

@@ -9,17 +9,26 @@ Page({
     tempAvatarUrl: '',
     tempNickname: '',
     headerLogoDesc: '',
+    headerLogoUrl: '',
     companyName: '科必学',
   },
 
   onLoad() {
     this.setData({ companyName: app.globalData.companyName || '科必学' });
+    const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '') || '';
+    const toFull = (u) => {
+      if (!u || typeof u !== 'string') return '';
+      const t = u.trim();
+      if (t.startsWith('http')) return t;
+      return base + (t.startsWith('/') ? t : '/' + t);
+    };
     app.request({ url: '/home-config' }).then(res => {
       const list = res.data || [];
       const headerLogo = list.find(i => i.section === 'headerLogo' && i.status === 'active');
-      if (headerLogo && headerLogo.desc) {
-        this.setData({ headerLogoDesc: headerLogo.desc });
-      }
+      const patch = {};
+      if (headerLogo && headerLogo.desc) patch.headerLogoDesc = headerLogo.desc;
+      if (headerLogo && headerLogo.imageUrl) patch.headerLogoUrl = toFull(headerLogo.imageUrl);
+      if (Object.keys(patch).length) this.setData(patch);
     }).catch(() => {});
   },
 

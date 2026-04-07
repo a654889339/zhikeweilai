@@ -172,6 +172,10 @@ Page({
     wx.navigateTo({ url: '/pages/orders/orders' });
   },
 
+  goCart() {
+    wx.navigateTo({ url: '/pages/cart/cart' });
+  },
+
   goOrderShortcut(e) {
     const key = e.currentTarget.dataset.key;
     if (!app.isLoggedIn()) {

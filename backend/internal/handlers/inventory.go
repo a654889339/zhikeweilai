@@ -22,62 +22,6 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func invListCategories(c *gin.Context) {
-	var list []models.InventoryCategory
-	db.DB.Order("sortOrder ASC, id ASC").Find(&list)
-	resp.OK(c, list)
-}
-
-func invCreateCategory(c *gin.Context) {
-	var body struct {
-		Name      string `json:"name"`
-		SortOrder int    `json:"sortOrder"`
-		Status    string `json:"status"`
-	}
-	if err := c.ShouldBindJSON(&body); err != nil || strings.TrimSpace(body.Name) == "" {
-		resp.Err(c, 400, 400, "种类名称不能为空")
-		return
-	}
-	if body.Status == "" {
-		body.Status = "active"
-	}
-	cat := models.InventoryCategory{Name: strings.TrimSpace(body.Name), SortOrder: body.SortOrder, Status: body.Status}
-	db.DB.Create(&cat)
-	resp.OK(c, cat)
-}
-
-func invUpdateCategory(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	var cat models.InventoryCategory
-	if err := db.DB.First(&cat, id).Error; err != nil {
-		resp.Err(c, 404, 404, "种类不存在")
-		return
-	}
-	var body models.InventoryCategory
-	_ = c.ShouldBindJSON(&body)
-	if body.Name != "" {
-		cat.Name = strings.TrimSpace(body.Name)
-	}
-	cat.SortOrder = body.SortOrder
-	if body.Status != "" {
-		cat.Status = body.Status
-	}
-	db.DB.Save(&cat)
-	resp.OK(c, cat)
-}
-
-func invRemoveCategory(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	var cat models.InventoryCategory
-	if err := db.DB.First(&cat, id).Error; err != nil {
-		resp.Err(c, 404, 404, "种类不存在")
-		return
-	}
-	// 库存商品已改为关联「商品配置」二级种类，不再引用本表
-	db.DB.Delete(&cat)
-	resp.OKMsg(c, "删除成功")
-}
-
 func invListProducts(c *gin.Context) {
 	productCategoryID := c.Query("productCategoryId")
 	status := c.Query("status")

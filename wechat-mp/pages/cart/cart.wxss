@@ -1,0 +1,29 @@
+.page {
+  min-height: 100vh;
+  background: #e8e8ed;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+.cart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 80px;
+}
+.cart-empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+.cart-empty-text {
+  font-size: 15px;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+.cart-btn {
+  background: #b91c1c;
+  color: #fff;
+  border-radius: 999px;
+  padding: 12px 48px;
+  font-size: 15px;
+  border: none;
+}

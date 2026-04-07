@@ -7,6 +7,7 @@
     "pages/service/service",
     "pages/orders/orders",
     "pages/mine/mine",
+    "pages/cart/cart",
     "pages/chatgroup-room/chatgroup-room",
     "pages/service-detail/service-detail",
     "pages/guide-detail/guide-detail",

@@ -1,8 +1,8 @@
 <view class="page">
   <view class="login-card">
     <view class="logo-area">
-      <view class="logo-circle">
-          <image src="../../assets/logo.png" class="logo-image" mode="aspectFit" />
+      <view class="logo-circle" wx:if="{{headerLogoUrl}}">
+        <image src="{{headerLogoUrl}}" class="logo-image" mode="aspectFit" />
       </view>
       <text class="app-name">{{companyName}}</text>
       <text class="app-desc">AI - Science - Future</text>

@@ -191,7 +191,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-nav-item" data-page="guides" onclick="switchPage('guides')">商品配置</div>
     <div class="dash-nav-item" data-page="inventory" onclick="switchPage('inventory')">库存商品配置</div>
     <div class="dash-nav-item" data-page="courseCenter" onclick="switchPage('courseCenter')">课程中心配置</div>
-    <div class="dash-nav-item" data-page="serviceConfig" onclick="switchPage('serviceConfig')">服务配置</div>
     <div class="dash-nav-item" data-page="homeConfig" onclick="switchPage('homeConfig')">首页配置</div>
     <div class="dash-nav-item" data-page="homeAnimConfig" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
     <div class="dash-nav-item" data-page="pageThemeConfig" onclick="switchPage('pageThemeConfig')">页面基础配置</div>
@@ -269,66 +268,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!-- 服务配置 Page -->
-    <div class="dash-page" id="page-serviceConfig">
-      <div class="dash-section">
-        <div class="section-header">
-          <h3>币种</h3>
-        </div>
-        <p style="font-size:13px;color:#666;margin-bottom:12px">用于前台服务列表、详情、预约页及订单金额展示。价格为 0 时仅显示数字「0」，不显示币种符号。</p>
-        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px">
-          <label for="serviceCurrencySymbol" style="font-size:14px;color:var(--text)">币种符号</label>
-          <input type="text" id="serviceCurrencySymbol" class="form-input" maxlength="8" placeholder="如 ¥ $ €" style="width:120px;padding:8px 12px" />
-          <button type="button" class="refresh-btn" onclick="saveServiceCurrency()">保存</button>
-        </div>
-      </div>
-      <div class="dash-section">
-        <div class="section-header">
-          <h3>服务种类</h3>
-          <button class="refresh-btn" style="background:#059669" onclick="openServiceCategoryEditor()">+ 新增种类</button>
-        </div>
-        <p style="font-size:13px;color:#666;margin-bottom:12px">先配置种类，再在下方具体服务中为每个服务选择种类。</p>
-        <table class="order-table">
-          <thead><tr><th>ID</th><th>种类名称</th><th>key</th><th>背景色</th><th>透明度</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
-          <tbody id="serviceCategoryTableBody"></tbody>
-        </table>
-      </div>
-      <div class="dash-section" style="margin-top:24px">
-        <div class="section-header">
-          <h3>具体服务</h3>
-          <div style="display:flex;gap:8px">
-            <button class="refresh-btn" onclick="loadServices()">刷新</button>
-            <button class="refresh-btn" style="background:#059669" onclick="openServiceItemEditor()">+ 新增服务</button>
-          </div>
-        </div>
-        <div class="order-filters" style="margin-bottom:12px;flex-wrap:wrap;align-items:center;gap:8px">
-          <span style="font-size:13px;color:#666">种类：</span>
-          <select class="form-input" id="serviceFilterCategoryId" style="width:140px;display:inline-block;padding:6px 10px" onchange="renderServicesTable()">
-            <option value="">全部</option>
-          </select>
-        </div>
-        <table class="order-table">
-          <thead><tr><th>排序</th><th>种类</th><th>名称</th><th>描述</th><th>图标</th><th>价格</th><th>原价</th><th>背景色</th><th>状态</th><th>操作</th></tr></thead>
-          <tbody id="serviceTableBody"></tbody>
-        </table>
-        <div class="order-empty" id="serviceEmpty" style="display:none">暂无具体服务</div>
-      </div>
-    </div>
-
-    <!-- 商品库存 Page -->
+    <!-- 商品库存 Page（种类使用「商品配置」中的二级分类，不再单独维护库存种类） -->
     <div class="dash-page" id="page-inventory">
       <div class="dash-section">
-        <div class="section-header">
-          <h3>库存种类</h3>
-          <button class="refresh-btn" style="background:#059669" onclick="openInvCategoryEditor()">+ 新增种类</button>
-        </div>
-        <p style="font-size:13px;color:#666;margin-bottom:12px">先配置种类，再在下方商品列表中为每个商品选择种类；商品序列号作为 key，用于扫码绑定。</p>
-        <table class="order-table">
-          <thead><tr><th>ID</th><th>种类名称</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
-          <tbody id="invCategoryTableBody"></tbody>
-        </table>
-      </div>
-      <div class="dash-section" style="margin-top:24px">
         <div class="section-header">
           <h3>库存商品</h3>
           <div style="display:flex;gap:8px;align-items:center">
@@ -343,8 +285,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           </div>
         </div>
         <div class="order-filters" style="margin-bottom:12px;flex-wrap:wrap;align-items:center;gap:8px">
-          <span style="font-size:13px;color:#666">种类：</span>
-          <select class="form-input" id="invFilterCategoryId" style="width:140px;display:inline-block;padding:6px 10px" onchange="loadInventoryProducts(true)">
+          <span style="font-size:13px;color:#666">二级种类：</span>
+          <select class="form-input" id="invFilterCategoryId" style="width:200px;display:inline-block;padding:6px 10px" onchange="loadInventoryProducts(true)">
             <option value="">全部</option>
           </select>
           <span style="font-size:13px;color:#666;margin-left:8px">状态：</span>
@@ -456,6 +398,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <!-- Home Config Page -->
     <div class="dash-page" id="page-homeConfig">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>币种</h3>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">用于前台服务列表、详情、预约页及订单金额展示。价格为 0 时仅显示数字「0」，不显示币种符号。</p>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px">
+          <label for="serviceCurrencySymbol" style="font-size:14px;color:var(--text)">币种符号</label>
+          <input type="text" id="serviceCurrencySymbol" class="form-input" maxlength="8" placeholder="如 ¥ $ €" style="width:120px;padding:8px 12px" />
+          <button type="button" class="refresh-btn" onclick="saveServiceCurrency()">保存</button>
+        </div>
+      </div>
       <div class="dash-section">
         <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
           <h3>首页配置管理</h3>
@@ -1098,23 +1051,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!-- 商品库存：种类编辑 -->
-    <div class="modal-overlay" id="invCategoryModal" style="display:none" onclick="if(event.target===this)closeInvCategoryEditor()">
-      <div class="modal-content" style="max-width:400px">
-        <div class="modal-header">
-          <h3 id="invCategoryModalTitle">新增种类</h3>
-          <span class="modal-close" onclick="closeInvCategoryEditor()">&times;</span>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="invCategoryEditId" />
-          <div class="form-group"><label>种类名称 *</label><input class="form-input" id="invCategoryName" placeholder="如：空调" /></div>
-          <div class="form-group"><label>排序</label><input type="number" class="form-input" id="invCategorySort" value="0" /></div>
-          <div class="form-group"><label>状态</label><select class="form-input" id="invCategoryStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
-          <button class="submit-btn" onclick="saveInvCategory()">保存</button>
-        </div>
-      </div>
-    </div>
-
     <!-- 商品库存：商品编辑 -->
     <div class="modal-overlay" id="invProductModal" style="display:none" onclick="if(event.target===this)closeInvProductEditor()">
       <div class="modal-content" style="max-width:480px">
@@ -1214,7 +1150,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="modal-body" style="line-height:1.6;font-size:14px">
           <p style="margin-bottom:12px">请使用与示例一致的列名（第一行为表头）：<strong>种类名称、商品名称、序列号、商品配置、排序、状态、标签</strong>。</p>
           <ul style="margin:0 0 12px 20px;padding:0">
-            <li>种类名称：必须与「库存种类」中已配置的名称完全一致</li>
+            <li>种类名称：须与「商品配置」中<strong>二级种类</strong>的名称完全一致</li>
             <li>商品名称、序列号：必填；序列号不可重复</li>
             <li>商品配置：可选，如 aircondition，用于绑定后跳转</li>
             <li>排序：数字，默认 0</li>
@@ -1240,69 +1176,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <li>可增加「商品名称（选填，仅作对照）」列便于核对，不会参与匹配</li>
           </ul>
           <p style="margin-bottom:16px"><a href="#" id="invProductDeleteHelpDownloadLink" style="color:var(--primary);font-weight:500">下载示例 Excel</a>，填写要删除的序列号后，通过「批量删除」上传即可。</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 服务配置：种类编辑 -->
-    <div class="modal-overlay" id="serviceCategoryModal" style="display:none" onclick="if(event.target===this)closeServiceCategoryEditor()">
-      <div class="modal-content" style="max-width:400px">
-        <div class="modal-header">
-          <h3 id="serviceCategoryModalTitle">新增种类</h3>
-          <span class="modal-close" onclick="closeServiceCategoryEditor()">&times;</span>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="serviceCategoryEditId" />
-          <div class="form-group"><label>语种</label><select class="form-input" id="scLang" onchange="onScLangChange()"><option value="zh">中文</option><option value="en">English</option></select></div>
-          <div id="scLangZh"><div class="form-group"><label>种类名称 *</label><input class="form-input" id="serviceCategoryName" placeholder="如：维修" /></div></div>
-          <div id="scLangEn" style="display:none"><div class="form-group"><label>Category Name (EN)</label><input class="form-input" id="serviceCategoryNameEn" placeholder="e.g. Repair" /></div></div>
-          <div class="form-group"><label>key <span style="font-weight:normal;color:#999;font-size:12px">（可选，如 repair，用于前台分组）</span></label><input class="form-input" id="serviceCategoryKey" placeholder="如：repair" /></div>
-          <div class="form-group"><label>背景色 <span style="font-weight:normal;color:#999;font-size:12px">（可选，如 #2a2a2e）</span></label><input class="form-input" id="serviceCategoryBg" placeholder="#2a2a2e" /></div>
-          <div class="form-group"><label>透明度 <span style="font-weight:normal;color:#999;font-size:12px">（0-100，可选）</span></label><input type="number" class="form-input" id="serviceCategoryBgOpacity" placeholder="100" min="0" max="100" step="1" /></div>
-          <div class="form-group"><label>排序</label><input type="number" class="form-input" id="serviceCategorySort" value="0" /></div>
-          <div class="form-group"><label>状态</label><select class="form-input" id="serviceCategoryStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
-          <button class="submit-btn" onclick="saveServiceCategory()">保存</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 服务配置：具体服务编辑 -->
-    <div class="modal-overlay" id="serviceItemModal" style="display:none" onclick="if(event.target===this)closeServiceItemEditor()">
-      <div class="modal-content" style="max-width:480px">
-        <div class="modal-header">
-          <h3 id="serviceItemModalTitle">新增服务</h3>
-          <span class="modal-close" onclick="closeServiceItemEditor()">&times;</span>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="serviceItemEditId" />
-          <div class="form-group"><label>语种</label><select class="form-input" id="siLang" onchange="onSiLangChange()"><option value="zh">中文</option><option value="en">English</option></select></div>
-          <div id="siLangZh">
-            <div class="form-group"><label>种类 *</label><select class="form-input" id="serviceItemCategoryId"><option value="">请选择种类</option></select></div>
-            <div class="form-group"><label>名称 *</label><input class="form-input" id="serviceItemTitle" placeholder="如：设备维修" /></div>
-            <div class="form-group"><label>描述</label><input class="form-input" id="serviceItemDesc" placeholder="简短描述或详情页描述" /></div>
-            <div class="form-group"><label>图标图片 <span style="font-weight:normal;color:#999;font-size:12px">（上传则前台显示图片，否则显示下方 Vant 图标名）</span></label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input class="form-input" id="serviceItemIconUrl" placeholder="上传或填写图标图片 URL" style="flex:1" />
-                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadServiceIconUrl(this)" /></label>
-              </div>
-              <img id="serviceItemIconPreview" style="width:44px;height:44px;object-fit:contain;border-radius:8px;border:1px solid #eee;margin-top:6px;display:none;background:#f5f5f5" />
-            </div>
-            <div class="form-group"><label>Vant 图标名 <span style="font-weight:normal;color:#999;font-size:12px">（无图标图片时使用）</span></label><input class="form-input" id="serviceItemIcon" placeholder="如 setting-o、location-o" /></div>
-            <div class="form-group"><label>价格</label><input class="form-input" type="number" id="serviceItemPrice" placeholder="99" step="0.01" /></div>
-            <div class="form-group"><label>原价（详情页展示）</label><input class="form-input" type="number" id="serviceItemOriginPrice" placeholder="159" step="0.01" /></div>
-          </div>
-          <div id="siLangEn" style="display:none">
-            <div class="form-group"><label>Title (EN)</label><input class="form-input" id="serviceItemTitleEn" placeholder="e.g. Device Repair" /></div>
-            <div class="form-group"><label>Description (EN)</label><input class="form-input" id="serviceItemDescEn" placeholder="English description" /></div>
-            <div class="form-group"><label>Price (EN)</label><input class="form-input" type="number" id="serviceItemPriceEn" placeholder="99" step="0.01" /></div>
-            <div class="form-group"><label>Original Price (EN)</label><input class="form-input" type="number" id="serviceItemOriginPriceEn" placeholder="159" step="0.01" /></div>
-            <div class="form-group"><label>Currency (EN)</label><input class="form-input" id="serviceItemCurrencyEn" placeholder="$ or €" /></div>
-          </div>
-          <div class="form-group"><label>背景色</label><input class="form-input" id="serviceItemBg" placeholder="#B91C1C" /></div>
-          <div class="form-group"><label>透明度 <span style="font-weight:normal;color:#999;font-size:12px">（0-100，100 为不透明，用于前台服务详情头部背景）</span></label><input class="form-input" type="number" id="serviceItemBgOpacity" placeholder="100" min="0" max="100" step="1" /></div>
-          <div class="form-group"><label>排序</label><input type="number" class="form-input" id="serviceItemSort" value="0" /></div>
-          <div class="form-group"><label>状态</label><select class="form-input" id="serviceItemStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
-          <button class="submit-btn" onclick="saveServiceItem()">保存</button>
         </div>
       </div>
     </div>
@@ -1418,41 +1291,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </table>
         <div class="order-empty" id="outletUserEmpty" style="display:none">暂无用户</div>
         <div class="pagination" id="outletUserPagination"></div>
-      </div>
-    </div>
-
-    <!-- Outlet Home Config -->
-    <div class="dash-page" id="page-outletServiceConfig">
-      <div class="dash-section">
-        <div class="section-header">
-          <h3>服务商服务种类</h3>
-          <button class="refresh-btn" style="background:#059669" onclick="openOutletServiceCategoryEditor()">+ 新增种类</button>
-        </div>
-        <p style="font-size:13px;color:#666;margin-bottom:12px">先配置服务种类，再在下方具体服务中为每个服务选择种类。</p>
-        <table class="order-table">
-          <thead><tr><th>ID</th><th>种类名称</th><th>key</th><th>背景色</th><th>透明度</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
-          <tbody id="outletServiceCategoryTableBody"></tbody>
-        </table>
-      </div>
-      <div class="dash-section" style="margin-top:24px">
-        <div class="section-header">
-          <h3>服务商具体服务</h3>
-          <div style="display:flex;gap:8px">
-            <button class="refresh-btn" onclick="loadOutletServices()">刷新</button>
-            <button class="refresh-btn" style="background:#059669" onclick="openOutletServiceItemEditor()">+ 新增服务</button>
-          </div>
-        </div>
-        <div class="order-filters" style="margin-bottom:12px;flex-wrap:wrap;align-items:center;gap:8px">
-          <span style="font-size:13px;color:#666">种类：</span>
-          <select class="form-input" id="outletServiceFilterCategoryId" style="width:140px;display:inline-block;padding:6px 10px" onchange="renderOutletServicesTable()">
-            <option value="">全部</option>
-          </select>
-        </div>
-        <table class="order-table">
-          <thead><tr><th>排序</th><th>种类</th><th>名称</th><th>描述</th><th>图标</th><th>价格</th><th>原价</th><th>背景色</th><th>状态</th><th>操作</th></tr></thead>
-          <tbody id="outletServiceTableBody"></tbody>
-        </table>
-        <div class="order-empty" id="outletServiceEmpty" style="display:none">暂无具体服务</div>
       </div>
     </div>
 
@@ -1614,19 +1452,18 @@ async function api(path, options = {}) {
 let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
-const tocPages = ['overview','orders','users','guides','inventory','courseCenter','serviceConfig','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
+const tocPages = ['overview','orders','users','guides','inventory','courseCenter','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
   {page:'guides',label:'商品配置'},{page:'inventory',label:'库存商品配置'},{page:'courseCenter',label:'课程中心配置'},
-  {page:'serviceConfig',label:'服务配置'},
   {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
   {page:'pageThemeConfig',label:'页面基础配置'},{page:'i18nConfig',label:'语言翻译'},{page:'messages',label:'留言板'}
 ];
 const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
-  {page:'outletServiceConfig',label:'服务配置'},{page:'outletHomeConfig',label:'首页配置'},{page:'outletHomeAnimConfig',label:'首页动画配置'},
+  {page:'outletHomeConfig',label:'首页配置'},{page:'outletHomeAnimConfig',label:'首页动画配置'},
   {page:'outletMineConfig',label:'个人中心配置'},{page:'outletMessages',label:'留言板'}
 ];
 
@@ -1668,8 +1505,7 @@ function switchPage(page) {
   if (page === 'orders') loadOrders();
   if (page === 'users') { userPage = 1; loadUsers(); }
   if (page === 'guides') { loadCategories(); loadGuides(); }
-  if (page === 'serviceConfig') { loadServiceCategories(); loadServices(); }
-  if (page === 'inventory') { invProductPage = 1; loadCategories().then(function () { loadInventoryCategories(); loadInventoryProducts(); }); }
+  if (page === 'inventory') { invProductPage = 1; loadCategories().then(function () { loadInventoryProducts(); }); }
   if (page === 'courseCenter') { loadCourseCenterCategories(); loadCourseCenterItems(); }
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); loadGuides(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
@@ -1680,7 +1516,6 @@ function switchPage(page) {
   if (page === 'outletOverview') { loadOutletStats(); loadPageVisitStats(); }
   if (page === 'outletOrders') { outletOrderPage = 1; loadOutletOrders(); }
   if (page === 'outletUsers') { outletUserPage = 1; loadOutletUsers(); }
-  if (page === 'outletServiceConfig') { loadOutletServiceCategories(); loadOutletServices(); }
   if (page === 'outletHomeConfig') { outletCurrentHCPage = 'homeConfig'; loadOutletHomeConfig(); }
   if (page === 'outletHomeAnimConfig') { outletCurrentHCPage = 'homeAnimConfig'; loadOutletHomeAnimConfig(); }
   if (page === 'outletMineConfig') loadOutletMineConfig();
@@ -2420,9 +2255,7 @@ async function uploadCategoryThumbnailEn(input) {
   input.value = '';
 }
 
-// ---------- 服务配置 ----------
-let allServiceCategories = [];
-let allServices = [];
+// ---------- 币种 / 订单金额展示 ----------
 let adminCurrencySymbol = '¥';
 let serviceCurrencyConfigId = null;
 
@@ -2465,212 +2298,6 @@ async function saveServiceCurrency() {
       alert('已保存');
     } else alert(res.message || '保存失败');
   } catch (_) { alert('保存失败'); }
-}
-
-async function loadServiceCategories() {
-  await loadServiceCurrency();
-  const tbody = document.getElementById('serviceCategoryTableBody');
-  if (!tbody) return;
-  try {
-    const res = await api('/service-categories');
-    if (res.code === 0) {
-      allServiceCategories = res.data || [];
-      tbody.innerHTML = allServiceCategories.map(c => `<tr>
-        <td>${c.id}</td>
-        <td><strong>${c.name}</strong></td>
-        <td style="font-size:12px;color:#666;font-family:monospace">${c.key || '-'}</td>
-        <td><span style="display:inline-block;width:20px;height:20px;border-radius:4px;border:1px solid #eee;background:${c.bg||'transparent'}"></span> <span style="font-size:12px;color:#666">${c.bg||'-'}</span></td>
-        <td style="font-size:12px;color:#666">${c.bgOpacity != null ? c.bgOpacity : '-'}</td>
-        <td>${c.sortOrder}</td>
-        <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${c.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${c.status==='active'?'启用':'禁用'}</span></td>
-        <td>
-          <button class="detail-btn" onclick="openServiceCategoryEditor(${c.id})">编辑</button>
-          <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteServiceCategory(${c.id})">删除</button>
-        </td>
-      </tr>`).join('');
-      if (!allServiceCategories.length) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
-    }
-  } catch { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>'; }
-}
-
-async function loadServices() {
-  const tbody = document.getElementById('serviceTableBody');
-  const empty = document.getElementById('serviceEmpty');
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
-  try {
-    const res = await api('/services/admin/list');
-    if (res.code === 0) {
-      allServices = res.data || [];
-      var sel = document.getElementById('serviceFilterCategoryId');
-      if (sel && sel.options.length <= 1) {
-        sel.innerHTML = '<option value="">全部</option>' + (allServiceCategories || []).map(c => '<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>').join('');
-      }
-      renderServicesTable();
-    }
-  } catch { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; document.getElementById('serviceEmpty').style.display = 'none'; }
-}
-
-function renderServicesTable() {
-  const tbody = document.getElementById('serviceTableBody');
-  const empty = document.getElementById('serviceEmpty');
-  if (!tbody) return;
-  var filterId = document.getElementById('serviceFilterCategoryId');
-  var categoryId = filterId ? filterId.value : '';
-  var list = !categoryId ? allServices : allServices.filter(s => String(s.categoryId) === String(categoryId));
-  if (!list.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
-  empty.style.display = 'none';
-  tbody.innerHTML = list.map(s => `<tr>
-    <td>${s.sortOrder}</td>
-    <td style="font-size:12px;color:#666">${s.serviceCategory ? s.serviceCategory.name : '-'}</td>
-    <td><strong>${s.title}</strong></td>
-    <td style="font-size:12px;color:#666;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(s.description||'')}">${(s.description||'').slice(0,24)}${(s.description||'').length>24?'…':''}</td>
-    <td>${s.iconUrl ? '<img src="'+escapeHtml(s.iconUrl)+'" style="width:32px;height:32px;object-fit:contain;border-radius:6px;vertical-align:middle" />' : (s.icon ? s.icon : '-')}</td>
-    <td>${formatAdminPrice(s.price)}</td>
-    <td style="font-size:12px;color:#999">${s.originPrice != null ? formatAdminPrice(s.originPrice) : '-'}</td>
-    <td><span style="display:inline-block;width:20px;height:20px;border-radius:4px;border:1px solid #eee;background:${s.bg||'#B91C1C'}"></span></td>
-    <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${s.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${s.status==='active'?'启用':'禁用'}</span></td>
-    <td>
-      <button class="detail-btn" onclick="editServiceItem(${s.id})">编辑</button>
-      <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteServiceItem(${s.id})">删除</button>
-    </td>
-  </tr>`).join('');
-}
-
-function openServiceCategoryEditor(id) {
-  const c = id ? allServiceCategories.find(x => x.id === id) : null;
-  document.getElementById('serviceCategoryEditId').value = c ? c.id : '';
-  document.getElementById('serviceCategoryModalTitle').textContent = c ? '编辑种类' : '新增种类';
-  document.getElementById('serviceCategoryName').value = c ? c.name : '';
-  document.getElementById('serviceCategoryNameEn').value = c ? (c.nameEn || '') : '';
-  document.getElementById('serviceCategoryKey').value = c ? (c.key || '') : '';
-  document.getElementById('serviceCategoryBg').value = c ? (c.bg || '') : '';
-  document.getElementById('serviceCategoryBgOpacity').value = c && c.bgOpacity != null ? c.bgOpacity : '';
-  document.getElementById('serviceCategorySort').value = c ? c.sortOrder : 0;
-  document.getElementById('serviceCategoryStatus').value = c ? c.status : 'active';
-  document.getElementById('scLang').value = 'zh';
-  onScLangChange();
-  document.getElementById('serviceCategoryModal').style.display = 'flex';
-}
-function onScLangChange() {
-  var lang = document.getElementById('scLang').value;
-  document.getElementById('scLangZh').style.display = lang === 'zh' ? '' : 'none';
-  document.getElementById('scLangEn').style.display = lang === 'en' ? '' : 'none';
-}
-
-function closeServiceCategoryEditor() { document.getElementById('serviceCategoryModal').style.display = 'none'; }
-
-async function saveServiceCategory() {
-  const id = document.getElementById('serviceCategoryEditId').value;
-  const name = document.getElementById('serviceCategoryName').value.trim();
-  if (!name) { alert('请填写种类名称'); return; }
-  const bg = document.getElementById('serviceCategoryBg').value.trim();
-  const bgOpacity = document.getElementById('serviceCategoryBgOpacity').value;
-  const body = {
-    name,
-    nameEn: (document.getElementById('serviceCategoryNameEn').value || '').trim() || undefined,
-    key: document.getElementById('serviceCategoryKey').value.trim() || undefined,
-    bg: bg || undefined,
-    bgOpacity: (bgOpacity != null && String(bgOpacity).trim() !== '') ? bgOpacity : null,
-    sortOrder: parseInt(document.getElementById('serviceCategorySort').value, 10) || 0,
-    status: document.getElementById('serviceCategoryStatus').value,
-  };
-  try {
-    const res = id
-      ? await api('/service-categories/' + id, { method: 'PUT', body })
-      : await api('/service-categories', { method: 'POST', body });
-    if (res.code === 0) { closeServiceCategoryEditor(); loadServiceCategories(); loadServices(); }
-    else alert(res.message || '保存失败');
-  } catch (e) { alert('保存失败'); }
-}
-
-async function deleteServiceCategory(id) {
-  if (!confirm('确定删除该种类？其下无具体服务时才能删除。')) return;
-  try {
-    const res = await api('/service-categories/' + id, { method: 'DELETE' });
-    if (res.code === 0) { loadServiceCategories(); loadServices(); }
-    else alert(res.message || '删除失败');
-  } catch { alert('删除失败'); }
-}
-
-function openServiceItemEditor(id) {
-  const sel = document.getElementById('serviceItemCategoryId');
-  sel.innerHTML = '<option value="">请选择种类</option>' + (allServiceCategories || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  const s = id ? allServices.find(x => x.id === id) : null;
-  document.getElementById('serviceItemEditId').value = s ? s.id : '';
-  document.getElementById('serviceItemModalTitle').textContent = s ? '编辑服务' : '新增服务';
-  document.getElementById('serviceItemCategoryId').value = s ? (s.categoryId || '') : '';
-  document.getElementById('serviceItemTitle').value = s ? s.title : '';
-  document.getElementById('serviceItemDesc').value = s ? (s.description || '') : '';
-  document.getElementById('serviceItemIconUrl').value = s ? (s.iconUrl || '') : '';
-  var iconPreview = document.getElementById('serviceItemIconPreview');
-  if (iconPreview) { iconPreview.src = s && s.iconUrl ? s.iconUrl : ''; iconPreview.style.display = s && s.iconUrl ? 'block' : 'none'; }
-  document.getElementById('serviceItemIcon').value = s ? (s.icon || '') : '';
-  document.getElementById('serviceItemPrice').value = s != null && s.price != null ? s.price : '';
-  document.getElementById('serviceItemOriginPrice').value = s != null && s.originPrice != null ? s.originPrice : '';
-  document.getElementById('serviceItemTitleEn').value = s ? (s.titleEn || '') : '';
-  document.getElementById('serviceItemDescEn').value = s ? (s.descriptionEn || '') : '';
-  document.getElementById('serviceItemPriceEn').value = s != null && s.priceEn != null ? s.priceEn : '';
-  document.getElementById('serviceItemOriginPriceEn').value = s != null && s.originPriceEn != null ? s.originPriceEn : '';
-  document.getElementById('serviceItemCurrencyEn').value = s ? (s.currencyEn || '') : '';
-  document.getElementById('serviceItemBg').value = s ? (s.bg || '#B91C1C') : '#B91C1C';
-  document.getElementById('serviceItemBgOpacity').value = s != null && s.bgOpacity != null ? s.bgOpacity : '';
-  document.getElementById('serviceItemSort').value = s ? s.sortOrder : 0;
-  document.getElementById('serviceItemStatus').value = s ? s.status : 'active';
-  document.getElementById('siLang').value = 'zh';
-  onSiLangChange();
-  document.getElementById('serviceItemModal').style.display = 'flex';
-}
-function onSiLangChange() {
-  var lang = document.getElementById('siLang').value;
-  document.getElementById('siLangZh').style.display = lang === 'zh' ? '' : 'none';
-  document.getElementById('siLangEn').style.display = lang === 'en' ? '' : 'none';
-}
-
-function editServiceItem(id) { openServiceItemEditor(id); }
-
-function closeServiceItemEditor() { document.getElementById('serviceItemModal').style.display = 'none'; }
-
-async function saveServiceItem() {
-  const id = document.getElementById('serviceItemEditId').value;
-  const title = document.getElementById('serviceItemTitle').value.trim();
-  const categoryId = document.getElementById('serviceItemCategoryId').value;
-  if (!title) { alert('请填写服务名称'); return; }
-  if (!categoryId) { alert('请选择种类'); return; }
-  const body = {
-    categoryId: parseInt(categoryId, 10),
-    title,
-    description: document.getElementById('serviceItemDesc').value.trim() || undefined,
-    iconUrl: document.getElementById('serviceItemIconUrl').value.trim() || undefined,
-    icon: document.getElementById('serviceItemIcon').value.trim() || undefined,
-    price: parseFloat(document.getElementById('serviceItemPrice').value) || 0,
-    originPrice: document.getElementById('serviceItemOriginPrice').value ? parseFloat(document.getElementById('serviceItemOriginPrice').value) : undefined,
-    titleEn: (document.getElementById('serviceItemTitleEn').value || '').trim(),
-    descriptionEn: (document.getElementById('serviceItemDescEn').value || '').trim(),
-    priceEn: document.getElementById('serviceItemPriceEn').value ? parseFloat(document.getElementById('serviceItemPriceEn').value) : undefined,
-    originPriceEn: document.getElementById('serviceItemOriginPriceEn').value ? parseFloat(document.getElementById('serviceItemOriginPriceEn').value) : undefined,
-    currencyEn: (document.getElementById('serviceItemCurrencyEn').value || '').trim(),
-    bg: document.getElementById('serviceItemBg').value.trim() || '#B91C1C',
-    bgOpacity: document.getElementById('serviceItemBgOpacity').value !== '' ? parseFloat(document.getElementById('serviceItemBgOpacity').value) : undefined,
-    sortOrder: parseInt(document.getElementById('serviceItemSort').value, 10) || 0,
-    status: document.getElementById('serviceItemStatus').value,
-  };
-  try {
-    const res = id
-      ? await api('/services/' + id, { method: 'PUT', body })
-      : await api('/services', { method: 'POST', body });
-    if (res.code === 0) { closeServiceItemEditor(); loadServices(); }
-    else alert(res.message || '保存失败');
-  } catch (e) { alert('保存失败'); }
-}
-
-async function deleteServiceItem(id) {
-  if (!confirm('确定删除该服务？')) return;
-  try {
-    const res = await api('/services/' + id, { method: 'DELETE' });
-    if (res.code === 0) loadServices();
-    else alert(res.message || '删除失败');
-  } catch { alert('删除失败'); }
 }
 
 let guideMediaItems = [];
@@ -2808,24 +2435,6 @@ async function uploadGuideFile(input, targetId) {
         if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gIconUrlThumb'); if(t)t.value=res.data.thumbUrl; } }
       } else { el.value = ''; alert(res.message||'上传失败'); }
     } catch { el.value = ''; alert('上传失败'); }
-  });
-  input.value = '';
-}
-
-async function uploadServiceIconUrl(input) {
-  if (!input.files || !input.files[0]) return;
-  var file = input.files[0];
-  if (file.size > 10*1024*1024) { alert('文件不能超过10MB'); return; }
-  var el = document.getElementById('serviceItemIconUrl');
-  var preview = document.getElementById('serviceItemIconPreview');
-  await runWithUploadOverlay(file.name, async () => {
-    try {
-      var res = await doUpload(file);
-      if (res.code === 0 && res.data && res.data.url) {
-        el.value = res.data.url;
-        if (preview) { preview.src = res.data.url; preview.style.display = 'block'; }
-      } else { el.value = ''; if (preview) preview.style.display = 'none'; alert(res.message || '上传失败'); }
-    } catch { el.value = ''; if (preview) preview.style.display = 'none'; alert('上传失败'); }
   });
   input.value = '';
 }
@@ -3332,32 +2941,9 @@ async function deleteCourseCenterItem(id) {
 }
 
 /* ===== 商品库存 ===== */
-let allInvCategories = [];
 let allInvProducts = [];
 let invProductPage = 1;
 const invProductPageSize = 50;
-
-async function loadInventoryCategories() {
-  try {
-    const res = await api('/inventory/categories');
-    allInvCategories = (res.data || []).filter(c => c);
-    const tbody = document.getElementById('invCategoryTableBody');
-    const filterSel = document.getElementById('invFilterCategoryId');
-    if (filterSel) {
-      const cur = filterSel.value;
-      filterSel.innerHTML = '<option value="">全部</option>' + allInvCategories.map(c => '<option value="'+c.id+'">'+c.name+'</option>').join('');
-      if (cur) filterSel.value = cur;
-    }
-    if (!allInvCategories.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px">暂无种类，请先新增</td></tr>'; return; }
-    tbody.innerHTML = allInvCategories.map(c => `<tr>
-      <td>${c.id}</td>
-      <td>${c.name}</td>
-      <td>${c.sortOrder}</td>
-      <td>${c.status === 'active' ? '启用' : '禁用'}</td>
-      <td><button class="detail-btn" onclick="editInvCategory(${c.id})">编辑</button> <button class="history-btn" onclick="deleteInvCategory(${c.id})">删除</button></td>
-    </tr>`).join('');
-  } catch { document.getElementById('invCategoryTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
-}
 
 function formatDateTime(str) {
   if (!str) return '-';
@@ -3417,38 +3003,6 @@ async function loadInventoryProducts(resetPage) {
       </span>
       <button class="page-btn" onclick="invProductPage++;loadInventoryProducts()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
   } catch { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
-}
-
-function openInvCategoryEditor(cat) {
-  document.getElementById('invCategoryModalTitle').textContent = cat ? '编辑种类' : '新增种类';
-  document.getElementById('invCategoryEditId').value = cat ? cat.id : '';
-  document.getElementById('invCategoryName').value = cat ? cat.name : '';
-  document.getElementById('invCategorySort').value = cat ? cat.sortOrder : 0;
-  document.getElementById('invCategoryStatus').value = cat ? cat.status : 'active';
-  document.getElementById('invCategoryModal').style.display = 'flex';
-}
-function closeInvCategoryEditor() { document.getElementById('invCategoryModal').style.display = 'none'; }
-function editInvCategory(id) { const c = allInvCategories.find(x => x.id === id); if (c) openInvCategoryEditor(c); }
-
-async function saveInvCategory() {
-  const id = document.getElementById('invCategoryEditId').value;
-  const name = document.getElementById('invCategoryName').value.trim();
-  if (!name) { alert('种类名称不能为空'); return; }
-  try {
-    const body = { name, sortOrder: parseInt(document.getElementById('invCategorySort').value) || 0, status: document.getElementById('invCategoryStatus').value };
-    const res = id ? await api('/inventory/categories/' + id, { method: 'PUT', body }) : await api('/inventory/categories', { method: 'POST', body });
-    if (res.code === 0) { closeInvCategoryEditor(); loadInventoryCategories(); loadInventoryProducts(); }
-    else alert(res.message || '保存失败');
-  } catch { alert('保存失败'); }
-}
-
-async function deleteInvCategory(id) {
-  if (!confirm('确定删除该种类？其下商品需先删除或移出。')) return;
-  try {
-    const res = await api('/inventory/categories/' + id, { method: 'DELETE' });
-    if (res.code === 0) { loadInventoryCategories(); loadInventoryProducts(); }
-    else alert(res.message || '删除失败');
-  } catch { alert('删除失败'); }
 }
 
 function openInvProductEditor(product) {
@@ -4953,226 +4507,6 @@ let outletOrderUserFilterId = null;
 function goToOutletOrder(orderNo, orderId, userId) {
   outletOrderUserFilterId = userId || null;
   switchPage('outletOrders');
-}
-
-// --- Outlet Service Config ---
-let outletServiceCategories = [];
-let outletServices = [];
-
-async function loadOutletServiceCategories() {
-  try {
-    const res = await outletApi('/service-categories');
-    if (res.code !== 0) return;
-    outletServiceCategories = res.data || [];
-    const tbody = document.getElementById('outletServiceCategoryTableBody');
-    tbody.innerHTML = outletServiceCategories.map(c => `<tr>
-      <td>${c.id}</td><td>${c.name}</td><td>${c.key || '-'}</td>
-      <td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #444;background:${c.bg||'transparent'}"></span> <span style="font-size:12px;color:#666">${c.bg||'-'}</span></td>
-      <td style="font-size:12px;color:#666">${c.bgOpacity != null ? c.bgOpacity : '-'}</td>
-      <td>${c.sortOrder}</td>
-      <td><span class="status-badge status-${c.status==='active'?'completed':'cancelled'}">${c.status==='active'?'启用':'禁用'}</span></td>
-      <td><button class="refresh-btn" style="padding:4px 12px;font-size:12px" onclick="openOutletServiceCategoryEditor(${c.id})">编辑</button>
-          <button class="refresh-btn" style="padding:4px 12px;font-size:12px;background:#B91C1C" onclick="deleteOutletServiceCategory(${c.id})">删除</button></td>
-    </tr>`).join('');
-    const select = document.getElementById('outletServiceFilterCategoryId');
-    if (select) {
-      const current = select.value;
-      select.innerHTML = '<option value=\"\">全部</option>' + outletServiceCategories.map(c => `<option value=\"${c.id}\">${c.name}</option>`).join('');
-      if (current) select.value = current;
-    }
-  } catch (e) { console.error('loadOutletServiceCategories', e); }
-}
-
-async function loadOutletServices() {
-  try {
-    await loadServiceCurrency();
-    const res = await outletApi('/services/admin/list');
-    if (res.code !== 0) return;
-    outletServices = res.data || [];
-    renderOutletServicesTable();
-  } catch (e) { console.error('loadOutletServices', e); }
-}
-
-function renderOutletServicesTable() {
-  const tbody = document.getElementById('outletServiceTableBody');
-  const empty = document.getElementById('outletServiceEmpty');
-  if (!tbody || !empty) return;
-  const catId = document.getElementById('outletServiceFilterCategoryId')?.value || '';
-  const list = (!catId ? outletServices : outletServices.filter(s => String(s.categoryId) === String(catId)));
-  if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
-  empty.style.display = 'none';
-  tbody.innerHTML = list.map(s => {
-    const cat = s.serviceCategory || {};
-    return `<tr>
-      <td>${s.sortOrder}</td>
-      <td>${cat.name || '-'}</td>
-      <td>${s.title}</td>
-      <td>${s.description || '-'}</td>
-      <td>${s.iconUrl ? `<img src="${s.iconUrl}" style="max-height:32px;border-radius:4px" />` : (s.icon || '-')}</td>
-      <td>${formatAdminPrice(s.price)}</td>
-      <td>${s.originPrice != null ? formatAdminPrice(s.originPrice) : '-'}</td>
-      <td>${s.bg || '-'}</td>
-      <td><span class="status-badge status-${s.status==='active'?'completed':'cancelled'}">${s.status==='active'?'启用':'禁用'}</span></td>
-      <td><button class="refresh-btn" style="padding:4px 12px;font-size:12px" onclick="openOutletServiceItemEditor(${s.id})">编辑</button>
-          <button class="refresh-btn" style="padding:4px 12px;font-size:12px;background:#B91C1C" onclick="deleteOutletService(${s.id})">删除</button></td>
-    </tr>`;
-  }).join('');
-}
-
-function openOutletServiceCategoryEditor(id) {
-  const cat = outletServiceCategories.find(c => c.id === id);
-  const name = prompt('种类名称', cat ? cat.name : '');
-  if (name == null || !name.trim()) return;
-  const key = prompt('key（可选，如 repair、clean 等）', cat ? (cat.key || '') : '');
-  const bg = prompt('背景色（可选，如 #2a2a2e）', cat ? (cat.bg || '') : '');
-  const bgOpacity = prompt('透明度（0-100，可选）', cat && cat.bgOpacity != null ? String(cat.bgOpacity) : '');
-  const sort = prompt('排序（数字，越小越靠前）', cat ? String(cat.sortOrder || 0) : '0');
-  const status = prompt('状态（active/inactive）', cat ? cat.status : 'active') || 'active';
-  const body = {
-    name,
-    key,
-    bg: (bg != null && String(bg).trim()) ? String(bg).trim() : undefined,
-    bgOpacity: (bgOpacity != null && String(bgOpacity).trim() !== '') ? bgOpacity : null,
-    sortOrder: parseInt(sort, 10) || 0,
-    status,
-  };
-  if (cat) {
-    outletApi('/service-categories/' + cat.id, { method: 'PUT', body }).then(() => loadOutletServiceCategories());
-  } else {
-    outletApi('/service-categories', { method: 'POST', body }).then(() => loadOutletServiceCategories());
-  }
-}
-
-function deleteOutletServiceCategory(id) {
-  if (!confirm('确认删除该服务种类？')) return;
-  outletApi('/service-categories/' + id, { method: 'DELETE' }).then(res => {
-    if (res.code === 0) loadOutletServiceCategories();
-    else alert(res.message || '删除失败');
-  });
-}
-
-function openOutletServiceItemEditor(id) {
-  const svc = outletServices.find(s => s.id === id);
-  const modal = document.createElement('div');
-  modal.id = 'outletServiceItemModal';
-  modal.className = 'modal-overlay';
-  const opts = outletServiceCategories.map(c => `<option value="${c.id}" ${svc && svc.categoryId===c.id?'selected':''}>${c.name}</option>`).join('');
-  modal.innerHTML = `<div class="modal-content" style="max-width:720px;width:96%">
-    <div class="modal-header">
-      <h3>${svc ? '编辑' : '新增'}服务</h3>
-      <span class="modal-close" onclick="closeOutletServiceItemModal()">&times;</span>
-    </div>
-    <div class="modal-body">
-      <div class="form-group"><label>所属种类</label>
-        <select id="osCategoryId" class="form-input">${opts}</select>
-      </div>
-      <div class="form-group"><label>名称</label>
-        <input id="osTitle" class="form-input" value="${svc ? svc.title : ''}">
-      </div>
-      <div class="form-group"><label>描述</label>
-        <input id="osDesc" class="form-input" value="${svc ? (svc.description || '') : ''}">
-      </div>
-      <div class="form-group"><label>Vant 图标名（无图标图片时使用）</label>
-        <input id="osIcon" class="form-input" value="${svc ? (svc.icon || '') : ''}" placeholder="如 setting-o">
-      </div>
-      <div class="form-group"><label>图标图片 URL</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="osIconUrl" class="form-input" style="flex:1" value="${svc ? (svc.iconUrl || '') : ''}">
-          <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
-            上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadOutletServiceIcon(this)">
-          </label>
-        </div>
-      </div>
-      <div class="form-group"><label>价格</label>
-        <input id="osPrice" type="number" step="0.01" class="form-input" value="${svc && svc.price != null ? svc.price : ''}">
-      </div>
-      <div class="form-group"><label>原价（可选）</label>
-        <input id="osOriginPrice" type="number" step="0.01" class="form-input" value="${svc && svc.originPrice != null ? svc.originPrice : ''}">
-      </div>
-      <div class="form-group"><label>背景色（如 #B91C1C 或渐变）</label>
-        <input id="osBg" class="form-input" value="${svc ? (svc.bg || '') : ''}">
-      </div>
-      <div class="form-group"><label>背景透明度（0-100，可选）</label>
-        <input id="osBgOpacity" type="number" class="form-input" value="${svc && svc.bgOpacity != null ? svc.bgOpacity : ''}">
-      </div>
-      <div class="form-group"><label>排序</label>
-        <input id="osSort" type="number" class="form-input" value="${svc ? svc.sortOrder : 0}">
-      </div>
-      <div class="form-group"><label>状态</label>
-        <select id="osStatus" class="form-input">
-          <option value="active" ${!svc || svc.status==='active'?'selected':''}>启用</option>
-          <option value="inactive" ${svc && svc.status==='inactive'?'selected':''}>禁用</option>
-        </select>
-      </div>
-      <button class="submit-btn" onclick="saveOutletService(${svc ? svc.id : 'null'})">${svc ? '保存' : '新增'}</button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-}
-
-function closeOutletServiceItemModal() {
-  document.getElementById('outletServiceItemModal')?.remove();
-}
-
-async function uploadOutletServiceIcon(input) {
-  const file = input.files[0];
-  if (!file) return;
-  await runWithUploadOverlay(file.name, async () => {
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch(API + '/outlet/home-config/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd }).then(r => r.json());
-      if (res.code === 0 && res.data && res.data.url) {
-        document.getElementById('osIconUrl').value = res.data.url;
-      } else {
-        alert(res.message || '上传失败');
-      }
-    } catch (e) {
-      console.error('uploadOutletServiceIcon', e);
-      alert('上传失败');
-    }
-  });
-  input.value = '';
-}
-
-async function saveOutletService(id) {
-  const body = {
-    categoryId: parseInt(document.getElementById('osCategoryId').value, 10) || null,
-    title: document.getElementById('osTitle').value.trim(),
-    description: document.getElementById('osDesc').value.trim(),
-    icon: document.getElementById('osIcon').value.trim(),
-    iconUrl: document.getElementById('osIconUrl').value.trim(),
-    price: document.getElementById('osPrice').value,
-    originPrice: document.getElementById('osOriginPrice').value,
-    bg: document.getElementById('osBg').value.trim(),
-    bgOpacity: document.getElementById('osBgOpacity').value,
-    sortOrder: parseInt(document.getElementById('osSort').value, 10) || 0,
-    status: document.getElementById('osStatus').value,
-  };
-  if (!body.title) { alert('名称不能为空'); return; }
-  if (!body.categoryId) { alert('请选择服务种类'); return; }
-  try {
-    const method = id ? 'PUT' : 'POST';
-    const path = id ? '/services/' + id : '/services';
-    const res = await outletApi(path, { method, body });
-    if (res.code === 0) {
-      closeOutletServiceItemModal();
-      await loadOutletServices();
-    } else {
-      alert(res.message || '保存失败');
-    }
-  } catch (e) {
-    console.error('saveOutletService', e);
-    alert('保存失败');
-  }
-}
-
-function deleteOutletService(id) {
-  if (!confirm('确认删除该服务？')) return;
-  outletApi('/services/' + id, { method: 'DELETE' }).then(res => {
-    if (res.code === 0) loadOutletServices();
-    else alert(res.message || '删除失败');
-  });
 }
 
 // --- Outlet HomeConfig / HomeAnimConfig / MineConfig ---

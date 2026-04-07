@@ -30,11 +30,26 @@
             @click="selectCategory(cat)"
           >
             <span class="sidebar-item-inner">
+              <span class="sidebar-thumb" v-if="cat.thumb">
+                <LodImg :src="cat.thumb" :thumb="cat.thumb" class="sidebar-thumb-img" alt="" />
+              </span>
               <span class="sidebar-name">{{ cat.name }}</span>
             </span>
           </button>
         </aside>
         <div class="product-main">
+          <div v-if="l2PickerOptions.length > 1" class="course-l2-picker-row">
+            <span class="course-l2-label">选择子分类</span>
+            <select
+              class="course-l2-select"
+              :value="String(selectedCategoryId ?? '')"
+              @change="onL2PickerChange"
+            >
+              <option v-for="opt in l2PickerOptions" :key="opt.id" :value="String(opt.id)">
+                {{ opt.name }}
+              </option>
+            </select>
+          </div>
           <van-loading v-if="listLoading" size="28" class="main-loading" />
           <div v-else-if="filteredCourses.length" class="product-grid">
             <button
@@ -126,7 +141,11 @@ function flattenSidebarTree(tree) {
         parentL1Id: p.id,
         mergedSingle: true,
         name: p.name,
-        thumb: '',
+        thumb: c0.thumbnailUrl
+          ? fullUrl(String(c0.thumbnailUrl).trim())
+          : p.thumbnailUrl
+            ? fullUrl(String(p.thumbnailUrl).trim())
+            : '',
         depth: 0,
         isHeader: false,
         hasChildren: false,
@@ -139,7 +158,7 @@ function flattenSidebarTree(tree) {
         id: p.id,
         parentL1Id: p.id,
         name: p.name,
-        thumb: '',
+        thumb: p.thumbnailUrl ? fullUrl(String(p.thumbnailUrl).trim()) : '',
         depth: 0,
         isHeader: true,
         hasChildren: true,
@@ -152,7 +171,7 @@ function flattenSidebarTree(tree) {
           id: c.id,
           parentL1Id: p.id,
           name: c.name,
-          thumb: '',
+          thumb: c.thumbnailUrl ? fullUrl(String(c.thumbnailUrl).trim()) : (p.thumbnailUrl ? fullUrl(String(p.thumbnailUrl).trim()) : ''),
           depth: 1,
           isHeader: false,
           hasChildren: false,
@@ -166,7 +185,7 @@ function flattenSidebarTree(tree) {
         id: p.id,
         parentL1Id: p.id,
         name: p.name,
-        thumb: '',
+        thumb: p.thumbnailUrl ? fullUrl(String(p.thumbnailUrl).trim()) : '',
         depth: 0,
         isHeader: false,
         hasChildren: false,
@@ -194,6 +213,23 @@ const filteredCourses = computed(() => {
   if (!kw) return list;
   return list.filter((d) => (d.name || '').toLowerCase().includes(kw));
 });
+
+/** 多二级时：主区域下拉列出当前一级下全部二级（与小程序课程页一致） */
+const l2PickerOptions = computed(() => {
+  const eid = expandedL1Id.value;
+  if (eid == null) return [];
+  const p = categories.value.find((x) => Number(x.id) === Number(eid));
+  const ch = p && Array.isArray(p.children) ? sortCategoriesForSidebar(p.children) : [];
+  if (ch.length <= 1) return [];
+  return ch.map((c) => ({ id: c.id, name: c.name || c.title || '' }));
+});
+
+function onL2PickerChange(e) {
+  const id = Number((e.target && e.target.value) || '');
+  if (!Number.isFinite(id)) return;
+  const cat = sidebarItems.value.find((x) => Number(x.id) === id && !x.isHeader);
+  if (cat) selectCategory(cat);
+}
 
 function openCourse(d) {
   const idOrSlug = d.slug || d.id;
@@ -349,6 +385,47 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.sidebar-thumb {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f4f6;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+.sidebar-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.course-l2-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+}
+.course-l2-label {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+.course-l2-select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #111827;
 }
 .sidebar-name {
   flex: 1;

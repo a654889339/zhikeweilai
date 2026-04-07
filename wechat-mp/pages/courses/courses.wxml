@@ -15,9 +15,31 @@
         data-idx="{{index}}"
         bindtap="selectCategory"
       >
-        <text class="sidebar-name-mp only">{{item.name}}</text>
+        <view class="sidebar-inner-mp" wx:if="{{item.thumb}}">
+          <image class="sidebar-thumb-mp" src="{{item.thumb}}" mode="aspectFill" />
+          <text class="sidebar-name-mp">{{item.name}}</text>
+        </view>
+        <text class="sidebar-name-mp only" wx:else>{{item.name}}</text>
       </view>
     </scroll-view>
+
+    <view class="product-main-mp course-main-wrap-mp">
+      <picker
+        wx:if="{{l2PickerOptions.length > 1}}"
+        mode="selector"
+        range="{{l2PickerOptions}}"
+        range-key="name"
+        value="{{l2PickerIndex}}"
+        bindchange="onL2Pick"
+      >
+        <view class="product-select-row">
+          <view class="select-product-field">
+            <text class="select-label">选择子分类</text>
+            <text class="select-value">{{l2PickerLabel}}</text>
+            <text class="select-arrow">›</text>
+          </view>
+        </view>
+      </picker>
 
     <scroll-view scroll-y class="course-main-mp">
       <view wx:if="{{loading}}" class="loading">加载中...</view>
@@ -36,6 +58,7 @@
       </view>
       <view wx:else class="empty">该分类下暂无课程</view>
     </scroll-view>
+    </view>
   </view>
 
   <view wx:else class="empty-page">暂无课程分类</view>

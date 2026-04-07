@@ -56,19 +56,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	svc := api.Group("/services")
 	{
 		svc.GET("/", svcList)
-		svc.GET("/admin/list", middleware.Auth(cfg), middleware.Admin(), svcAdminList)
 		svc.GET("/:id", svcDetail)
-		svc.POST("/", middleware.Auth(cfg), middleware.Admin(), svcCreate)
-		svc.PUT("/:id", middleware.Auth(cfg), middleware.Admin(), svcUpdate)
-		svc.DELETE("/:id", middleware.Auth(cfg), middleware.Admin(), svcRemove)
-	}
-
-	sc := api.Group("/service-categories")
-	{
-		sc.GET("/", middleware.Auth(cfg), middleware.Admin(), scatList)
-		sc.POST("/", middleware.Auth(cfg), middleware.Admin(), scatCreate)
-		sc.PUT("/:id", middleware.Auth(cfg), middleware.Admin(), scatUpdate)
-		sc.DELETE("/:id", middleware.Auth(cfg), middleware.Admin(), scatRemove)
 	}
 
 	ccat := api.Group("/course-categories")
@@ -153,10 +141,6 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 
 	inv := api.Group("/inventory")
 	{
-		inv.GET("/categories", middleware.Auth(cfg), middleware.Admin(), invListCategories)
-		inv.POST("/categories", middleware.Auth(cfg), middleware.Admin(), invCreateCategory)
-		inv.PUT("/categories/:id", middleware.Auth(cfg), middleware.Admin(), invUpdateCategory)
-		inv.DELETE("/categories/:id", middleware.Auth(cfg), middleware.Admin(), invRemoveCategory)
 		inv.GET("/sample-excel", middleware.Auth(cfg), middleware.Admin(), invGetSampleExcel)
 		inv.POST("/import-excel", middleware.Auth(cfg), middleware.Admin(), func(c *gin.Context) { invImportExcel(c, cfg) })
 		inv.GET("/sample-delete-excel", middleware.Auth(cfg), middleware.Admin(), invGetSampleDeleteExcel)
@@ -199,13 +183,6 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 
 		out.GET("/service-categories", outletSvcCatList)
 		out.GET("/services", outletSvcList)
-		out.GET("/services/admin/list", middleware.Auth(cfg), middleware.Admin(), outletSvcAdminList)
-		out.POST("/service-categories", middleware.Auth(cfg), middleware.Admin(), outletSvcCatCreate)
-		out.PUT("/service-categories/:id", middleware.Auth(cfg), middleware.Admin(), outletSvcCatUpdate)
-		out.DELETE("/service-categories/:id", middleware.Auth(cfg), middleware.Admin(), outletSvcCatRemove)
-		out.POST("/services", middleware.Auth(cfg), middleware.Admin(), outletSvcCreate)
-		out.PUT("/services/:id", middleware.Auth(cfg), middleware.Admin(), outletSvcUpdate)
-		out.DELETE("/services/:id", middleware.Auth(cfg), middleware.Admin(), outletSvcRemove)
 
 		out.GET("/messages/mine", middleware.OutletAuth(cfg), outletMsgMy)
 		out.POST("/messages/send", middleware.OutletAuth(cfg), outletMsgSend)

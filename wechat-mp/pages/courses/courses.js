@@ -15,12 +15,26 @@ function mapCourseTree(nodes) {
   }));
 }
 
+function pickThumb(c, p) {
+  if (c && c.thumbnailUrl) return fullUrl(c.thumbnailUrl);
+  if (p && p.thumbnailUrl) return fullUrl(p.thumbnailUrl);
+  return '';
+}
+
 function sortCategoriesForSidebar(categories) {
   const list = [...(categories || [])];
-  list.sort(
-    (a, b) =>
-      (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || (a.id ?? 0) - (b.id ?? 0)
-  );
+  const rank = (name) => {
+    const n = (name || '').trim();
+    if (n === '空调') return 0;
+    if (n === '除湿机' || n.includes('除湿')) return 1;
+    return 2;
+  };
+  list.sort((a, b) => {
+    const ra = rank(a.name);
+    const rb = rank(b.name);
+    if (ra !== rb) return ra - rb;
+    return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || (a.id ?? 0) - (b.id ?? 0);
+  });
   return list;
 }
 
@@ -66,6 +80,7 @@ function applyVisibleSidebarMp(items, expandedL1Id, selectedCategoryId) {
   }));
 }
 
+/** 与 pages/products/products.js flattenSidebarForMp 一致：单二级合并一行；多二级时一级标题 + 子项 */
 function flattenSidebarForCourses(tree) {
   const out = [];
   const arr = Array.isArray(tree) ? tree : [];
@@ -81,6 +96,7 @@ function flattenSidebarForCourses(tree) {
         name: p.name,
         isHeader: false,
         isSub: false,
+        thumb: pickThumb(c0, p),
       });
     } else if (ch.length > 1) {
       out.push({
@@ -91,6 +107,7 @@ function flattenSidebarForCourses(tree) {
         isHeader: true,
         firstChildId: ch[0].id,
         isSub: false,
+        thumb: pickThumb(null, p),
       });
       ch.forEach((c) => {
         out.push({
@@ -100,6 +117,7 @@ function flattenSidebarForCourses(tree) {
           name: c.name,
           isHeader: false,
           isSub: true,
+          thumb: pickThumb(c, p),
         });
       });
     } else {
@@ -110,10 +128,27 @@ function flattenSidebarForCourses(tree) {
         name: p.name,
         isHeader: false,
         isSub: false,
+        thumb: pickThumb(null, p),
       });
     }
   });
   return out;
+}
+
+function buildL2PickerState(categories, expandedL1Id, selectedCategoryId) {
+  if (expandedL1Id == null) {
+    return { l2PickerOptions: [], l2PickerIndex: 0, l2PickerLabel: '' };
+  }
+  const p = (categories || []).find((x) => Number(x.id) === Number(expandedL1Id));
+  const ch = p && Array.isArray(p.children) ? sortCategoriesForSidebar(p.children) : [];
+  if (ch.length <= 1) {
+    return { l2PickerOptions: [], l2PickerIndex: 0, l2PickerLabel: '' };
+  }
+  const l2PickerOptions = ch.map((c) => ({ id: c.id, name: c.name || c.title || '' }));
+  let idx = l2PickerOptions.findIndex((o) => Number(o.id) === Number(selectedCategoryId));
+  if (idx < 0) idx = 0;
+  const l2PickerLabel = (l2PickerOptions[idx] && l2PickerOptions[idx].name) || '';
+  return { l2PickerOptions, l2PickerIndex: idx, l2PickerLabel };
 }
 
 Page({
@@ -127,6 +162,9 @@ Page({
     filteredCourses: [],
     loading: false,
     searchKeyword: '',
+    l2PickerOptions: [],
+    l2PickerIndex: 0,
+    l2PickerLabel: '',
   },
 
   onShow() {
@@ -154,7 +192,16 @@ Page({
         const first = sidebarItems.find((x) => !x.isHeader);
         const expandedL1Id = first ? findExpandedL1IdFromTree(categories, first.id) : null;
         const visibleSidebarItems = applyVisibleSidebarMp(sidebarItems, expandedL1Id, first ? first.id : null);
-        this.setData({ categories, sidebarItems, expandedL1Id, visibleSidebarItems });
+        const pick = buildL2PickerState(categories, expandedL1Id, first ? first.id : null);
+        this.setData({
+          categories,
+          sidebarItems,
+          expandedL1Id,
+          visibleSidebarItems,
+          l2PickerOptions: pick.l2PickerOptions,
+          l2PickerIndex: pick.l2PickerIndex,
+          l2PickerLabel: pick.l2PickerLabel,
+        });
         if (first) this.selectCategoryById(first.id, true);
       })
       .catch(() => {});
@@ -180,10 +227,14 @@ Page({
       expandedL1Id = findExpandedL1IdFromTree(categories, catId);
     }
     const visibleSidebarItems = applyVisibleSidebarMp(sidebarItems, expandedL1Id, catId);
+    const pick = buildL2PickerState(categories, expandedL1Id, catId);
     this.setData({
       selectedCategoryId: catId,
       expandedL1Id,
       visibleSidebarItems,
+      l2PickerOptions: pick.l2PickerOptions,
+      l2PickerIndex: pick.l2PickerIndex,
+      l2PickerLabel: pick.l2PickerLabel,
       courses: [],
       filteredCourses: [],
       loading: true,
@@ -199,6 +250,13 @@ Page({
         this.setData({ courses: list, filteredCourses: list, loading: false });
       })
       .catch(() => this.setData({ loading: false }));
+  },
+
+  onL2Pick(e) {
+    const idx = parseInt(e.detail.value, 10);
+    const opt = (this.data.l2PickerOptions || [])[idx];
+    if (!opt) return;
+    this.selectCategoryById(opt.id);
   },
 
   openCourse(e) {

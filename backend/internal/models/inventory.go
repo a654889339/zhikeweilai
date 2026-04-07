@@ -2,17 +2,6 @@ package models
 
 import "time"
 
-type InventoryCategory struct {
-	ID        int       `gorm:"primaryKey" json:"id"`
-	Name      string    `gorm:"size:100;not null" json:"name"`
-	SortOrder int       `gorm:"column:sortOrder" json:"sortOrder"`
-	Status    string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
-	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
-}
-
-func (InventoryCategory) TableName() string { return "inventory_categories" }
-
 type InventoryProduct struct {
 	ID                int       `gorm:"primaryKey" json:"id"`
 	ProductCategoryID int       `gorm:"column:productCategoryId;not null;default:0;index" json:"productCategoryId"` // 商品配置中的二级种类 ID

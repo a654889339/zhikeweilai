@@ -416,28 +416,7 @@ func randInventorySerial() string {
 	return "ZKWL-" + hex.EncodeToString(b)
 }
 
-func firstInventoryCategoryIDForSeed() (int, error) {
-	var ic models.InventoryCategory
-	err := db.DB.Where("status = ?", "active").Order("id ASC").First(&ic).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			row := models.InventoryCategory{Name: "默认", SortOrder: 0, Status: "active"}
-			if err := db.DB.Create(&row).Error; err != nil {
-				return 0, err
-			}
-			return row.ID, nil
-		}
-		return 0, err
-	}
-	return ic.ID, nil
-}
-
 func seedInventorySamplesIfSparse() error {
-	legacyInvCatID, err := firstInventoryCategoryIDForSeed()
-	if err != nil || legacyInvCatID <= 0 {
-		log.Printf("[zkwl] seedInventorySamplesIfSparse: skip inventory legacy category: %v", err)
-		return nil
-	}
 	var invCount int64
 	if err := db.DB.Model(&models.InventoryProduct{}).Count(&invCount).Error; err != nil {
 		return err
@@ -476,7 +455,7 @@ func seedInventorySamplesIfSparse() error {
 		}
 		row := models.InventoryProduct{
 			ProductCategoryID:         cat.ID,
-			InventoryCategoryIDLegacy: legacyInvCatID,
+			InventoryCategoryIDLegacy: 0,
 			Name:                      names[i],
 			SerialNumber:              serial,
 			SortOrder:                 i + 1,
@@ -533,22 +512,6 @@ func seedDefaultsIfEmpty() error {
 		log.Println("[DB] Default product categories (L1+L2) created.")
 	}
 
-	var sc int64
-	if err := db.DB.Model(&models.ServiceCategory{}).Count(&sc).Error; err != nil {
-		return err
-	}
-	if sc == 0 {
-		if err := db.DB.Create([]models.ServiceCategory{
-			{Name: "维修", Key: strPtr("repair"), SortOrder: 1, Status: "active"},
-			{Name: "清洁", Key: strPtr("clean"), SortOrder: 2, Status: "active"},
-			{Name: "检测", Key: strPtr("inspect"), SortOrder: 3, Status: "active"},
-			{Name: "数据", Key: strPtr("data"), SortOrder: 4, Status: "active"},
-		}).Error; err != nil {
-			return err
-		}
-		log.Println("[DB] Default service categories created.")
-	}
-
 	var hc int64
 	if err := db.DB.Model(&models.HomeConfig{}).Count(&hc).Error; err != nil {
 		return err
@@ -556,36 +519,12 @@ func seedDefaultsIfEmpty() error {
 	if hc == 0 {
 		seed := []models.HomeConfig{
 			{Section: "banner", Title: "科必学 品质服务", Desc: "专业·高效·可信赖", Color: "linear-gradient(135deg, #B91C1C, #7F1D1D)", SortOrder: 1, Status: "active"},
-			{Section: "nav", Title: "全部服务", Icon: "apps-o", Path: "/services", Color: "#B91C1C", SortOrder: 1, Status: "active"},
+			{Section: "nav", Title: "全部商品", Icon: "apps-o", Path: "/products", Color: "#B91C1C", SortOrder: 1, Status: "active"},
 		}
 		if err := db.DB.Create(&seed).Error; err != nil {
 			return err
 		}
 		log.Println("[DB] Default home configs (partial) created.")
-	}
-
-	var svc int64
-	if err := db.DB.Model(&models.Service{}).Count(&svc).Error; err != nil {
-		return err
-	}
-	if svc == 0 {
-		var cats []models.ServiceCategory
-		if err := db.DB.Order("sortOrder ASC").Find(&cats).Error; err != nil {
-			return err
-		}
-		if len(cats) >= 4 {
-			repair, clean, inspect, data := cats[0].ID, cats[1].ID, cats[2].ID, cats[3].ID
-			services := []models.Service{
-				{Title: "设备维修", Description: "专业工程师提供全方位维修服务", Icon: "setting-o", CategoryID: &repair, Price: 99, OriginPrice: f64Ptr(159), Bg: "#B91C1C", SortOrder: 1, Status: "active"},
-				{Title: "深度清洁", Description: "全方位清洁保养", Icon: "brush-o", CategoryID: &clean, Price: 149, OriginPrice: f64Ptr(199), Bg: "#2563EB", SortOrder: 1, Status: "active"},
-				{Title: "全面检测", Description: "系统全面评估", Icon: "scan", CategoryID: &inspect, Price: 49, OriginPrice: f64Ptr(79), Bg: "#059669", SortOrder: 1, Status: "active"},
-				{Title: "数据恢复", Description: "专业数据找回", Icon: "replay", CategoryID: &data, Price: 199, OriginPrice: f64Ptr(299), Bg: "#7C3AED", SortOrder: 1, Status: "active"},
-			}
-			if err := db.DB.Create(&services).Error; err != nil {
-				return err
-			}
-			log.Println("[DB] Default services created.")
-		}
 	}
 
 	var dg int64

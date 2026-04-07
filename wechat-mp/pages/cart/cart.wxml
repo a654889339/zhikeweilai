@@ -1,0 +1,7 @@
+<view class="page">
+  <view class="cart-empty">
+    <text class="cart-empty-icon">🛒</text>
+    <text class="cart-empty-text">购物车是空的</text>
+    <button class="cart-btn" bindtap="goProducts">去选购</button>
+  </view>
+</view>
