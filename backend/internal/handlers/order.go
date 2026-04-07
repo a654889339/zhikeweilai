@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math"
-	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -66,9 +67,11 @@ func guidePointsForOrder(g *models.DeviceGuide) int {
 
 func genOrderNo() string {
 	now := time.Now()
-	r := rand.Intn(10000)
-	return fmt.Sprintf("VN%d%02d%02d%02d%02d%02d%04d",
-		now.Year(), int(now.Month()), now.Day(), now.Hour(), now.Minute(), now.Second(), r)
+	var b [4]byte
+	_, _ = rand.Read(b[:])
+	// 时间戳 + 随机后缀，避免同秒并发撞唯一索引 orderNo
+	return fmt.Sprintf("VN%d%02d%02d%02d%02d%02d%s",
+		now.Year(), int(now.Month()), now.Day(), now.Hour(), now.Minute(), now.Second(), hex.EncodeToString(b[:]))
 }
 
 func orderCreate(c *gin.Context) {
@@ -120,6 +123,14 @@ func orderCreate(c *gin.Context) {
 		resp.Err(c, 400, 400, "服务信息不完整")
 		return
 	}
+	contactPhone := strings.TrimSpace(body.ContactPhone)
+	if contactPhone != "" {
+		contactPhone = services.NormalizePhone(contactPhone)
+		if !services.ValidChinaMobile(contactPhone) {
+			resp.Err(c, 400, 400, "请输入正确的11位大陆手机号")
+			return
+		}
+	}
 	points := 0
 	if gid != nil {
 		var g models.DeviceGuide
@@ -136,7 +147,7 @@ func orderCreate(c *gin.Context) {
 		ServiceIcon:     firstNonEmptyStr(body.ServiceIcon, "setting-o"),
 		Price:           body.Price,
 		ContactName:     body.ContactName,
-		ContactPhone:    body.ContactPhone,
+		ContactPhone:    contactPhone,
 		Address:         body.Address,
 		AppointmentTime: appt,
 		Remark:          body.Remark,

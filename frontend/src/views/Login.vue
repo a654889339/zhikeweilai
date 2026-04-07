@@ -137,7 +137,7 @@ const sendingCode = ref(false);
 let countdownTimer = null;
 
 const handleSendSmsCode = async () => {
-  if (!/^1\d{10}$/.test(form.phone)) {
+  if (!/^1[3-9]\d{9}$/.test((form.phone || '').trim())) {
     showToast('请输入正确的11位手机号');
     return;
   }
@@ -163,7 +163,7 @@ const handleLogin = async () => {
       showToast('请填写手机号和验证码');
       return;
     }
-    if (!/^1\d{10}$/.test(form.phone)) {
+    if (!/^1[3-9]\d{9}$/.test((form.phone || '').trim())) {
       showToast('手机号格式不正确');
       return;
     }

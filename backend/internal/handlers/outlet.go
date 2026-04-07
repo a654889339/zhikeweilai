@@ -76,7 +76,7 @@ func outletSendSmsCode(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	key := services.NormalizePhone(body.Phone)
-	if len(key) != 11 || key[0] != '1' {
+	if !services.ValidChinaMobile(key) {
 		resp.Err(c, 400, 400, "请输入正确的11位大陆手机号")
 		return
 	}
@@ -204,6 +204,10 @@ func outletLogin(c *gin.Context, cfg *config.Config) {
 			return
 		}
 		normalized := services.NormalizePhone(body.Phone)
+		if !services.ValidChinaMobile(normalized) {
+			resp.Err(c, 400, 400, "手机号格式不正确")
+			return
+		}
 		if ok, msg := services.SMSVerify(body.Phone, body.Code); !ok {
 			resp.Err(c, 400, 400, msg)
 			return
@@ -339,6 +343,10 @@ func outletBindPhone(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	normalized := services.NormalizePhone(body.Phone)
+	if !services.ValidChinaMobile(normalized) {
+		resp.Err(c, 400, 400, "手机号格式不正确")
+		return
+	}
 	if ok2, msg := services.SMSVerify(body.Phone, body.Code); !ok2 {
 		resp.Err(c, 400, 400, msg)
 		return

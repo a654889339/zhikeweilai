@@ -46,7 +46,14 @@
 
           <van-cell-group inset class="ck-fields">
             <van-field v-model="form.contactName" label="收货人" placeholder="必填" required />
-            <van-field v-model="form.contactPhone" label="手机号" type="tel" placeholder="必填" required />
+            <van-field
+              v-model="form.contactPhone"
+              label="手机号"
+              type="tel"
+              maxlength="11"
+              placeholder="11位大陆手机号"
+              required
+            />
             <van-field
               v-model="form.address"
               label="收货地址"
@@ -76,6 +83,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import { authApi, addressApi, orderApi } from '@/api';
+import { isValidChinaMobile } from '@/utils/phone';
 
 const router = useRouter();
 const loading = ref(true);
@@ -164,6 +172,10 @@ async function submit() {
   const phone = form.value.contactPhone.trim();
   if (!name || !phone) {
     showToast('请填写收货人和手机号');
+    return;
+  }
+  if (!isValidChinaMobile(phone)) {
+    showToast('请输入正确的11位大陆手机号');
     return;
   }
   if (!lines.value.length) {

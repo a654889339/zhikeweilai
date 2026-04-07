@@ -10,6 +10,7 @@ import (
 	"zhikeweilai/backend/internal/db"
 	"zhikeweilai/backend/internal/models"
 	"zhikeweilai/backend/internal/resp"
+	"zhikeweilai/backend/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -208,6 +209,11 @@ func orderCartCheckout(c *gin.Context) {
 		resp.Err(c, 400, 400, "请填写联系人和电话")
 		return
 	}
+	phoneKey := services.NormalizePhone(body.ContactPhone)
+	if !services.ValidChinaMobile(phoneKey) {
+		resp.Err(c, 400, 400, "请输入正确的11位大陆手机号")
+		return
+	}
 	var user models.User
 	if err := db.DB.First(&user, u.ID).Error; err != nil {
 		resp.Err(c, 404, 404, "用户不存在")
@@ -270,7 +276,7 @@ func orderCartCheckout(c *gin.Context) {
 		ServiceIcon:     "shopping-cart-o",
 		Price:           totalPrice,
 		ContactName:     strings.TrimSpace(body.ContactName),
-		ContactPhone:    strings.TrimSpace(body.ContactPhone),
+		ContactPhone:    phoneKey,
 		Address:         strings.TrimSpace(body.Address),
 		Remark:          strings.TrimSpace(body.Remark),
 		AppointmentTime: appt,

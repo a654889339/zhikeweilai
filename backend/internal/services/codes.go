@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,14 @@ func NormalizePhone(phone string) string {
 		p = strings.TrimLeft(p, " ")
 	}
 	return p
+}
+
+var chinaMobileRe = regexp.MustCompile(`^1[3-9]\d{9}$`)
+
+// ValidChinaMobile 大陆手机号：规范化后须为 11 位数字且第二位为 3–9（与登录/短信一致）
+func ValidChinaMobile(phone string) bool {
+	p := NormalizePhone(phone)
+	return chinaMobileRe.MatchString(p)
 }
 
 type emailRec struct {

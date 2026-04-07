@@ -71,7 +71,7 @@ func authSendSmsCode(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	key := services.NormalizePhone(phone)
-	if len(key) != 11 || key[0] != '1' {
+	if !services.ValidChinaMobile(key) {
 		resp.Err(c, 400, 400, "请输入正确的11位大陆手机号")
 		return
 	}
@@ -115,7 +115,7 @@ func authRegister(c *gin.Context, cfg *config.Config) {
 			return
 		}
 		normalized := services.NormalizePhone(body.Phone)
-		if len(normalized) != 11 || normalized[0] != '1' {
+		if !services.ValidChinaMobile(normalized) {
 			resp.Err(c, 400, 400, "手机号格式不正确")
 			return
 		}
@@ -247,7 +247,7 @@ func authLogin(c *gin.Context, cfg *config.Config) {
 			return
 		}
 		normalized := services.NormalizePhone(body.Phone)
-		if len(normalized) != 11 || normalized[0] != '1' {
+		if !services.ValidChinaMobile(normalized) {
 			resp.Err(c, 400, 400, "手机号格式不正确")
 			return
 		}
@@ -317,7 +317,7 @@ func authBindPhone(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	normalized := services.NormalizePhone(body.Phone)
-	if len(normalized) != 11 || normalized[0] != '1' {
+	if !services.ValidChinaMobile(normalized) {
 		resp.Err(c, 400, 400, "手机号格式不正确")
 		return
 	}

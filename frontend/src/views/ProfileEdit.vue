@@ -156,7 +156,7 @@ const onNicknameBlur = async () => {
 
 const onSendBindCode = async () => {
   const phone = bindPhone.value.replace(/\D/g, '').slice(0, 11);
-  if (!/^1\d{10}$/.test(phone)) {
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
     showToast('请输入正确的11位手机号');
     return;
   }
@@ -180,7 +180,7 @@ const onSendBindCode = async () => {
 const onSubmitBindPhone = async () => {
   const phone = bindPhone.value.replace(/\D/g, '').slice(0, 11);
   const code = bindCode.value.replace(/\D/g, '').slice(0, 6);
-  if (!/^1\d{10}$/.test(phone)) {
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
     showToast('请输入正确的11位手机号');
     return;
   }

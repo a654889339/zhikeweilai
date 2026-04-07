@@ -18,7 +18,7 @@ func SendSMSCode(cfg *config.Config, phone string) error {
 		return fmt.Errorf("短信服务未启用，请配置 TENCENT_SMS_* 环境变量并设置 SMS_ENABLED=true")
 	}
 	key := NormalizePhone(phone)
-	if len(key) != 11 || key[0] != '1' {
+	if !ValidChinaMobile(key) {
 		return fmt.Errorf("请输入正确的11位大陆手机号")
 	}
 	if err := SMSCanSend(phone); err != nil {

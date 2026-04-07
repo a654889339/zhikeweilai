@@ -1,5 +1,9 @@
 const app = getApp();
 
+function isValidChinaMobile(s) {
+  return /^1[3-9]\d{9}$/.test(String(s || '').trim());
+}
+
 function formatAddr(addr) {
   if (!addr) return '';
   const parts = [];
@@ -113,6 +117,10 @@ Page({
     const phone = (this.data.contactPhone || '').trim();
     if (!name || !phone) {
       wx.showToast({ title: '请填写收货人和手机号', icon: 'none' });
+      return;
+    }
+    if (!isValidChinaMobile(phone)) {
+      wx.showToast({ title: '请输入正确的11位大陆手机号', icon: 'none' });
       return;
     }
     if (!this.data.lines.length) {

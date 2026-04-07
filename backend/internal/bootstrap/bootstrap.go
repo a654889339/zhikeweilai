@@ -75,6 +75,10 @@ func Run() error {
 	if err := EnsureShopCartCommerceColumns(); err != nil {
 		log.Printf("[zkwl] ensureShopCartCommerceColumns: %v", err)
 	}
+	// 主流程 AutoMigrate 若中途失败，orders 可能未对齐；启动时再补一次
+	if err := db.DB.AutoMigrate(&models.Order{}); err != nil {
+		log.Printf("[zkwl] bootstrap AutoMigrate orders: %v", err)
+	}
 
 	return seedDefaultsIfEmpty()
 }
