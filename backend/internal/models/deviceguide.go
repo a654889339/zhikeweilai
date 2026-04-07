@@ -10,7 +10,7 @@ type DeviceGuide struct {
 	ID                 int            `gorm:"primaryKey" json:"id"`
 	Name               string         `gorm:"size:100;not null" json:"name"`
 	Slug               *string        `gorm:"size:100;uniqueIndex:slug" json:"slug"`
-	Subtitle           string         `gorm:"size:200" json:"subtitle"`
+	Subtitle           string         `gorm:"size:200" json:"-"`
 	Icon               string         `gorm:"size:100" json:"icon"`
 	IconURL            string         `gorm:"column:iconUrl;size:500" json:"iconUrl"`
 	IconURLThumb       string         `gorm:"column:iconUrlThumb;size:500" json:"iconUrlThumb"`
@@ -30,7 +30,9 @@ type DeviceGuide struct {
 	SortOrder          int            `gorm:"column:sortOrder" json:"sortOrder"`
 	QrcodeURL          string         `gorm:"column:qrcodeUrl;size:500" json:"qrcodeUrl"`
 	NameEn             string         `gorm:"size:100" json:"nameEn"`
-	SubtitleEn         string         `gorm:"size:200" json:"subtitleEn"`
+	SubtitleEn         string         `gorm:"size:200" json:"-"`
+	ListPrice          float64        `gorm:"column:listPrice;type:decimal(10,2);default:0" json:"listPrice"`
+	RewardPoints       int            `gorm:"column:rewardPoints;default:0" json:"rewardPoints"`
 	BadgeEn            string         `gorm:"size:20" json:"badgeEn"`
 	DescriptionEn      string         `gorm:"type:text" json:"descriptionEn"`
 	IconURLEn          string         `gorm:"column:iconUrlEn;size:500" json:"iconUrlEn"`

@@ -7,7 +7,6 @@
     <template v-else>
       <div class="maint-header">
         <h1 class="maint-title">{{ guide.name }} 维护指南</h1>
-        <p v-if="guide.subtitle" class="maint-subtitle">{{ guide.subtitle }}</p>
       </div>
 
       <div v-if="!sections.length" class="maint-empty">

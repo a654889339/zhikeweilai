@@ -40,6 +40,15 @@
         </div>
       </div>
 
+      <div v-if="guide.id" class="guide-price-card">
+        <div class="guide-price-inner">
+          <span class="guide-price-label">价格</span>
+          <span class="guide-price-val">¥ {{ priceText }}</span>
+          <span class="guide-points-label">积分</span>
+          <span class="guide-points-val">{{ pointsText }}</span>
+        </div>
+      </div>
+
       <!-- Help Links -->
       <div v-if="helpItems.length || sections.length" class="section-card">
         <h3 class="section-title">使用帮助</h3>
@@ -72,7 +81,7 @@
         </div>
       </div>
 
-      <div style="height:24px"></div>
+      <div style="height:88px"></div>
     </template>
 
     <!-- Video Player Overlay -->
@@ -82,18 +91,31 @@
         <div class="video-close" @click="closeVideo()"><van-icon name="cross" size="24" color="#fff" /></div>
       </div>
     </div>
-    <!-- 固定底部：返回主页（始终可见可点） -->
-    <div class="guide-footer-fixed">
-      <van-button type="primary" color="#B91C1C" block round class="btn-home" @click="goHome">返回主页</van-button>
+    <div class="guide-footer-fixed guide-footer-actions">
+      <van-button class="gf-btn gf-cart" plain hairline type="default" round @click="goCartPage">购物车</van-button>
+      <van-button class="gf-btn gf-buy" type="danger" round @click="buyNow">购买</van-button>
+      <van-button class="gf-btn gf-add" type="primary" color="#B91C1C" round @click="addToCart">加入购物车</van-button>
     </div>
+
+    <van-dialog v-model:show="buyDialogShow" title="填写订单信息" :show-confirm-button="false" :show-cancel-button="false">
+      <div class="buy-dialog-body">
+        <van-field v-model="buyForm.contactName" label="联系人" placeholder="必填" />
+        <van-field v-model="buyForm.contactPhone" label="电话" type="tel" placeholder="必填" />
+        <van-field v-model="buyForm.address" label="地址" type="textarea" rows="2" autosize placeholder="选填" />
+        <div class="buy-dialog-btns">
+          <van-button round block @click="buyDialogShow = false">取消</van-button>
+          <van-button type="primary" color="#B91C1C" round block @click="submitBuy">提交订单</van-button>
+        </div>
+      </div>
+    </van-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { showImagePreview } from 'vant';
-import { guideApi } from '@/api';
+import { showImagePreview, showToast } from 'vant';
+import { guideApi, authApi, orderApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 
 const route = useRoute();
@@ -162,8 +184,83 @@ const previewImage = (url) => {
 };
 
 const router = useRouter();
-const goHome = () => {
-  router.replace('/');
+
+const priceText = computed(() => {
+  const v = guide.value.listPrice;
+  if (v == null || Number.isNaN(Number(v))) return '0.00';
+  return Number(v).toFixed(2);
+});
+const pointsText = computed(() => {
+  const v = guide.value.rewardPoints;
+  if (v != null && Number(v) > 0) return String(v);
+  return '—';
+});
+
+const buyDialogShow = ref(false);
+const buyForm = ref({ contactName: '', contactPhone: '', address: '' });
+
+const goCartPage = () => {
+  router.push('/cart');
+};
+
+const addToCart = async () => {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    showToast('请先登录');
+    router.push('/login');
+    return;
+  }
+  const gid = guide.value.id;
+  if (!gid) return;
+  try {
+    const cartRes = await authApi.getCart();
+    const rows = cartRes.data?.items || [];
+    const items = rows.map((x) => ({ guideId: x.guideId, qty: x.qty }));
+    const hit = items.find((x) => x.guideId === gid);
+    if (hit) hit.qty += 1;
+    else items.push({ guideId: gid, qty: 1 });
+    await authApi.putCart({ items });
+    showToast('已加入购物车');
+  } catch (e) {
+    showToast(e.message || '操作失败');
+  }
+};
+
+const buyNow = () => {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    showToast('请先登录');
+    router.push('/login');
+    return;
+  }
+  buyDialogShow.value = true;
+};
+
+const submitBuy = async () => {
+  const name = buyForm.value.contactName.trim();
+  const phone = buyForm.value.contactPhone.trim();
+  if (!name || !phone) {
+    showToast('请填写联系人和电话');
+    return;
+  }
+  const gid = guide.value.id;
+  const price = Number(guide.value.listPrice) || 0;
+  try {
+    await orderApi.create({
+      serviceTitle: guide.value.name || '商品',
+      serviceIcon: guide.value.icon || 'shopping-cart-o',
+      price,
+      contactName: name,
+      contactPhone: phone,
+      address: buyForm.value.address.trim(),
+      guideId: gid,
+    });
+    buyDialogShow.value = false;
+    showToast('下单成功');
+    router.push('/orders');
+  } catch (e) {
+    showToast(e.message || '下单失败');
+  }
 };
 
 const openMedia = (m) => {
@@ -434,22 +531,70 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-/* ===== 固定底部返回主页（层级低于视频浮层，始终可见） ===== */
+.guide-price-card {
+  margin: 0 12px 8px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+.guide-price-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 15px;
+}
+.guide-price-label,
+.guide-points-label {
+  color: var(--vino-text-secondary);
+  font-size: 13px;
+}
+.guide-price-val {
+  font-weight: 700;
+  color: #B91C1C;
+  font-size: 18px;
+}
+.guide-points-val {
+  font-weight: 600;
+  color: var(--vino-dark);
+}
+
+/* 固定底部操作栏 */
 .guide-footer-fixed {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 150;
-  padding: 12px 16px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding: 10px 12px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
   background: linear-gradient(to top, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
   backdrop-filter: blur(8px);
 }
-.guide-footer-fixed .btn-home {
-  max-width: 280px;
-  margin: 0 auto;
-  display: block;
+.guide-footer-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+.guide-footer-actions .gf-btn {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+.guide-footer-actions .gf-cart {
+  flex: 0.85;
+}
+.buy-dialog-body {
+  padding: 8px 0 4px;
+}
+.buy-dialog-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 0 16px 16px;
 }
 
 /* ===== Video Overlay ===== */

@@ -8,6 +8,12 @@ Page({
     mediaItems: [],
     helpItems: [],
     firstMediaTitle: '',
+    priceText: '0.00',
+    pointsText: '—',
+    buyShow: false,
+    buyName: '',
+    buyPhone: '',
+    buyAddr: '',
   },
 
   onLoad(options) {
@@ -36,12 +42,17 @@ Page({
         });
         const helpItems = parse(g.helpItems);
         const sections = parse(g.sections);
+        const lp = g.listPrice != null ? Number(g.listPrice) : 0;
+        const pts =
+          g.rewardPoints != null && Number(g.rewardPoints) > 0 ? String(g.rewardPoints) : '—';
         this.setData({
           guide: g,
           sections,
           mediaItems,
           helpItems,
           firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.name) : g.name,
+          priceText: lp.toFixed(2),
+          pointsText: pts,
           loading: false,
         });
       })
@@ -99,5 +110,74 @@ Page({
 
   goServices() {
     wx.switchTab({ url: '/pages/products/products' });
+  },
+
+  goCart() {
+    wx.navigateTo({ url: '/pages/cart/cart' });
+  },
+
+  noop() {},
+
+  addToCart() {
+    if (!app.checkLogin()) return;
+    const gid = this.data.guide.id;
+    if (!gid) return;
+    app
+      .request({ url: '/auth/cart' })
+      .then((res) => {
+        const rows = (res.data && res.data.items) || [];
+        const items = rows.map((x) => ({ guideId: x.guideId, qty: x.qty }));
+        const hit = items.find((x) => x.guideId === gid);
+        if (hit) hit.qty += 1;
+        else items.push({ guideId: gid, qty: 1 });
+        return app.request({ url: '/auth/cart', method: 'PUT', data: { items } });
+      })
+      .then(() => wx.showToast({ title: '已加入购物车' }))
+      .catch((e) => wx.showToast({ title: e.message || '失败', icon: 'none' }));
+  },
+
+  openBuy() {
+    if (!app.checkLogin()) return;
+    this.setData({ buyShow: true });
+  },
+
+  closeBuy() {
+    this.setData({ buyShow: false });
+  },
+
+  onBuyField(e) {
+    const k = e.currentTarget.dataset.k;
+    this.setData({ [k]: e.detail.value });
+  },
+
+  submitBuy() {
+    const name = (this.data.buyName || '').trim();
+    const phone = (this.data.buyPhone || '').trim();
+    if (!name || !phone) {
+      wx.showToast({ title: '请填写联系人和电话', icon: 'none' });
+      return;
+    }
+    const g = this.data.guide;
+    const price = g.listPrice != null ? Number(g.listPrice) : 0;
+    app
+      .request({
+        url: '/orders',
+        method: 'POST',
+        data: {
+          serviceTitle: g.name || '商品',
+          serviceIcon: g.icon || 'shopping-cart-o',
+          price,
+          contactName: name,
+          contactPhone: phone,
+          address: (this.data.buyAddr || '').trim(),
+          guideId: g.id,
+        },
+      })
+      .then(() => {
+        this.setData({ buyShow: false });
+        wx.showToast({ title: '下单成功' });
+        wx.navigateTo({ url: '/pages/orders/orders' });
+      })
+      .catch((e) => wx.showToast({ title: e.message || '下单失败', icon: 'none' }));
   },
 });

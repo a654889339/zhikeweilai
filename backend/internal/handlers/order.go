@@ -40,6 +40,17 @@ func orderPointsFromGuideID(guideID *int) int {
 	if err := db.DB.First(&g, *guideID).Error; err != nil {
 		return 0
 	}
+	return guidePointsForOrder(&g)
+}
+
+// guidePointsForOrder 商品积分：优先 device_guides.rewardPoints，否则沿用种类积分
+func guidePointsForOrder(g *models.DeviceGuide) int {
+	if g == nil {
+		return 0
+	}
+	if g.RewardPoints > 0 {
+		return g.RewardPoints
+	}
 	if g.CategoryID == nil || *g.CategoryID <= 0 {
 		return 0
 	}
@@ -79,7 +90,11 @@ func orderCreate(c *gin.Context) {
 		ProductSerial   string   `json:"productSerial"`
 		GuideID         *float64 `json:"guideId"`
 	}
-	if err := c.ShouldBindJSON(&body); err != nil || strings.TrimSpace(body.ServiceTitle) == "" || body.Price == 0 {
+	if err := c.ShouldBindJSON(&body); err != nil || strings.TrimSpace(body.ServiceTitle) == "" {
+		resp.Err(c, 400, 400, "服务信息不完整")
+		return
+	}
+	if body.Price < 0 {
 		resp.Err(c, 400, 400, "服务信息不完整")
 		return
 	}
@@ -101,7 +116,17 @@ func orderCreate(c *gin.Context) {
 			appt = &t
 		}
 	}
-	points := orderPointsFromGuideID(gid)
+	if body.Price == 0 && (gid == nil || *gid <= 0) {
+		resp.Err(c, 400, 400, "服务信息不完整")
+		return
+	}
+	points := 0
+	if gid != nil {
+		var g models.DeviceGuide
+		if err := db.DB.First(&g, *gid).Error; err == nil {
+			points = guidePointsForOrder(&g)
+		}
+	}
 	o := models.Order{
 		OrderNo:         genOrderNo(),
 		UserID:          u.ID,

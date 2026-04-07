@@ -71,8 +71,39 @@ func Run() error {
 	if err := ensureCourseCenterValidTimestamps(); err != nil {
 		log.Printf("[zkwl] ensureCourseCenterValidTimestamps: %v", err)
 	}
+	if err := ensureShopCartCommerceColumns(); err != nil {
+		log.Printf("[zkwl] ensureShopCartCommerceColumns: %v", err)
+	}
 
 	return seedDefaultsIfEmpty()
+}
+
+func ensureShopCartCommerceColumns() error {
+	type colDDL struct {
+		table, column, ddl string
+	}
+	for _, c := range []colDDL{
+		{"device_guides", "listPrice", "ALTER TABLE `device_guides` ADD COLUMN `listPrice` DECIMAL(10,2) NOT NULL DEFAULT 0"},
+		{"device_guides", "rewardPoints", "ALTER TABLE `device_guides` ADD COLUMN `rewardPoints` INT NOT NULL DEFAULT 0"},
+		{"users", "cartJson", "ALTER TABLE `users` ADD COLUMN `cartJson` JSON NULL"},
+		{"orders", "cartItems", "ALTER TABLE `orders` ADD COLUMN `cartItems` JSON NULL"},
+	} {
+		var n int64
+		if err := db.DB.Raw(`
+			SELECT COUNT(*) FROM information_schema.COLUMNS
+			WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?
+		`, c.table, c.column).Scan(&n).Error; err != nil {
+			return err
+		}
+		if n > 0 {
+			continue
+		}
+		if err := db.DB.Exec(c.ddl).Error; err != nil {
+			return err
+		}
+		log.Printf("[zkwl] ensureShopCartCommerceColumns: added %s.%s", c.table, c.column)
+	}
+	return nil
 }
 
 func ensureDeviceGuideManualPdfUrlColumn() error {

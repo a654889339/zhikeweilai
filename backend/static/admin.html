@@ -260,7 +260,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('userSearchKeyword').value='';document.getElementById('userSearchType').value='';userPage=1;loadUsers()">重置</button>
         </div>
         <table class="order-table" id="userTable">
-          <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>我的积分</th><th>角色</th><th>订单数</th><th>地址数</th><th>已绑定商品</th><th>注册时间</th><th>操作</th><th>删除</th></tr></thead>
+          <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>我的积分</th><th>角色</th><th>订单数</th><th>地址数</th><th>已绑定商品</th><th>购物车</th><th>注册时间</th><th>操作</th><th>删除</th></tr></thead>
           <tbody id="userTableBody"></tbody>
         </table>
         <div class="order-empty" id="userEmpty" style="display:none">暂无用户</div>
@@ -360,7 +360,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           </div>
         </div>
         <table class="order-table">
-          <thead><tr><th>排序</th><th>种类</th><th>名称</th><th>英文描述</th><th>副标题</th><th>图标</th><th>状态</th><th>二维码</th><th>操作</th></tr></thead>
+          <thead><tr><th>排序</th><th>种类</th><th>名称</th><th>英文描述</th><th>价格</th><th>积分</th><th>图标</th><th>状态</th><th>二维码</th><th>操作</th></tr></thead>
           <tbody id="guideTableBody"></tbody>
         </table>
         <div class="order-empty" id="guideEmpty" style="display:none">暂无商品</div>
@@ -904,7 +904,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
               <div class="form-group"><label>二级种类 *</label><select class="form-input" id="gCategoryId"><option value="">请选择二级种类</option></select></div>
               <div class="form-group"><label>名称 *</label><input class="form-input" id="gName" placeholder="如：空调" /></div>
               <div class="form-group"><label>英文描述 * <span style="font-weight:normal;color:#999;font-size:12px">（唯一标识，用于链接路径，如 aircondition）</span></label><input class="form-input" id="gSlug" placeholder="如：aircondition" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'')" /></div>
-              <div class="form-group"><label>副标题</label><input class="form-input" id="gSubtitle" placeholder="如：家用/商用中央空调" /></div>
+              <div class="form-group"><label>价格（元）</label><input class="form-input" id="gListPrice" type="number" step="0.01" min="0" placeholder="0" /></div>
+              <div class="form-group"><label>积分（单件）</label><input class="form-input" id="gRewardPoints" type="number" step="1" min="0" placeholder="0 表示沿用种类积分" /></div>
               <div class="form-group"><label>自定义图标 <span style="font-weight:normal;color:#999;font-size:12px">（上传后替代默认图标）</span></label>
                 <div style="display:flex;gap:8px;align-items:center">
                   <img id="gIconPreview" style="width:44px;height:44px;object-fit:contain;border-radius:10px;border:1px solid #eee;display:none;background:#f5f5f5" />
@@ -924,7 +925,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <h4 style="margin:0 0 12px;color:var(--primary)">English Config</h4>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
               <div class="form-group"><label>Name (EN)</label><input class="form-input" id="gNameEn" placeholder="e.g. Air Conditioner" /></div>
-              <div class="form-group"><label>Subtitle (EN)</label><input class="form-input" id="gSubtitleEn" placeholder="e.g. Residential/Commercial" /></div>
               <div class="form-group"><label>Badge (EN)</label><input class="form-input" id="gBadgeEn" placeholder="e.g. Hot, New" /></div>
               <div class="form-group"><label>Description (EN)</label><input class="form-input" id="gDescriptionEn" placeholder="English description" /></div>
               <div class="form-group"><label>Emoji (EN)</label><input class="form-input" id="gEmojiEn" placeholder="❄️" /></div>
@@ -1839,10 +1839,27 @@ const expandedUsers = new Set();
 let userPage = 1;
 const userPageSize = 50;
 
+function formatUserCart(cart) {
+  if (cart == null || cart === '') return '-';
+  var s = typeof cart === 'string' ? cart : JSON.stringify(cart);
+  try {
+    var arr = JSON.parse(s);
+    if (!Array.isArray(arr)) return s;
+    return JSON.stringify(arr);
+  } catch (e) {
+    return String(cart);
+  }
+}
+function formatUserCartShort(cart) {
+  var full = formatUserCart(cart);
+  if (full === '-') return '-';
+  return full.length > 48 ? full.slice(0, 45) + '…' : full;
+}
+
 async function loadUsers() {
   const tbody = document.getElementById('userTableBody');
   const empty = document.getElementById('userEmpty');
-  tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
     const params = new URLSearchParams({ page: userPage, pageSize: userPageSize });
     const st = document.getElementById('userSearchType') && document.getElementById('userSearchType').value;
@@ -1883,7 +1900,7 @@ async function loadUsers() {
         <button class="page-btn" onclick="userPage++;loadUsers()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
     }
   } catch {
-    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>';
   }
 }
 
@@ -1911,13 +1928,14 @@ function renderUserTable() {
       <td>${u.orderCount}</td>
       <td>${addrCount}</td>
       <td style="font-size:12px;max-width:180px;word-break:break-all" title="${boundStr}">${boundKeys.length ? boundKeys.length + ' 个' : '-'}</td>
+      <td style="font-size:11px;max-width:200px;word-break:break-all;color:#555" title="${escapeHtml(formatUserCart(u.cart))}">${escapeHtml(formatUserCartShort(u.cart))}</td>
       <td style="font-size:12px">${regTime}</td>
       <td><button class="detail-btn" onclick="toggleUserDetail(${u.id})">${isExpanded ? '收起' : '详情'}</button></td>
       <td>${delBtn}</td>
     </tr>`;
     if (isExpanded) {
       const isEmptyNormal = (u.orderCount || 0) === 0 && boundKeys.length === 0 && addrCount === 0 && u.status === 'active';
-      html += `<tr class="user-detail-row"><td colspan="13"><div class="user-detail-inner">`;
+      html += `<tr class="user-detail-row"><td colspan="14"><div class="user-detail-inner">`;
       if (isEmptyNormal) {
         html += '<div style="font-size:13px;color:#999">该用户暂无订单、绑定商品与收货地址，状态正常。</div>';
       } else {
@@ -2035,11 +2053,11 @@ let allGuides = [];
 async function loadGuides() {
   const tbody = document.getElementById('guideTableBody');
   const empty = document.getElementById('guideEmpty');
-  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
     const res = await api('/guides/admin/list');
     if (res.code !== 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">' + escapeHtml(res.message || '加载失败') + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#B91C1C">' + escapeHtml(res.message || '加载失败') + '</td></tr>';
       empty.style.display = 'none';
       return;
     }
@@ -2051,7 +2069,8 @@ async function loadGuides() {
       <td style="font-size:12px;color:#666">${g.category ? g.category.name : '-'}</td>
       <td><strong>${g.name}</strong></td>
       <td style="font-size:12px;color:#6366F1;font-family:monospace">${g.slug || '<span style="color:#ccc">-</span>'}</td>
-      <td style="font-size:12px;color:#666">${g.subtitle || '-'}</td>
+      <td style="font-size:13px">${g.listPrice != null ? Number(g.listPrice).toFixed(2) : '0.00'}</td>
+      <td>${g.rewardPoints != null ? g.rewardPoints : 0}</td>
       <td>${g.iconUrl ? '<img src="'+(g.iconUrlThumb||g.iconUrl)+'" data-full-src="'+(g.iconUrlThumb?g.iconUrl:'')+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px" class="lod-img">' : (g.icon || '-')}</td>
       <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${g.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleGuideStatus(${g.id},'${g.status}')">${g.status==='active'?'启用':'禁用'}</span></td>
       <td>${g.qrcodeUrl
@@ -2063,7 +2082,7 @@ async function loadGuides() {
         <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteGuide(${g.id})">删除</button>
       </td>
     </tr>`).join('');
-  } catch { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; }
+  } catch { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; }
   setTimeout(upgradeLodImages, 0);
 }
 
@@ -2491,7 +2510,8 @@ function openGuideEditor(guide) {
   gCatSel.value = guide && guide.categoryId ? guide.categoryId : '';
   document.getElementById('gName').value = guide ? guide.name : '';
   document.getElementById('gSlug').value = guide ? (guide.slug||'') : '';
-  document.getElementById('gSubtitle').value = guide ? (guide.subtitle||'') : '';
+  document.getElementById('gListPrice').value = guide && guide.listPrice != null ? guide.listPrice : '';
+  document.getElementById('gRewardPoints').value = guide && guide.rewardPoints != null ? guide.rewardPoints : '';
   document.getElementById('gIcon').value = guide ? guide.icon : 'setting-o';
   document.getElementById('gIconUrl').value = guide ? (guide.iconUrl||'') : '';
   document.getElementById('gIconUrlThumb').value = guide ? (guide.iconUrlThumb||'') : '';
@@ -2513,7 +2533,6 @@ function openGuideEditor(guide) {
   renderMediaItems(); renderHelpItems();
   document.getElementById('gManualPdfUrl').value = guide ? (guide.manualPdfUrl || '') : '';
   document.getElementById('gNameEn').value = guide ? (guide.nameEn || '') : '';
-  document.getElementById('gSubtitleEn').value = guide ? (guide.subtitleEn || '') : '';
   document.getElementById('gBadgeEn').value = guide ? (guide.badgeEn || '') : '';
   document.getElementById('gDescriptionEn').value = guide ? (guide.descriptionEn || '') : '';
   document.getElementById('gIconUrlEn').value = guide ? (guide.iconUrlEn || '') : '';
@@ -2562,7 +2581,8 @@ async function saveGuide() {
     })(),
     name: document.getElementById('gName').value,
     slug,
-    subtitle: document.getElementById('gSubtitle').value,
+    listPrice: parseFloat(document.getElementById('gListPrice').value) || 0,
+    rewardPoints: parseInt(document.getElementById('gRewardPoints').value, 10) || 0,
     icon: document.getElementById('gIcon').value,
     iconUrl: document.getElementById('gIconUrl').value,
     iconUrlThumb: document.getElementById('gIconUrlThumb').value,
@@ -2579,7 +2599,6 @@ async function saveGuide() {
     helpItems: guideHelpItems,
     manualPdfUrl: (document.getElementById('gManualPdfUrl') && document.getElementById('gManualPdfUrl').value) ? document.getElementById('gManualPdfUrl').value.trim() : '',
     nameEn: (document.getElementById('gNameEn').value || '').trim(),
-    subtitleEn: (document.getElementById('gSubtitleEn').value || '').trim(),
     badgeEn: (document.getElementById('gBadgeEn').value || '').trim(),
     descriptionEn: (document.getElementById('gDescriptionEn').value || '').trim(),
     iconUrlEn: (document.getElementById('gIconUrlEn').value || '').trim(),

@@ -28,6 +28,8 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		auth.POST("/alipay-login", func(c *gin.Context) { authAlipayLogin(c, cfg) })
 		auth.GET("/profile", middleware.Auth(cfg), authGetProfile)
 		auth.PUT("/profile", middleware.Auth(cfg), authUpdateProfile)
+		auth.GET("/cart", middleware.Auth(cfg), authGetCart)
+		auth.PUT("/cart", middleware.Auth(cfg), authPutCart)
 		auth.POST("/upload-avatar", middleware.Auth(cfg), func(c *gin.Context) { authUploadAvatar(c, cfg) })
 		auth.GET("/admin/users", middleware.Auth(cfg), middleware.Admin(), authAdminGetUsers)
 		auth.DELETE("/admin/users/:userId", middleware.Auth(cfg), middleware.Admin(), authAdminDeleteUser)
@@ -39,6 +41,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 
 	orders := api.Group("/orders")
 	{
+		orders.POST("/cart-checkout", middleware.Auth(cfg), orderCartCheckout)
 		orders.POST("/", middleware.Auth(cfg), orderCreate)
 		orders.GET("/mine", middleware.Auth(cfg), orderMyOrders)
 		orders.GET("/mine/stats", middleware.Auth(cfg), orderMineStats)

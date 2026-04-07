@@ -1,0 +1,258 @@
+package handlers
+
+import (
+	"encoding/json"
+	"strings"
+	"time"
+
+	"zhikeweilai/backend/internal/db"
+	"zhikeweilai/backend/internal/models"
+	"zhikeweilai/backend/internal/resp"
+
+	"github.com/gin-gonic/gin"
+)
+
+type cartLineIn struct {
+	GuideID int `json:"guideId"`
+	Qty     int `json:"qty"`
+}
+
+type cartLineOut struct {
+	GuideID     int     `json:"guideId"`
+	Qty         int     `json:"qty"`
+	Name        string  `json:"name"`
+	ListPrice   float64 `json:"listPrice"`
+	RewardPoints int    `json:"rewardPoints"`
+	LineTotal   float64 `json:"lineTotal"`
+}
+
+type cartSnapshotItem struct {
+	GuideID      int     `json:"guideId"`
+	Name         string  `json:"name"`
+	Qty          int     `json:"qty"`
+	UnitPrice    float64 `json:"unitPrice"`
+	LineTotal    float64 `json:"lineTotal"`
+	RewardPoints int     `json:"rewardPoints"`
+	LinePoints   int     `json:"linePoints"`
+}
+
+func parseUserCartJSON(raw *string) []cartLineIn {
+	if raw == nil || strings.TrimSpace(*raw) == "" {
+		return nil
+	}
+	var items []cartLineIn
+	if err := json.Unmarshal([]byte(*raw), &items); err != nil {
+		return nil
+	}
+	out := make([]cartLineIn, 0, len(items))
+	for _, it := range items {
+		if it.GuideID <= 0 || it.Qty <= 0 {
+			continue
+		}
+		if it.Qty > 9999 {
+			it.Qty = 9999
+		}
+		out = append(out, it)
+	}
+	return out
+}
+
+func mergeCartLines(items []cartLineIn) []cartLineIn {
+	byID := map[int]int{}
+	for _, it := range items {
+		byID[it.GuideID] += it.Qty
+	}
+	out := make([]cartLineIn, 0, len(byID))
+	for gid, q := range byID {
+		if q > 9999 {
+			q = 9999
+		}
+		out = append(out, cartLineIn{GuideID: gid, Qty: q})
+	}
+	return out
+}
+
+// authGetCart GET /auth/cart
+func authGetCart(c *gin.Context) {
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	var user models.User
+	if err := db.DB.First(&user, u.ID).Error; err != nil {
+		resp.Err(c, 404, 404, "用户不存在")
+		return
+	}
+	lines, totalPrice, totalPoints := resolveCartLines(user.CartJSON)
+	resp.OK(c, gin.H{
+		"items":       lines,
+		"totalPrice":  totalPrice,
+		"totalPoints": totalPoints,
+	})
+}
+
+func resolveCartLines(cartRaw *string) (lines []cartLineOut, totalPrice float64, totalPoints int) {
+	items := parseUserCartJSON(cartRaw)
+	if len(items) == 0 {
+		return nil, 0, 0
+	}
+	lines = make([]cartLineOut, 0, len(items))
+	for _, it := range items {
+		var g models.DeviceGuide
+		if err := db.DB.First(&g, it.GuideID).Error; err != nil || g.Status != "active" {
+			continue
+		}
+		unit := g.ListPrice
+		if unit < 0 {
+			unit = 0
+		}
+		rp := guidePointsForOrder(&g)
+		lineTot := unit * float64(it.Qty)
+		lines = append(lines, cartLineOut{
+			GuideID:      it.GuideID,
+			Qty:          it.Qty,
+			Name:         g.Name,
+			ListPrice:    unit,
+			RewardPoints: rp,
+			LineTotal:    lineTot,
+		})
+		totalPrice += lineTot
+		totalPoints += rp * it.Qty
+	}
+	return lines, totalPrice, totalPoints
+}
+
+// authPutCart PUT /auth/cart  body: { items: [{ guideId, qty }] }
+func authPutCart(c *gin.Context) {
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	var body struct {
+		Items []cartLineIn `json:"items"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		resp.Err(c, 400, 400, "参数错误")
+		return
+	}
+	merged := mergeCartLines(body.Items)
+	b, err := json.Marshal(merged)
+	if err != nil {
+		resp.Err(c, 500, 500, "保存失败")
+		return
+	}
+	s := string(b)
+	if err := db.DB.Model(&models.User{}).Where("id = ?", u.ID).Update("cartJson", s).Error; err != nil {
+		resp.Err(c, 500, 500, "保存失败")
+		return
+	}
+	var user models.User
+	_ = db.DB.First(&user, u.ID)
+	lines, totalPrice, totalPoints := resolveCartLines(user.CartJSON)
+	resp.OK(c, gin.H{
+		"items":       lines,
+		"totalPrice":  totalPrice,
+		"totalPoints": totalPoints,
+	})
+}
+
+// orderCartCheckout POST /orders/cart-checkout
+func orderCartCheckout(c *gin.Context) {
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	var body struct {
+		ContactName     string  `json:"contactName"`
+		ContactPhone    string  `json:"contactPhone"`
+		Address         string  `json:"address"`
+		Remark          string  `json:"remark"`
+		AppointmentTime *string `json:"appointmentTime"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		resp.Err(c, 400, 400, "参数错误")
+		return
+	}
+	if strings.TrimSpace(body.ContactName) == "" || strings.TrimSpace(body.ContactPhone) == "" {
+		resp.Err(c, 400, 400, "请填写联系人和电话")
+		return
+	}
+	var user models.User
+	if err := db.DB.First(&user, u.ID).Error; err != nil {
+		resp.Err(c, 404, 404, "用户不存在")
+		return
+	}
+	items := parseUserCartJSON(user.CartJSON)
+	if len(items) == 0 {
+		resp.Err(c, 400, 400, "购物车为空")
+		return
+	}
+	var snap []cartSnapshotItem
+	var totalPrice float64
+	var totalPoints int
+	for _, it := range items {
+		var g models.DeviceGuide
+		if err := db.DB.First(&g, it.GuideID).Error; err != nil || g.Status != "active" {
+			continue
+		}
+		unit := g.ListPrice
+		if unit < 0 {
+			unit = 0
+		}
+		rp := guidePointsForOrder(&g)
+		lineTot := unit * float64(it.Qty)
+		snap = append(snap, cartSnapshotItem{
+			GuideID:      g.ID,
+			Name:         g.Name,
+			Qty:          it.Qty,
+			UnitPrice:    unit,
+			LineTotal:    lineTot,
+			RewardPoints: rp,
+			LinePoints:   rp * it.Qty,
+		})
+		totalPrice += lineTot
+		totalPoints += rp * it.Qty
+	}
+	if len(snap) == 0 {
+		resp.Err(c, 400, 400, "购物车中没有可结算的商品")
+		return
+	}
+	snapBytes, _ := json.Marshal(snap)
+	snapStr := string(snapBytes)
+	title := "购物车订单"
+	if len(snap) == 1 {
+		title = snap[0].Name
+	}
+	var appt *time.Time
+	if body.AppointmentTime != nil && *body.AppointmentTime != "" {
+		t, err := time.Parse(time.RFC3339, *body.AppointmentTime)
+		if err == nil {
+			appt = &t
+		}
+	}
+	o := models.Order{
+		OrderNo:         genOrderNo(),
+		UserID:          u.ID,
+		ServiceID:       nil,
+		ServiceTitle:    title,
+		ServiceTitleEn:  "Cart order",
+		ServiceIcon:     "shopping-cart-o",
+		Price:           totalPrice,
+		ContactName:     strings.TrimSpace(body.ContactName),
+		ContactPhone:    strings.TrimSpace(body.ContactPhone),
+		Address:         strings.TrimSpace(body.Address),
+		Remark:          strings.TrimSpace(body.Remark),
+		AppointmentTime: appt,
+		GuideID:         nil,
+		CartItems:       &snapStr,
+		Points:          totalPoints,
+		Status:          "pending",
+	}
+	if err := db.DB.Create(&o).Error; err != nil {
+		resp.Err(c, 500, 500, "创建订单失败")
+		return
+	}
+	empty := "[]"
+	_ = db.DB.Model(&models.User{}).Where("id = ?", u.ID).Update("cartJson", empty)
+	resp.OK(c, o)
+}

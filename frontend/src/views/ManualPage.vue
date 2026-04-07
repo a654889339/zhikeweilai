@@ -7,7 +7,6 @@
     <template v-else>
       <div class="manual-header">
         <h1 class="manual-title">{{ guide.name }}{{ title ? ' ' : '' }}使用说明书</h1>
-        <p v-if="guide.subtitle" class="manual-subtitle">{{ guide.subtitle }}</p>
       </div>
 
       <div v-if="!chapters.length" class="manual-empty">

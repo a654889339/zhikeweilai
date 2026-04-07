@@ -137,6 +137,8 @@ func attachGuideThumbs(g *models.DeviceGuide) gin.H {
 	h["iconUrlThumb"] = iconThumb
 	h["coverImageThumb"] = coverThumb
 	h["qrcodeUrlThumb"] = services.GetThumbURL(g.QrcodeURL)
+	delete(h, "subtitle")
+	delete(h, "subtitleEn")
 	return h
 }
 

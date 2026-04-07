@@ -7,6 +7,8 @@ export const authApi = {
   register: (data) => request.post('/auth/register', data),
   getProfile: () => request.get('/auth/profile'),
   updateProfile: (data) => request.put('/auth/profile', data),
+  getCart: () => request.get('/auth/cart'),
+  putCart: (data) => request.put('/auth/cart', data),
   uploadAvatar: (file) => {
     const fd = new FormData();
     fd.append('avatar', file);
@@ -24,6 +26,7 @@ export const authApi = {
 
 export const orderApi = {
   create: (data) => request.post('/orders', data),
+  cartCheckout: (data) => request.post('/orders/cart-checkout', data),
   mine: (params) => request.get('/orders/mine', { params }),
   mineStats: () => request.get('/orders/mine/stats'),
   detail: (id) => request.get(`/orders/${id}`),
