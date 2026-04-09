@@ -96,6 +96,6 @@ func Load() *Config {
 	c.SMS.SignName = getenv("TENCENT_SMS_SIGN_NAME", "科必学服务")
 	c.SMS.TemplateID = getenv("TENCENT_SMS_TEMPLATE_ID", "")
 	c.SMS.CodeExpireMinutes = atoi(getenv("SMS_CODE_EXPIRE_MINUTES", "5"), 5)
-	c.FrontendURL = getenv("FRONTEND_URL", "http://106.54.50.88:5301")
+	c.FrontendURL = getenv("FRONTEND_URL", "http://106.54.50.88")
 	return c
 }

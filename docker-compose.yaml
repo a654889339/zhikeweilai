@@ -1,6 +1,6 @@
 # 科必学 — 与 Vino_test 同机部署时请保持本文件端口/容器名，勿与 Vino 冲突
 # Vino_test: 前端 5201 / API 5202 / 门店 5203 / MySQL 主机 3308
-# zhikeweilai: 前端 5301 / API 5302 / 门店 5303 / MySQL 主机 3310（3309 已被 jiuyoumi-mysql 占用）
+# zhikeweilai: 前端 80 / API 5302 / 门店 5303 / MySQL 主机 3310（3309 已被 jiuyoumi-mysql 占用）
 name: zhikeweilai
 
 services:
@@ -49,7 +49,7 @@ services:
       EMAIL_FROM_NAME: Vino服务
       WECHAT_APPID: wxf6fdff25c117e86d
       WECHAT_SECRET: 8c82016b1f57a66764f581ae763dec15
-      FRONTEND_URL: ${FRONTEND_URL:-http://106.54.50.88:5301}
+      FRONTEND_URL: ${FRONTEND_URL:-http://106.54.50.88}
       WECHAT_PAY_MCH_ID: ${WECHAT_PAY_MCH_ID:-}
       WECHAT_PAY_SERIAL_NO: ${WECHAT_PAY_SERIAL_NO:-}
       WECHAT_PAY_API_V3_KEY: ${WECHAT_PAY_API_V3_KEY:-}
@@ -70,7 +70,7 @@ services:
     container_name: zkwl-frontend
     restart: always
     ports:
-      - "5301:5301"
+      - "80:80"
     depends_on:
       - zkwl-backend
 
