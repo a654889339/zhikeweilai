@@ -1,6 +1,6 @@
 ---
 name: deploy-to-106
-description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存（zkwl-* 容器、主前端 80 / API 5302 / 门店 5303、3310 MySQL 映射、独立 MySQL 卷）。后端为 Go（Gin，`backend/Dockerfile` 构建）。使用 SSH + ghfast 镜像拉代码 + docker compose。在用户要求发布/部署/上 106 时执行本 skill。
+description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存（zkwl-* 容器、主前端 5301:80 / API 5302 / 门店 5303、3310 MySQL 映射、独立 MySQL 卷）。后端为 Go（Gin，`backend/Dockerfile` 构建）。使用 SSH + ghfast 镜像拉代码 + docker compose。在用户要求发布/部署/上 106 时执行本 skill。
 ---
 
 # Deploy zhikeweilai to 106
@@ -10,7 +10,7 @@ description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存
 | 项目 | 主前端 | 门店 | API | MySQL 宿主机端口 |
 |------|--------|------|-----|------------------|
 | **Vino_test** | 5201 | 5203 | 5202 | 3308 |
-| **zhikeweilai** | 80 | 5303 | 5302 | **3310**（106 上 3309 已被 jiuyoumi 占用） |
+| **zhikeweilai** | 5301→容器80 | 5303 | 5302 | **3310**（106 上 3309 已被 jiuyoumi 占用） |
 
 - 容器名：`zkwl-mysql`、`zkwl-backend`、`zkwl-frontend`、`zkwl-frontend-outlet`（禁止再用 `vino-*`，会与 Vino 冲突）。
 - 数据卷：`zkwl-mysql-data`（与 `vino-mysql-data` 独立）。
@@ -96,7 +96,7 @@ sudo docker ps --filter name=zkwl --format 'table {{.Names}}\t{{.Status}}\t{{.Po
 curl -s http://localhost:5302/api/health
 ```
 
-浏览器：`http://106.54.50.88`（门店 `http://106.54.50.88:5303`）。
+浏览器：主站 `http://106.54.50.88:5301`（或宿主机 nginx 反代到该端口后用标准 80）；门店 `http://106.54.50.88:5303`。
 
 ## 常见说明
 

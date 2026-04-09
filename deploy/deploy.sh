@@ -1,7 +1,7 @@
 #!/bin/bash
 # Vino服务 - 腾讯云部署脚本
 # 服务器: 106.54.50.88
-# 端口: 前端80, 后端5302, MySQL3308
+# 端口: 前端 5301->容器80, 后端5302, MySQL3308
 # 部署流程: git push -> SSH -> git pull -> docker-compose rebuild
 
 set -e
@@ -42,6 +42,6 @@ ssh $SSH_OPTS -i "$SSH_KEY" $SERVER "sudo docker ps --filter name=vino --format 
 echo ""
 echo "========================================="
 echo "  部署完成!"
-echo "  前端: http://106.54.50.88"
+echo "  前端: http://106.54.50.88:5301"
 echo "  后端: http://106.54.50.88:5302/api/health"
 echo "========================================="

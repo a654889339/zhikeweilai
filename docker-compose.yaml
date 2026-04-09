@@ -1,6 +1,6 @@
 # 科必学 — 与 Vino_test 同机部署时请保持本文件端口/容器名，勿与 Vino 冲突
 # Vino_test: 前端 5201 / API 5202 / 门店 5203 / MySQL 主机 3308
-# zhikeweilai: 前端 80 / API 5302 / 门店 5303 / MySQL 主机 3310（3309 已被 jiuyoumi-mysql 占用）
+# zhikeweilai: 主前端容器内 Nginx 监听 80，映射宿主机 5301:80（避免与宿主机已占用的 80 冲突；公网 80 由宿主机 nginx 反代到本端口）
 name: zhikeweilai
 
 services:
@@ -70,7 +70,7 @@ services:
     container_name: zkwl-frontend
     restart: always
     ports:
-      - "80:80"
+      - "5301:80"
     depends_on:
       - zkwl-backend
 
