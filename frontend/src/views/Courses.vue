@@ -26,6 +26,7 @@
               active: isRowActive(cat),
               sub: cat.depth === 1,
               header: cat.isHeader,
+              'depth-2': cat.depth === 2 || cat.rowKind === 'course',
             }"
             @click="selectCategory(cat)"
           >
@@ -38,43 +39,10 @@
           </button>
         </aside>
         <div class="product-main">
-          <div v-if="l2PickerOptions.length > 1" class="course-l2-picker-row">
-            <span class="course-l2-label">选择子分类</span>
-            <select
-              class="course-l2-select"
-              :value="String(selectedCategoryId ?? '')"
-              @change="onL2PickerChange"
-            >
-              <option v-for="opt in l2PickerOptions" :key="opt.id" :value="String(opt.id)">
-                {{ opt.name }}
-              </option>
-            </select>
-          </div>
-          <van-loading v-if="listLoading" size="28" class="main-loading" />
-          <div v-else-if="filteredCourses.length" class="product-grid">
-            <button
-              v-for="d in filteredCourses"
-              :key="d.id"
-              type="button"
-              class="grid-card"
-              @click="openCourse(d)"
-            >
-              <div class="grid-card-icon">
-                <LodImg
-                  v-if="d.coverImage"
-                  :src="fullUrl(d.coverImage)"
-                  :thumb="fullUrl(d.coverImage)"
-                  class="grid-card-icon-img"
-                />
-                <van-icon v-else :name="d.icon || 'records'" size="28" color="#6b7280" />
-              </div>
-              <span class="grid-card-name">{{ d.name }}</span>
-            </button>
-          </div>
-          <div v-else-if="selectedCategoryId && !listLoading && courses.length && !filteredCourses.length" class="main-empty">
-            未找到匹配的课程
-          </div>
-          <div v-else-if="selectedCategoryId && !listLoading && !courses.length" class="main-empty">该分类下暂无课程</div>
+          <van-loading v-if="detailLoading" size="28" class="main-loading" />
+          <EmbeddedCourseDetail v-else-if="selectedCourseId" :course-id="selectedCourseId" />
+          <div v-else-if="selectedCategoryId && !detailLoading" class="main-empty">该分类下暂无课程</div>
+          <div v-else class="main-empty">请选择左侧分类与课程</div>
         </div>
       </div>
 
@@ -89,10 +57,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
 import { courseApi, homeConfigApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
+import EmbeddedCourseDetail from '@/components/EmbeddedCourseDetail.vue';
 import { sortCategoriesForSidebar } from '@/utils/productGuideOrder';
 import {
   findExpandedL1IdFromTree,
@@ -100,9 +68,7 @@ import {
   isSidebarRowActive,
 } from '@/utils/categorySidebar';
 
-const router = useRouter();
-
-/** 将课程分类树的 title 转为与产品侧栏一致的 name */
+/** 课程分类树 title → name */
 function mapCourseTree(nodes) {
   if (!Array.isArray(nodes)) return [];
   return nodes.map((n) => ({
@@ -114,10 +80,13 @@ function mapCourseTree(nodes) {
 }
 
 const categories = ref([]);
+const allCourses = ref([]);
 const selectedCategoryId = ref(null);
+const selectedCourseId = ref(null);
 const expandedL1Id = ref(null);
-const courses = ref([]);
+const expandedL2Id = ref(null);
 const listLoading = ref(false);
+const detailLoading = ref(false);
 const searchKeyword = ref('');
 
 const BASE = import.meta.env.VITE_API_BASE || '';
@@ -125,6 +94,34 @@ function fullUrl(url) {
   if (!url) return '';
   if (url.startsWith('http')) return url;
   return BASE.replace('/api', '') + url;
+}
+
+function coursesForL2(l2Id) {
+  const id = Number(l2Id);
+  return (allCourses.value || []).filter((c) => Number(c.courseCategoryId) === id);
+}
+
+function pushCourseRows(out, parentL1Id, parentL2Id) {
+  let list = coursesForL2(parentL2Id);
+  const kw = searchKeyword.value.trim().toLowerCase();
+  if (kw) {
+    list = list.filter((d) => (d.name || '').toLowerCase().includes(kw));
+  }
+  list.forEach((c) => {
+    const thumb = c.coverImage ? fullUrl(String(c.coverImage).trim()) : '';
+    out.push({
+      _key: `co-${c.id}`,
+      rowKind: 'course',
+      id: c.id,
+      courseId: c.id,
+      parentL1Id,
+      parentL2Id,
+      name: c.name,
+      thumb,
+      depth: 2,
+      isHeader: false,
+    });
+  });
 }
 
 function flattenSidebarTree(tree) {
@@ -152,6 +149,7 @@ function flattenSidebarTree(tree) {
         firstChildId: null,
         children: [],
       });
+      pushCourseRows(out, p.id, c0.id);
     } else if (children.length > 1) {
       out.push({
         _key: `p-${p.id}`,
@@ -171,13 +169,18 @@ function flattenSidebarTree(tree) {
           id: c.id,
           parentL1Id: p.id,
           name: c.name,
-          thumb: c.thumbnailUrl ? fullUrl(String(c.thumbnailUrl).trim()) : (p.thumbnailUrl ? fullUrl(String(p.thumbnailUrl).trim()) : ''),
+          thumb: c.thumbnailUrl
+            ? fullUrl(String(c.thumbnailUrl).trim())
+            : p.thumbnailUrl
+              ? fullUrl(String(p.thumbnailUrl).trim())
+              : '',
           depth: 1,
           isHeader: false,
           hasChildren: false,
           firstChildId: null,
           children: [],
         });
+        pushCourseRows(out, p.id, c.id);
       });
     } else {
       out.push({
@@ -200,62 +203,71 @@ function flattenSidebarTree(tree) {
 const sidebarItems = computed(() => flattenSidebarTree(categories.value));
 
 const visibleSidebarItems = computed(() =>
-  filterVisibleSidebarItems(sidebarItems.value, expandedL1Id.value)
+  filterVisibleSidebarItems(sidebarItems.value, expandedL1Id.value, expandedL2Id.value)
 );
 
 function isRowActive(cat) {
-  return isSidebarRowActive(cat, selectedCategoryId.value, expandedL1Id.value);
+  return isSidebarRowActive(
+    cat,
+    selectedCategoryId.value,
+    expandedL1Id.value,
+    selectedCourseId.value
+  );
 }
 
-const filteredCourses = computed(() => {
-  const list = courses.value || [];
+function firstCourseIdForL2(l2Id) {
+  const list = coursesForL2(l2Id);
   const kw = searchKeyword.value.trim().toLowerCase();
-  if (!kw) return list;
-  return list.filter((d) => (d.name || '').toLowerCase().includes(kw));
-});
-
-/** 多二级时：主区域下拉列出当前一级下全部二级（与小程序课程页一致） */
-const l2PickerOptions = computed(() => {
-  const eid = expandedL1Id.value;
-  if (eid == null) return [];
-  const p = categories.value.find((x) => Number(x.id) === Number(eid));
-  const ch = p && Array.isArray(p.children) ? sortCategoriesForSidebar(p.children) : [];
-  if (ch.length <= 1) return [];
-  return ch.map((c) => ({ id: c.id, name: c.name || c.title || '' }));
-});
-
-function onL2PickerChange(e) {
-  const id = Number((e.target && e.target.value) || '');
-  if (!Number.isFinite(id)) return;
-  const cat = sidebarItems.value.find((x) => Number(x.id) === id && !x.isHeader);
-  if (cat) selectCategory(cat);
-}
-
-function openCourse(d) {
-  const idOrSlug = d.slug || d.id;
-  router.push(`/course/${encodeURIComponent(String(idOrSlug))}`);
+  const filtered = kw ? list.filter((d) => (d.name || '').toLowerCase().includes(kw)) : list;
+  return filtered.length ? filtered[0].id : list[0] ? list[0].id : null;
 }
 
 const selectCategory = async (cat) => {
   if (!cat) return;
+
+  if (cat.rowKind === 'course') {
+    selectedCategoryId.value = cat.parentL2Id;
+    selectedCourseId.value = cat.courseId;
+    expandedL1Id.value = findExpandedL1IdFromTree(categories.value, cat.parentL2Id);
+    expandedL2Id.value = cat.parentL2Id;
+    return;
+  }
+
   if (cat.isHeader && cat.hasChildren && cat.firstChildId) {
     expandedL1Id.value = Number(cat.id);
-    const child = sidebarItems.value.find((x) => Number(x.id) === Number(cat.firstChildId));
+    const child = sidebarItems.value.find(
+      (x) => Number(x.id) === Number(cat.firstChildId) && !x.isHeader && x.rowKind !== 'course'
+    );
     if (child) return selectCategory(child);
     selectedCategoryId.value = cat.firstChildId;
   }
-  if (selectedCategoryId.value === cat.id) return;
+
+  if (selectedCategoryId.value === cat.id && !cat.isHeader && cat.rowKind !== 'course') {
+    expandedL2Id.value = cat.id;
+    const cid = firstCourseIdForL2(cat.id);
+    selectedCourseId.value = cid;
+    return;
+  }
+
   selectedCategoryId.value = cat.id;
   expandedL1Id.value = findExpandedL1IdFromTree(categories.value, cat.id);
-  searchKeyword.value = '';
-  listLoading.value = true;
-  try {
-    const res = await courseApi.list({ categoryId: cat.id });
-    courses.value = res.data || [];
-  } catch {
-    courses.value = [];
+  expandedL2Id.value = cat.mergedSingle ? cat.id : cat.depth === 1 ? cat.id : null;
+
+  if (cat.mergedSingle || cat.depth === 1) {
+    expandedL2Id.value = cat.id;
+  } else if (!cat.isHeader && cat.depth === 0 && !cat.mergedSingle) {
+    expandedL2Id.value = null;
   }
-  listLoading.value = false;
+
+  searchKeyword.value = '';
+
+  if (expandedL2Id.value != null) {
+    detailLoading.value = true;
+    selectedCourseId.value = firstCourseIdForL2(expandedL2Id.value);
+    detailLoading.value = false;
+  } else {
+    selectedCourseId.value = null;
+  }
 };
 
 onMounted(async () => {
@@ -268,25 +280,32 @@ onMounted(async () => {
   } catch {
     document.title = '课程中心';
   }
+  listLoading.value = true;
   try {
-    const res = await courseApi.categories();
-    categories.value = mapCourseTree(res.data || []);
-    const items = sidebarItems.value.filter((x) => !x.isHeader);
+    const [catRes, courseRes] = await Promise.all([
+      courseApi.categories(),
+      courseApi.list({}),
+    ]);
+    categories.value = mapCourseTree(catRes.data || []);
+    allCourses.value = courseRes.data || [];
+    const items = sidebarItems.value.filter((x) => !x.isHeader && x.rowKind !== 'course');
     if (items.length) {
-      const first = items[0];
-      selectedCategoryId.value = first.id;
-      expandedL1Id.value = findExpandedL1IdFromTree(categories.value, first.id);
-      listLoading.value = true;
-      try {
-        const listRes = await courseApi.list({ categoryId: first.id });
-        courses.value = listRes.data || [];
-      } catch {
-        courses.value = [];
-      }
-      listLoading.value = false;
+      await selectCategory(items[0]);
     }
   } catch {
     /* empty */
+  }
+  listLoading.value = false;
+});
+
+watch(searchKeyword, () => {
+  const cid = selectedCourseId.value;
+  if (!cid) return;
+  const row = sidebarItems.value.find((x) => x.rowKind === 'course' && Number(x.courseId) === Number(cid));
+  if (!row) {
+    const vis = visibleSidebarItems.value.filter((x) => x.rowKind === 'course');
+    if (vis.length) selectCategory(vis[0]);
+    else selectedCourseId.value = null;
   }
 });
 </script>
@@ -381,6 +400,12 @@ onMounted(async () => {
 .sidebar-item.sub {
   padding: 10px 8px;
 }
+.sidebar-item.depth-2 {
+  padding: 8px 8px 8px 14px;
+  margin-left: 4px;
+  border-radius: 10px;
+  border-left: 3px solid rgba(185, 28, 28, 0.25);
+}
 .sidebar-item-inner {
   display: flex;
   align-items: center;
@@ -400,33 +425,6 @@ onMounted(async () => {
   height: 100%;
   object-fit: cover;
 }
-.course-l2-picker-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-sizing: border-box;
-}
-.course-l2-label {
-  flex-shrink: 0;
-  font-size: 14px;
-  color: #374151;
-  font-weight: 500;
-}
-.course-l2-select {
-  flex: 1;
-  min-width: 0;
-  padding: 8px 10px;
-  font-size: 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fafafa;
-  color: #111827;
-}
 .sidebar-name {
   flex: 1;
   min-width: 0;
@@ -434,7 +432,7 @@ onMounted(async () => {
   white-space: normal;
   word-break: break-all;
   line-height: 1.25;
-  max-width: 5em;
+  max-width: 6em;
 }
 .sidebar-item.active {
   background: rgba(255, 183, 77, 0.45);
@@ -446,6 +444,8 @@ onMounted(async () => {
   min-width: 0;
   padding: 12px;
   background: #fafafa;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
 }
 .main-loading {
   display: flex;
@@ -457,50 +457,6 @@ onMounted(async () => {
   padding: 32px 12px;
   font-size: 14px;
   color: #6b7280;
-}
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-.grid-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  cursor: pointer;
-  min-height: 104px;
-}
-.grid-card-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: #f3f4f6;
-  overflow: hidden;
-}
-.grid-card-icon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.grid-card-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #111827;
-  text-align: center;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 .empty-hint {
   text-align: center;

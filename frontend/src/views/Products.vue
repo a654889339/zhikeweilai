@@ -26,6 +26,7 @@
               active: isRowActive(cat),
               sub: cat.depth === 1,
               header: cat.isHeader,
+              'depth-2': cat.depth === 2 || cat.rowKind === 'product',
             }"
             @click="selectCategory(cat)"
           >
@@ -38,40 +39,10 @@
           </button>
         </aside>
         <div class="product-main">
-          <div v-if="currentCategoryBannerSrc" class="category-banner">
-            <LodImg
-              :src="currentCategoryBannerSrc"
-              :thumb="currentCategoryBannerThumb"
-              class="category-banner-img"
-              alt=""
-            />
-          </div>
-
-          <van-loading v-if="listLoading" size="28" class="main-loading" />
-          <div v-else-if="filteredDeviceGuides.length" class="product-grid">
-            <button
-              v-for="d in filteredDeviceGuides"
-              :key="d.id"
-              type="button"
-              class="grid-card"
-              @click="openGuide(d)"
-            >
-              <div class="grid-card-icon">
-                <LodImg
-                  v-if="d.iconUrl"
-                  :src="fullUrl(d.iconUrl)"
-                  :thumb="d.iconUrlThumb ? fullUrl(d.iconUrlThumb) : ''"
-                  class="grid-card-icon-img"
-                />
-                <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />
-              </div>
-              <span class="grid-card-name">{{ d.name }}</span>
-            </button>
-          </div>
-          <div v-else-if="selectedCategoryId && !listLoading && sortedDeviceGuides.length && !filteredDeviceGuides.length" class="main-empty">
-            未找到匹配的商品
-          </div>
-          <div v-else-if="selectedCategoryId && !listLoading && !sortedDeviceGuides.length" class="main-empty">该种类下暂无商品</div>
+          <van-loading v-if="detailLoading" size="28" class="main-loading" />
+          <EmbeddedGuideDetail v-else-if="selectedGuideId" :guide-id="selectedGuideId" />
+          <div v-else-if="selectedCategoryId && !detailLoading" class="main-empty">该种类下暂无商品</div>
+          <div v-else class="main-empty">请选择左侧分类与商品</div>
         </div>
       </div>
 
@@ -86,10 +57,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
 import { guideApi, homeConfigApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
+import EmbeddedGuideDetail from '@/components/EmbeddedGuideDetail.vue';
 import {
   sortGuidesByDisplayOrder,
   sortCategoriesForSidebar,
@@ -100,14 +71,14 @@ import {
   isSidebarRowActive,
 } from '@/utils/categorySidebar';
 
-const router = useRouter();
-
 const categories = ref([]);
+const allGuides = ref([]);
 const selectedCategoryId = ref(null);
-/** 多二级时：仅展开该一级下的二级列表 */
+const selectedGuideId = ref(null);
 const expandedL1Id = ref(null);
-const deviceGuides = ref([]);
+const expandedL2Id = ref(null);
 const listLoading = ref(false);
+const detailLoading = ref(false);
 const searchKeyword = ref('');
 
 const BASE = import.meta.env.VITE_API_BASE || '';
@@ -115,6 +86,38 @@ function fullUrl(url) {
   if (!url) return '';
   if (url.startsWith('http')) return url;
   return BASE.replace('/api', '') + url;
+}
+
+function guidesForL2(l2Id) {
+  const id = Number(l2Id);
+  return (allGuides.value || []).filter((g) => Number(g.categoryId) === id);
+}
+
+function pushProductRows(out, parentL1Id, parentL2Id, catNameForSort) {
+  let list = guidesForL2(parentL2Id);
+  list = sortGuidesByDisplayOrder(list, catNameForSort || '');
+  const kw = searchKeyword.value.trim().toLowerCase();
+  if (kw) {
+    list = list.filter((d) => (d.name || '').toLowerCase().includes(kw));
+  }
+  list.forEach((g) => {
+    const thumb =
+      g.iconUrlThumb || g.iconUrl
+        ? fullUrl(String((g.iconUrlThumb || g.iconUrl || '').trim()))
+        : '';
+    out.push({
+      _key: `g-${g.id}`,
+      rowKind: 'product',
+      id: g.id,
+      guideId: g.id,
+      parentL1Id,
+      parentL2Id,
+      name: g.name,
+      thumb,
+      depth: 2,
+      isHeader: false,
+    });
+  });
 }
 
 function flattenSidebarTree(tree) {
@@ -142,6 +145,7 @@ function flattenSidebarTree(tree) {
         firstChildId: null,
         children: [],
       });
+      pushProductRows(out, p.id, c0.id, p.name);
     } else if (children.length > 1) {
       out.push({
         _key: `p-${p.id}`,
@@ -161,13 +165,18 @@ function flattenSidebarTree(tree) {
           id: c.id,
           parentL1Id: p.id,
           name: c.name,
-          thumb: c.thumbnailUrl ? fullUrl(String(c.thumbnailUrl).trim()) : (p.thumbnailUrl ? fullUrl(String(p.thumbnailUrl).trim()) : ''),
+          thumb: c.thumbnailUrl
+            ? fullUrl(String(c.thumbnailUrl).trim())
+            : p.thumbnailUrl
+              ? fullUrl(String(p.thumbnailUrl).trim())
+              : '',
           depth: 1,
           isHeader: false,
           hasChildren: false,
           firstChildId: null,
           children: [],
         });
+        pushProductRows(out, p.id, c.id, c.name);
       });
     } else {
       out.push({
@@ -190,81 +199,81 @@ function flattenSidebarTree(tree) {
 const sidebarItems = computed(() => flattenSidebarTree(categories.value));
 
 const visibleSidebarItems = computed(() =>
-  filterVisibleSidebarItems(sidebarItems.value, expandedL1Id.value)
+  filterVisibleSidebarItems(sidebarItems.value, expandedL1Id.value, expandedL2Id.value)
 );
 
 function isRowActive(cat) {
-  return isSidebarRowActive(cat, selectedCategoryId.value, expandedL1Id.value);
+  return isSidebarRowActive(
+    cat,
+    selectedCategoryId.value,
+    expandedL1Id.value,
+    selectedGuideId.value
+  );
 }
 
-function findCategoryDeep(tree, id) {
-  const target = Number(id);
-  const arr = Array.isArray(tree) ? tree : [];
-  for (const p of arr) {
-    if (Number(p.id) === target) return p;
-    const children = Array.isArray(p.children) ? p.children : [];
-    for (const c of children) {
-      if (Number(c.id) === target) return c;
-    }
-  }
-  return null;
-}
-
-const currentCategoryName = computed(() => {
-  const c = findCategoryDeep(categories.value, selectedCategoryId.value);
-  return c ? c.name : '';
-});
-
-const sortedDeviceGuides = computed(() =>
-  sortGuidesByDisplayOrder(deviceGuides.value, currentCategoryName.value)
-);
-
-const filteredDeviceGuides = computed(() => {
-  const list = sortedDeviceGuides.value;
+function firstGuideIdForL2(l2Id) {
+  const list = guidesForL2(l2Id);
+  if (!list.length) return null;
+  const name = '';
+  const sorted = sortGuidesByDisplayOrder(list, name);
   const kw = searchKeyword.value.trim().toLowerCase();
-  if (!kw) return list;
-  return list.filter((d) => (d.name || '').toLowerCase().includes(kw));
-});
-
-const currentCategory = computed(() =>
-  findCategoryDeep(categories.value, selectedCategoryId.value)
-);
-
-const currentCategoryBannerSrc = computed(() => {
-  const u = currentCategory.value?.thumbnailUrl;
-  if (u && String(u).trim()) return fullUrl(String(u).trim());
-  const item = sidebarItems.value.find((x) => Number(x.id) === Number(selectedCategoryId.value));
-  if (item && item.thumb) return item.thumb;
-  return '';
-});
-
-const currentCategoryBannerThumb = computed(() => currentCategoryBannerSrc.value);
-
-function openGuide(d) {
-  const idOrSlug = d.slug || d.id;
-  router.push(`/guide/${encodeURIComponent(String(idOrSlug))}`);
+  const filtered = kw
+    ? sorted.filter((d) => (d.name || '').toLowerCase().includes(kw))
+    : sorted;
+  return filtered.length ? filtered[0].id : sorted[0].id;
 }
 
 const selectCategory = async (cat) => {
   if (!cat) return;
+
+  if (cat.rowKind === 'product') {
+    selectedCategoryId.value = cat.parentL2Id;
+    selectedGuideId.value = cat.guideId;
+    expandedL1Id.value = findExpandedL1IdFromTree(categories.value, cat.parentL2Id);
+    expandedL2Id.value = cat.parentL2Id;
+    return;
+  }
+
   if (cat.isHeader && cat.hasChildren && cat.firstChildId) {
     expandedL1Id.value = Number(cat.id);
-    const child = sidebarItems.value.find((x) => Number(x.id) === Number(cat.firstChildId));
+    const child = sidebarItems.value.find(
+      (x) => Number(x.id) === Number(cat.firstChildId) && !x.isHeader && x.rowKind !== 'product'
+    );
     if (child) return selectCategory(child);
     selectedCategoryId.value = cat.firstChildId;
   }
-  if (selectedCategoryId.value === cat.id) return;
+
+  if (
+    selectedCategoryId.value === cat.id &&
+    !cat.isHeader &&
+    cat.rowKind !== 'product'
+  ) {
+    expandedL2Id.value = cat.id;
+    const gid = firstGuideIdForL2(cat.id);
+    selectedGuideId.value = gid;
+    return;
+  }
+
   selectedCategoryId.value = cat.id;
   expandedL1Id.value = findExpandedL1IdFromTree(categories.value, cat.id);
-  searchKeyword.value = '';
-  listLoading.value = true;
-  try {
-    const res = await guideApi.list({ categoryId: cat.id });
-    deviceGuides.value = res.data || [];
-  } catch {
-    deviceGuides.value = [];
+  expandedL2Id.value = cat.mergedSingle ? cat.id : cat.depth === 1 ? cat.id : null;
+
+  if (cat.mergedSingle || cat.depth === 1) {
+    expandedL2Id.value = cat.id;
+  } else if (!cat.isHeader && cat.depth === 0 && !cat.mergedSingle) {
+    expandedL2Id.value = null;
   }
-  listLoading.value = false;
+
+  searchKeyword.value = '';
+
+  if (expandedL2Id.value != null) {
+    const gid = firstGuideIdForL2(expandedL2Id.value);
+    detailLoading.value = true;
+    selectedGuideId.value = gid;
+    detailLoading.value = false;
+  } else {
+    selectedGuideId.value = null;
+  }
 };
 
 onMounted(async () => {
@@ -274,26 +283,36 @@ onMounted(async () => {
     const cn = items.find((i) => i.section === 'companyName' && i.status === 'active');
     const name = cn && cn.title ? String(cn.title).trim() : '';
     document.title = name || '服务';
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
+  listLoading.value = true;
   try {
-    const res = await guideApi.categories();
-    categories.value = res.data || [];
-    const items = sidebarItems.value.filter((x) => !x.isHeader);
+    const [catRes, guideRes] = await Promise.all([
+      guideApi.categories(),
+      guideApi.list({}),
+    ]);
+    categories.value = catRes.data || [];
+    allGuides.value = guideRes.data || [];
+    const items = sidebarItems.value.filter((x) => !x.isHeader && x.rowKind !== 'product');
     if (items.length) {
       const first = items[0];
-      selectedCategoryId.value = first.id;
-      expandedL1Id.value = findExpandedL1IdFromTree(categories.value, first.id);
-      listLoading.value = true;
-      try {
-        const listRes = await guideApi.list({ categoryId: first.id });
-        deviceGuides.value = listRes.data || [];
-      } catch {
-        deviceGuides.value = [];
-      }
-      listLoading.value = false;
+      await selectCategory(first);
     }
   } catch {
     /* empty */
+  }
+  listLoading.value = false;
+});
+
+watch(searchKeyword, () => {
+  const gid = selectedGuideId.value;
+  if (!gid) return;
+  const row = sidebarItems.value.find((x) => x.rowKind === 'product' && Number(x.guideId) === Number(gid));
+  if (!row) {
+    const vis = visibleSidebarItems.value.filter((x) => x.rowKind === 'product');
+    if (vis.length) selectCategory(vis[0]);
+    else selectedGuideId.value = null;
   }
 });
 </script>
@@ -401,6 +420,13 @@ onMounted(async () => {
   padding: 10px 8px;
 }
 
+.sidebar-item.depth-2 {
+  padding: 8px 8px 8px 14px;
+  margin-left: 4px;
+  border-radius: 10px;
+  border-left: 3px solid rgba(185, 28, 28, 0.25);
+}
+
 .sidebar-item-inner {
   display: flex;
   align-items: center;
@@ -430,7 +456,7 @@ onMounted(async () => {
   white-space: normal;
   word-break: break-all;
   line-height: 1.25;
-  max-width: 5em;
+  max-width: 6em;
 }
 
 .sidebar-item.active {
@@ -448,22 +474,8 @@ onMounted(async () => {
   min-width: 0;
   padding: 12px;
   background: #fafafa;
-}
-
-.category-banner {
-  width: 100%;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  overflow: hidden;
-  line-height: 0;
-  background: #e5e7eb;
-}
-
-.category-banner-img {
-  width: 100%;
-  height: auto;
-  display: block;
-  vertical-align: top;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
 }
 
 .main-loading {
@@ -477,62 +489,6 @@ onMounted(async () => {
   padding: 32px 12px;
   font-size: 14px;
   color: #6b7280;
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.grid-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  min-height: 104px;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.grid-card:active {
-  transform: scale(0.98);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.grid-card-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: #f3f4f6;
-  overflow: hidden;
-}
-
-.grid-card-icon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.grid-card-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #111827;
-  text-align: center;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .empty-hint {

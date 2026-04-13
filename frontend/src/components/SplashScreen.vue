@@ -23,6 +23,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { homeConfigApi } from '@/api';
+import { normalizeBrandText } from '@/utils/brandName';
 
 const visible = ref(true);
 const splashConfig = ref(null);
@@ -37,13 +38,12 @@ const backgroundColor = computed(() => {
 // 获取显示文本：优先使用配置的描述，否则使用默认文本
 const displayText = computed(() => {
   if (splashConfig.value?.desc) {
-    return splashConfig.value.desc;
+    return normalizeBrandText(splashConfig.value.desc);
   }
   if (splashConfig.value?.title) {
-    return `即将打开${splashConfig.value.title}...`;
+    return `即将打开${normalizeBrandText(splashConfig.value.title)}...`;
   }
-  // 兜底文案使用 companyName（来自后台 companyName 配置）
-  const fallback = splashConfig.value?.title || '服务站';
+  const fallback = splashConfig.value?.brandTitle || normalizeBrandText(splashConfig.value?.title) || '服务站';
   return `即将打开${fallback}...`;
 });
 
@@ -60,12 +60,21 @@ const onImageError = () => {
 // 加载开场动画配置；Logo 优先使用「首页动画配置」中的 headerLogo，与后台管理后台一致
 const loadSplashConfig = async () => {
   try {
-    const res = await homeConfigApi.list();
+    const res = await homeConfigApi.list({ all: 1 });
     if (res.data) {
       const items = res.data;
       const splash = items.find((item) => item.section === 'splash' && item.status === 'active');
       const headerLogo = items.find((item) => item.section === 'headerLogo' && item.status === 'active');
-      if (splash) splashConfig.value = splash;
+      const cn = items.find((item) => item.section === 'companyName' && item.status === 'active');
+      if (splash) {
+        splashConfig.value = {
+          ...splash,
+          brandTitle:
+            cn && cn.title ? normalizeBrandText(String(cn.title).trim()) : '',
+        };
+      } else if (cn && cn.title) {
+        splashConfig.value = { brandTitle: normalizeBrandText(String(cn.title).trim()) };
+      }
       logoUrl.value =
         (headerLogo && headerLogo.imageUrl && String(headerLogo.imageUrl).trim()) ||
         (splash && splash.imageUrl && String(splash.imageUrl).trim()) ||

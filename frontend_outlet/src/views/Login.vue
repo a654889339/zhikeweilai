@@ -103,6 +103,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { showToast } from 'vant';
 import { homeConfigApi, authApi } from '@/api';
+import { normalizeBrandText } from '@/utils/brandName';
 
 const router = useRouter();
 const route = useRoute();
@@ -119,14 +120,14 @@ onMounted(async () => {
     const res = await homeConfigApi.list({ all: 1 });
     const items = res.data || [];
     const cn = items.find(i => i.section === 'companyName' && i.status === 'active');
-    if (cn && cn.title) companyName.value = String(cn.title).trim() || companyName.value;
+    if (cn && cn.title) companyName.value = normalizeBrandText(String(cn.title).trim()) || companyName.value;
     const splash = items.find(i => i.section === 'splash' && i.status === 'active');
     if (splash) {
       if (splash.imageUrl) splashImageUrl.value = splash.imageUrl;
-      if (splash.desc) splashDesc.value = splash.desc;
+      if (splash.desc) splashDesc.value = normalizeBrandText(String(splash.desc));
     }
     const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
-    if (headerLogo && headerLogo.desc) headerLogoDesc.value = headerLogo.desc;
+    if (headerLogo && headerLogo.desc) headerLogoDesc.value = normalizeBrandText(String(headerLogo.desc));
   } catch (_) {}
 });
 

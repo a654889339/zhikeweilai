@@ -1,4 +1,5 @@
 @import '../products/products.wxss';
+@import '../course-detail/course-detail.wxss';
 
 /* 与 products 主区一致：上方子分类 picker + 下方可滚动列表 */
 .course-main-wrap-mp {
@@ -16,6 +17,13 @@
   min-width: 0;
   padding: 10px;
   box-sizing: border-box;
+}
+
+.sidebar-item-mp.product-sub {
+  padding: 12rpx 12rpx 12rpx 20rpx;
+  margin-left: 6rpx;
+  border-radius: 16rpx;
+  border-left: 4rpx solid rgba(185, 28, 28, 0.3);
 }
 
 .course-grid {

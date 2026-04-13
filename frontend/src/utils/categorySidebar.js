@@ -21,11 +21,15 @@ export function findExpandedL1IdFromTree(tree, selectedCategoryId) {
 }
 
 /**
- * 非当前展开一级下的「二级」行不展示
+ * 非当前展开一级下的「二级」行不展示；三级（商品名）仅在对应二级展开时展示
  */
-export function filterVisibleSidebarItems(items, expandedL1Id) {
+export function filterVisibleSidebarItems(items, expandedL1Id, expandedL2Id) {
   if (!Array.isArray(items) || !items.length) return [];
   return items.filter((item) => {
+    if (item.rowKind === 'product' || item.rowKind === 'course' || item.depth === 2) {
+      if (expandedL2Id == null) return false;
+      return Number(item.parentL2Id) === Number(expandedL2Id);
+    }
     if (item.depth === 1 && !item.isHeader) {
       if (expandedL1Id == null) return false;
       return Number(item.parentL1Id) === Number(expandedL1Id);
@@ -35,9 +39,19 @@ export function filterVisibleSidebarItems(items, expandedL1Id) {
 }
 
 /**
- * 侧栏行高亮：一级在选中其下任一二级时与二级同为 active
+ * 侧栏行高亮：一级在选中其下任一二级时与二级同为 active；商品行按 selectedGuideId
  */
-export function isSidebarRowActive(item, selectedCategoryId, expandedL1Id) {
+export function isSidebarRowActive(item, selectedCategoryId, expandedL1Id, selectedDetailId) {
+  if (item.rowKind === 'product' && item.guideId != null) {
+    const g = selectedDetailId != null && selectedDetailId !== '' ? Number(selectedDetailId) : null;
+    if (g == null || Number.isNaN(g)) return false;
+    return Number(item.guideId) === g;
+  }
+  if (item.rowKind === 'course' && item.courseId != null) {
+    const c = selectedDetailId != null && selectedDetailId !== '' ? Number(selectedDetailId) : null;
+    if (c == null || Number.isNaN(c)) return false;
+    return Number(item.courseId) === c;
+  }
   const sel = selectedCategoryId != null && selectedCategoryId !== '' ? Number(selectedCategoryId) : null;
   if (sel == null || Number.isNaN(sel)) return false;
   if (item.isHeader) {

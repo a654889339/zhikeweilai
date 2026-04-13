@@ -62,6 +62,13 @@
   padding: 14rpx 12rpx;
 }
 
+.sidebar-item-mp.product-sub {
+  padding: 12rpx 12rpx 12rpx 20rpx;
+  margin-left: 6rpx;
+  border-radius: 16rpx;
+  border-left: 4rpx solid rgba(185, 28, 28, 0.3);
+}
+
 .sidebar-item-mp.active {
   background: rgba(255, 183, 77, 0.45);
   color: #111827;
@@ -96,6 +103,11 @@
   flex: 1;
   min-width: 0;
   background: #fafafa;
+}
+.product-main-scroll {
+  max-height: 70vh;
+  box-sizing: border-box;
+  padding: 10px;
 }
 
 /* Hero */

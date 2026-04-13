@@ -1,3 +1,5 @@
+const { normalizeBrandText } = require('./utils/brand');
+
 /** 解析 JWT 过期时间（毫秒），失败返回 null */
 function getJwtExpMs(token) {
   if (!token || typeof token !== 'string') return null;
@@ -44,7 +46,7 @@ App({
       success: (res) => {
         const items = (res.data && res.data.code === 0 && res.data.data) ? res.data.data : [];
         const cn = items.find((i) => i.section === 'companyName' && i.status === 'active');
-        const name = cn && cn.title ? String(cn.title).trim() : '';
+        const name = cn && cn.title ? normalizeBrandText(String(cn.title).trim()) : '';
         if (name) this.globalData.companyName = name;
       },
     });

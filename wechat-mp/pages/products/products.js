@@ -30,6 +30,10 @@ function pickThumb(c, p) {
   return '';
 }
 
+function guidesForL2(guides, l2Id) {
+  return (guides || []).filter((g) => Number(g.categoryId) === Number(l2Id));
+}
+
 function findExpandedL1IdFromTree(tree, selectedCategoryId) {
   if (selectedCategoryId == null || selectedCategoryId === '') return null;
   const sid = Number(selectedCategoryId);
@@ -45,9 +49,13 @@ function findExpandedL1IdFromTree(tree, selectedCategoryId) {
   return null;
 }
 
-function filterVisibleSidebarMp(items, expandedL1Id) {
+function filterVisibleSidebarMp(items, expandedL1Id, expandedL2Id) {
   if (!Array.isArray(items) || !items.length) return [];
   return items.filter((item) => {
+    if (item.isProduct) {
+      if (expandedL2Id == null) return false;
+      return Number(item.parentL2Id) === Number(expandedL2Id);
+    }
     if (item.isSub) {
       if (expandedL1Id == null) return false;
       return Number(item.parentL1Id) === Number(expandedL1Id);
@@ -56,14 +64,12 @@ function filterVisibleSidebarMp(items, expandedL1Id) {
   });
 }
 
-function applyVisibleSidebarMp(items, expandedL1Id, selectedCategoryId) {
-  return filterVisibleSidebarMp(items, expandedL1Id).map((it) => ({
-    ...it,
-    rowActive: rowActiveMp(it, selectedCategoryId, expandedL1Id),
-  }));
-}
-
-function rowActiveMp(item, selectedCategoryId, expandedL1Id) {
+function rowActiveMp(item, selectedCategoryId, expandedL1Id, selectedGuideId) {
+  if (item.isProduct) {
+    const g = selectedGuideId != null && selectedGuideId !== '' ? Number(selectedGuideId) : null;
+    if (g == null || Number.isNaN(g)) return false;
+    return Number(item.guideId) === g;
+  }
   const sel = selectedCategoryId != null && selectedCategoryId !== '' ? Number(selectedCategoryId) : null;
   if (sel == null || Number.isNaN(sel)) return false;
   if (item.isHeader) {
@@ -72,12 +78,35 @@ function rowActiveMp(item, selectedCategoryId, expandedL1Id) {
   return Number(item.id) === sel;
 }
 
-/** 与 H5 Products.vue 一致：单二级时合并一行；多二级时一级标题 + 子项 */
-function flattenSidebarForMp(tree) {
+function applyVisibleSidebarMp(items, expandedL1Id, expandedL2Id, selectedCategoryId, selectedGuideId) {
+  return filterVisibleSidebarMp(items, expandedL1Id, expandedL2Id).map((it) => ({
+    ...it,
+    rowActive: rowActiveMp(it, selectedCategoryId, expandedL1Id, selectedGuideId),
+  }));
+}
+
+function flattenSidebarForMp(tree, guides) {
   const out = [];
   const arr = Array.isArray(tree) ? tree : [];
   sortCategoriesForSidebar(arr).forEach((p) => {
     const ch = Array.isArray(p.children) ? sortCategoriesForSidebar(p.children) : [];
+    const pushProducts = (l1, l2) => {
+      guidesForL2(guides, l2).forEach((g) => {
+        const thumb = g.iconUrlThumb || g.iconUrl ? fullUrl(String(g.iconUrlThumb || g.iconUrl)) : '';
+        out.push({
+          rowKey: `g-${g.id}`,
+          id: g.id,
+          guideId: g.id,
+          parentL1Id: l1,
+          parentL2Id: l2,
+          name: g.name,
+          isHeader: false,
+          isSub: false,
+          isProduct: true,
+          thumb,
+        });
+      });
+    };
     if (ch.length === 1) {
       const c0 = ch[0];
       out.push({
@@ -88,8 +117,10 @@ function flattenSidebarForMp(tree) {
         name: p.name,
         isHeader: false,
         isSub: false,
+        isProduct: false,
         thumb: pickThumb(c0, p),
       });
+      pushProducts(p.id, c0.id);
     } else if (ch.length > 1) {
       out.push({
         rowKey: `h-${p.id}`,
@@ -99,6 +130,7 @@ function flattenSidebarForMp(tree) {
         isHeader: true,
         firstChildId: ch[0].id,
         isSub: false,
+        isProduct: false,
         thumb: pickThumb(null, p),
       });
       ch.forEach((c) => {
@@ -109,8 +141,10 @@ function flattenSidebarForMp(tree) {
           name: c.name,
           isHeader: false,
           isSub: true,
+          isProduct: false,
           thumb: pickThumb(c, p),
         });
+        pushProducts(p.id, c.id);
       });
     } else {
       out.push({
@@ -120,6 +154,7 @@ function flattenSidebarForMp(tree) {
         name: p.name,
         isHeader: false,
         isSub: false,
+        isProduct: false,
         thumb: pickThumb(null, p),
       });
     }
@@ -127,17 +162,21 @@ function flattenSidebarForMp(tree) {
   return out;
 }
 
+function firstGuideIdForL2(guides, l2Id) {
+  const list = guidesForL2(guides, l2Id);
+  return list.length ? list[0].id : null;
+}
+
 Page({
   data: {
     categories: [],
+    allGuides: [],
     sidebarItems: [],
     visibleSidebarItems: [],
     expandedL1Id: null,
+    expandedL2Id: null,
     selectedCategoryId: null,
-    deviceGuides: [],
-    activeId: null,
-    selectedProductLabel: '',
-    productPickerIndex: 0,
+    selectedGuideId: null,
     guide: {},
     sections: [],
     mediaItems: [],
@@ -154,16 +193,34 @@ Page({
   },
 
   loadCategories() {
-    app.request({ url: '/guides/categories' })
-      .then((res) => {
-        const categories = res.data || [];
-        const sidebarItems = flattenSidebarForMp(categories);
-        const first = sidebarItems.find((x) => !x.isHeader);
+    Promise.all([app.request({ url: '/guides/categories' }), app.request({ url: '/guides' })])
+      .then(([catRes, gRes]) => {
+        const categories = catRes.data || [];
+        const allGuides = gRes.data || [];
+        const sidebarItems = flattenSidebarForMp(categories, allGuides);
+        const first = sidebarItems.find((x) => !x.isHeader && !x.isProduct);
         const expandedL1Id = first ? findExpandedL1IdFromTree(categories, first.id) : null;
-        const visibleSidebarItems = applyVisibleSidebarMp(sidebarItems, expandedL1Id, first ? first.id : null);
-        this.setData({ categories, sidebarItems, expandedL1Id, visibleSidebarItems });
-        if (first) {
-          this.selectCategoryByCat({ id: first.id }, true);
+        const expandedL2Id = first && (first.mergedSingle || first.isSub) ? first.id : null;
+        const selectedGuideId = expandedL2Id ? firstGuideIdForL2(allGuides, expandedL2Id) : null;
+        const visibleSidebarItems = applyVisibleSidebarMp(
+          sidebarItems,
+          expandedL1Id,
+          expandedL2Id,
+          first ? first.id : null,
+          selectedGuideId
+        );
+        this.setData({
+          categories,
+          allGuides,
+          sidebarItems,
+          expandedL1Id,
+          expandedL2Id,
+          selectedCategoryId: first ? first.id : null,
+          selectedGuideId,
+          visibleSidebarItems,
+        });
+        if (selectedGuideId) {
+          this.loadDetail(selectedGuideId);
         }
       })
       .catch(() => {});
@@ -174,11 +231,37 @@ Page({
     const item = (this.data.visibleSidebarItems || [])[idx];
     if (!item) return;
     if (item.isHeader && item.firstChildId) {
-      return this.selectCategoryByCat({ id: item.firstChildId });
+      const child = this.data.sidebarItems.find(
+        (x) => Number(x.id) === Number(item.firstChildId) && !x.isHeader && !x.isProduct
+      );
+      if (child) {
+        return this.selectCategoryByCat({
+          id: child.id,
+          mergedSingle: !!child.mergedSingle,
+          isSub: !!child.isSub,
+        });
+      }
     }
-    const id = item.id;
-    if (id === this.data.selectedCategoryId) return;
-    this.selectCategoryByCat({ id });
+    if (item.isProduct) {
+      const expandedL1Id = findExpandedL1IdFromTree(this.data.categories, item.parentL2Id);
+      const visibleSidebarItems = applyVisibleSidebarMp(
+        this.data.sidebarItems,
+        expandedL1Id,
+        item.parentL2Id,
+        item.parentL2Id,
+        item.guideId
+      );
+      this.setData({
+        selectedCategoryId: item.parentL2Id,
+        expandedL1Id,
+        expandedL2Id: item.parentL2Id,
+        selectedGuideId: item.guideId,
+        visibleSidebarItems,
+      });
+      this.loadDetail(item.guideId);
+      return;
+    }
+    this.selectCategoryByCat({ id: item.id, mergedSingle: item.mergedSingle, isSub: item.isSub });
   },
 
   selectCategoryByCat(cat, skipExpandSync) {
@@ -189,46 +272,37 @@ Page({
     if (!skipExpandSync) {
       expandedL1Id = findExpandedL1IdFromTree(categories, cat.id);
     }
-    const visibleSidebarItems = applyVisibleSidebarMp(sidebarItems, expandedL1Id, cat.id);
+    const expandedL2Id = cat.mergedSingle || cat.isSub ? cat.id : null;
+    const selectedGuideId = expandedL2Id ? firstGuideIdForL2(this.data.allGuides, expandedL2Id) : null;
+    const visibleSidebarItems = applyVisibleSidebarMp(
+      sidebarItems,
+      expandedL1Id,
+      expandedL2Id,
+      cat.id,
+      selectedGuideId
+    );
     this.setData({
       selectedCategoryId: cat.id,
       expandedL1Id,
+      expandedL2Id,
+      selectedGuideId,
       visibleSidebarItems,
-      deviceGuides: [],
-      activeId: null,
       guide: {},
       loading: true,
     });
-    app.request({ url: '/guides', data: { categoryId: cat.id } })
-      .then((res) => {
-        const list = (res.data || []).map((g) => ({
-          id: g.id,
-          name: g.name,
-          slug: g.slug || '',
-        }));
-        this.setData({ deviceGuides: list, loading: false });
-        if (list.length) {
-          this.loadDetail(list[0].slug || list[0].id, list[0].id, 0);
-        }
-      })
-      .catch(() => this.setData({ loading: false }));
+    if (selectedGuideId) {
+      this.loadDetail(selectedGuideId);
+    } else {
+      this.setData({ loading: false });
+    }
   },
 
-  onProductPick(e) {
-    const index = parseInt(e.detail.value, 10);
-    const list = this.data.deviceGuides;
-    const item = list[index];
-    if (!item) return;
-    this.loadDetail(item.slug || item.id, item.id, index);
-  },
-
-  loadDetail(param, id, pickerIndex) {
-    this.setData({
-      activeId: id,
-      productPickerIndex: pickerIndex !== undefined ? pickerIndex : this.data.productPickerIndex,
-      loading: true,
-    });
-    const guideName = (this.data.deviceGuides.find((g) => g.id === id) || {}).name || '';
+  loadDetail(guideId) {
+    const id = guideId;
+    this.setData({ loading: true, selectedGuideId: id });
+    const list = this.data.allGuides || [];
+    const meta = list.find((g) => g.id === id) || {};
+    const param = meta.slug || id;
     app.request({ url: `/guides/${param}` })
       .then((res) => {
         const g = res.data || {};
@@ -254,7 +328,6 @@ Page({
           sections,
           mediaItems,
           helpItems,
-          selectedProductLabel: guideName || g.name,
           firstMediaTitle: mediaItems.length ? mediaItems[0].title || g.name : g.name,
           loading: false,
         });

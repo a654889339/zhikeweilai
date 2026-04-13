@@ -152,6 +152,7 @@ import jsQR from 'jsqr';
 import { showToast } from 'vant';
 import { homeConfigApi, authApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
+import { normalizeBrandText } from '@/utils/brandName';
 
 const router = useRouter();
 const showShare = ref(false);
@@ -161,7 +162,8 @@ const shareUrl = window.location.origin;
 const allItems = ref([]);
 const companyName = computed(() => {
   const it = allItems.value.find((i) => i.section === 'companyName' && i.status === 'active');
-  return (it && it.title && String(it.title).trim()) || '科必学';
+  const raw = (it && it.title && String(it.title).trim()) || '科必学';
+  return normalizeBrandText(raw);
 });
 const myProducts = ref([]);
 const addProductLoading = ref(false);

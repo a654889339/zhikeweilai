@@ -11,6 +11,7 @@ function mapCourseTree(nodes) {
   return (nodes || []).map((n) => ({
     ...n,
     name: n.title || n.name,
+    thumbnailUrl: n.thumbnailUrl || '',
     children: mapCourseTree(n.children || []),
   }));
 }
@@ -38,6 +39,10 @@ function sortCategoriesForSidebar(categories) {
   return list;
 }
 
+function coursesForL2(all, l2Id) {
+  return (all || []).filter((c) => Number(c.courseCategoryId) === Number(l2Id));
+}
+
 function findExpandedL1IdFromTree(tree, selectedCategoryId) {
   if (selectedCategoryId == null || selectedCategoryId === '') return null;
   const sid = Number(selectedCategoryId);
@@ -53,9 +58,13 @@ function findExpandedL1IdFromTree(tree, selectedCategoryId) {
   return null;
 }
 
-function filterVisibleSidebarMp(items, expandedL1Id) {
+function filterVisibleSidebarMp(items, expandedL1Id, expandedL2Id) {
   if (!Array.isArray(items) || !items.length) return [];
   return items.filter((item) => {
+    if (item.isCourse) {
+      if (expandedL2Id == null) return false;
+      return Number(item.parentL2Id) === Number(expandedL2Id);
+    }
     if (item.isSub) {
       if (expandedL1Id == null) return false;
       return Number(item.parentL1Id) === Number(expandedL1Id);
@@ -64,7 +73,12 @@ function filterVisibleSidebarMp(items, expandedL1Id) {
   });
 }
 
-function rowActiveMp(item, selectedCategoryId, expandedL1Id) {
+function rowActiveMp(item, selectedCategoryId, expandedL1Id, selectedCourseId) {
+  if (item.isCourse) {
+    const c = selectedCourseId != null && selectedCourseId !== '' ? Number(selectedCourseId) : null;
+    if (c == null || Number.isNaN(c)) return false;
+    return Number(item.courseId) === c;
+  }
   const sel = selectedCategoryId != null && selectedCategoryId !== '' ? Number(selectedCategoryId) : null;
   if (sel == null || Number.isNaN(sel)) return false;
   if (item.isHeader) {
@@ -73,19 +87,35 @@ function rowActiveMp(item, selectedCategoryId, expandedL1Id) {
   return Number(item.id) === sel;
 }
 
-function applyVisibleSidebarMp(items, expandedL1Id, selectedCategoryId) {
-  return filterVisibleSidebarMp(items, expandedL1Id).map((it) => ({
+function applyVisibleSidebarMp(items, expandedL1Id, expandedL2Id, selectedCategoryId, selectedCourseId) {
+  return filterVisibleSidebarMp(items, expandedL1Id, expandedL2Id).map((it) => ({
     ...it,
-    rowActive: rowActiveMp(it, selectedCategoryId, expandedL1Id),
+    rowActive: rowActiveMp(it, selectedCategoryId, expandedL1Id, selectedCourseId),
   }));
 }
 
-/** 与 pages/products/products.js flattenSidebarForMp 一致：单二级合并一行；多二级时一级标题 + 子项 */
-function flattenSidebarForCourses(tree) {
+function flattenSidebarForCourses(tree, allCourses) {
   const out = [];
   const arr = Array.isArray(tree) ? tree : [];
   sortCategoriesForSidebar(arr).forEach((p) => {
     const ch = Array.isArray(p.children) ? sortCategoriesForSidebar(p.children) : [];
+    const pushCourses = (l1, l2) => {
+      coursesForL2(allCourses, l2).forEach((c) => {
+        const thumb = c.coverImage ? fullUrl(String(c.coverImage)) : '';
+        out.push({
+          rowKey: `co-${c.id}`,
+          id: c.id,
+          courseId: c.id,
+          parentL1Id: l1,
+          parentL2Id: l2,
+          name: c.name,
+          isHeader: false,
+          isSub: false,
+          isCourse: true,
+          thumb,
+        });
+      });
+    };
     if (ch.length === 1) {
       const c0 = ch[0];
       out.push({
@@ -96,8 +126,10 @@ function flattenSidebarForCourses(tree) {
         name: p.name,
         isHeader: false,
         isSub: false,
+        isCourse: false,
         thumb: pickThumb(c0, p),
       });
+      pushCourses(p.id, c0.id);
     } else if (ch.length > 1) {
       out.push({
         rowKey: `h-${p.id}`,
@@ -107,6 +139,7 @@ function flattenSidebarForCourses(tree) {
         isHeader: true,
         firstChildId: ch[0].id,
         isSub: false,
+        isCourse: false,
         thumb: pickThumb(null, p),
       });
       ch.forEach((c) => {
@@ -117,8 +150,10 @@ function flattenSidebarForCourses(tree) {
           name: c.name,
           isHeader: false,
           isSub: true,
+          isCourse: false,
           thumb: pickThumb(c, p),
         });
+        pushCourses(p.id, c.id);
       });
     } else {
       out.push({
@@ -128,6 +163,7 @@ function flattenSidebarForCourses(tree) {
         name: p.name,
         isHeader: false,
         isSub: false,
+        isCourse: false,
         thumb: pickThumb(null, p),
       });
     }
@@ -135,36 +171,25 @@ function flattenSidebarForCourses(tree) {
   return out;
 }
 
-function buildL2PickerState(categories, expandedL1Id, selectedCategoryId) {
-  if (expandedL1Id == null) {
-    return { l2PickerOptions: [], l2PickerIndex: 0, l2PickerLabel: '' };
-  }
-  const p = (categories || []).find((x) => Number(x.id) === Number(expandedL1Id));
-  const ch = p && Array.isArray(p.children) ? sortCategoriesForSidebar(p.children) : [];
-  if (ch.length <= 1) {
-    return { l2PickerOptions: [], l2PickerIndex: 0, l2PickerLabel: '' };
-  }
-  const l2PickerOptions = ch.map((c) => ({ id: c.id, name: c.name || c.title || '' }));
-  let idx = l2PickerOptions.findIndex((o) => Number(o.id) === Number(selectedCategoryId));
-  if (idx < 0) idx = 0;
-  const l2PickerLabel = (l2PickerOptions[idx] && l2PickerOptions[idx].name) || '';
-  return { l2PickerOptions, l2PickerIndex: idx, l2PickerLabel };
+function firstCourseIdForL2(all, l2Id) {
+  const list = coursesForL2(all, l2Id);
+  return list.length ? list[0].id : null;
 }
 
 Page({
   data: {
     categories: [],
+    allCourses: [],
     sidebarItems: [],
     visibleSidebarItems: [],
     expandedL1Id: null,
+    expandedL2Id: null,
     selectedCategoryId: null,
-    courses: [],
-    filteredCourses: [],
+    selectedCourseId: null,
+    course: {},
+    videos: [],
     loading: false,
     searchKeyword: '',
-    l2PickerOptions: [],
-    l2PickerIndex: 0,
-    l2PickerLabel: '',
   },
 
   onShow() {
@@ -175,34 +200,37 @@ Page({
   },
 
   onSearchInput(e) {
-    const kw = (e.detail.value || '').trim().toLowerCase();
-    const list = this.data.courses || [];
-    const filtered = kw
-      ? list.filter((d) => (d.name || '').toLowerCase().includes(kw))
-      : list;
-    this.setData({ searchKeyword: e.detail.value || '', filteredCourses: filtered });
+    this.setData({ searchKeyword: e.detail.value || '' });
   },
 
   loadCategories() {
-    app
-      .request({ url: '/course-categories' })
-      .then((res) => {
-        const categories = mapCourseTree(res.data || []);
-        const sidebarItems = flattenSidebarForCourses(categories);
-        const first = sidebarItems.find((x) => !x.isHeader);
+    Promise.all([app.request({ url: '/course-categories' }), app.request({ url: '/courses' })])
+      .then(([catRes, courseRes]) => {
+        const categories = mapCourseTree(catRes.data || []);
+        const allCourses = courseRes.data || [];
+        const sidebarItems = flattenSidebarForCourses(categories, allCourses);
+        const first = sidebarItems.find((x) => !x.isHeader && !x.isCourse);
         const expandedL1Id = first ? findExpandedL1IdFromTree(categories, first.id) : null;
-        const visibleSidebarItems = applyVisibleSidebarMp(sidebarItems, expandedL1Id, first ? first.id : null);
-        const pick = buildL2PickerState(categories, expandedL1Id, first ? first.id : null);
-        this.setData({
-          categories,
+        const expandedL2Id = first && (first.mergedSingle || first.isSub) ? first.id : null;
+        const selectedCourseId = expandedL2Id ? firstCourseIdForL2(allCourses, expandedL2Id) : null;
+        const visibleSidebarItems = applyVisibleSidebarMp(
           sidebarItems,
           expandedL1Id,
+          expandedL2Id,
+          first ? first.id : null,
+          selectedCourseId
+        );
+        this.setData({
+          categories,
+          allCourses,
+          sidebarItems,
+          expandedL1Id,
+          expandedL2Id,
+          selectedCategoryId: first ? first.id : null,
+          selectedCourseId,
           visibleSidebarItems,
-          l2PickerOptions: pick.l2PickerOptions,
-          l2PickerIndex: pick.l2PickerIndex,
-          l2PickerLabel: pick.l2PickerLabel,
         });
-        if (first) this.selectCategoryById(first.id, true);
+        if (selectedCourseId) this.loadCourseDetail(selectedCourseId);
       })
       .catch(() => {});
   },
@@ -212,59 +240,89 @@ Page({
     const item = (this.data.visibleSidebarItems || [])[idx];
     if (!item) return;
     if (item.isHeader && item.firstChildId) {
-      return this.selectCategoryById(item.firstChildId);
+      const child = this.data.sidebarItems.find(
+        (x) => Number(x.id) === Number(item.firstChildId) && !x.isHeader && !x.isCourse
+      );
+      if (child) {
+        return this.selectCategoryByCat({
+          id: child.id,
+          mergedSingle: !!child.mergedSingle,
+          isSub: !!child.isSub,
+        });
+      }
     }
-    if (item.id === this.data.selectedCategoryId) return;
-    this.selectCategoryById(item.id);
+    if (item.isCourse) {
+      const expandedL1Id = findExpandedL1IdFromTree(this.data.categories, item.parentL2Id);
+      const visibleSidebarItems = applyVisibleSidebarMp(
+        this.data.sidebarItems,
+        expandedL1Id,
+        item.parentL2Id,
+        item.parentL2Id,
+        item.courseId
+      );
+      this.setData({
+        selectedCategoryId: item.parentL2Id,
+        expandedL1Id,
+        expandedL2Id: item.parentL2Id,
+        selectedCourseId: item.courseId,
+        visibleSidebarItems,
+      });
+      this.loadCourseDetail(item.courseId);
+      return;
+    }
+    this.selectCategoryByCat({ id: item.id, mergedSingle: item.mergedSingle, isSub: item.isSub });
   },
 
-  selectCategoryById(catId, skipExpandSync) {
-    if (!catId) return;
+  selectCategoryByCat(cat) {
+    if (!cat || !cat.id) return;
     const categories = this.data.categories || [];
     const sidebarItems = this.data.sidebarItems || [];
-    let expandedL1Id = this.data.expandedL1Id;
-    if (!skipExpandSync) {
-      expandedL1Id = findExpandedL1IdFromTree(categories, catId);
-    }
-    const visibleSidebarItems = applyVisibleSidebarMp(sidebarItems, expandedL1Id, catId);
-    const pick = buildL2PickerState(categories, expandedL1Id, catId);
-    this.setData({
-      selectedCategoryId: catId,
+    const expandedL1Id = findExpandedL1IdFromTree(categories, cat.id);
+    const expandedL2Id = cat.mergedSingle || cat.isSub ? cat.id : null;
+    const selectedCourseId = expandedL2Id ? firstCourseIdForL2(this.data.allCourses, expandedL2Id) : null;
+    const visibleSidebarItems = applyVisibleSidebarMp(
+      sidebarItems,
       expandedL1Id,
+      expandedL2Id,
+      cat.id,
+      selectedCourseId
+    );
+    this.setData({
+      selectedCategoryId: cat.id,
+      expandedL1Id,
+      expandedL2Id,
+      selectedCourseId,
       visibleSidebarItems,
-      l2PickerOptions: pick.l2PickerOptions,
-      l2PickerIndex: pick.l2PickerIndex,
-      l2PickerLabel: pick.l2PickerLabel,
-      courses: [],
-      filteredCourses: [],
+      course: {},
+      videos: [],
       loading: true,
-      searchKeyword: '',
     });
+    if (selectedCourseId) {
+      this.loadCourseDetail(selectedCourseId);
+    } else {
+      this.setData({ loading: false });
+    }
+  },
+
+  loadCourseDetail(courseId) {
+    const id = courseId;
+    this.setData({ loading: true, selectedCourseId: id });
+    const meta = (this.data.allCourses || []).find((c) => c.id === id) || {};
+    const param = meta.slug || id;
     app
-      .request({ url: '/courses', data: { categoryId: catId } })
+      .request({ url: '/courses/' + encodeURIComponent(param) })
       .then((res) => {
-        const list = (res.data || []).map((c) => ({
-          ...c,
-          coverImageFull: c.coverImage ? fullUrl(c.coverImage) : '',
-        }));
-        this.setData({ courses: list, filteredCourses: list, loading: false });
+        const c = res.data || {};
+        const videos = Array.isArray(c.videos) ? c.videos.map((u) => fullUrl(u)) : [];
+        this.setData({
+          course: {
+            ...c,
+            coverFull: c.coverImage ? fullUrl(c.coverImage) : '',
+          },
+          videos,
+          loading: false,
+        });
       })
       .catch(() => this.setData({ loading: false }));
-  },
-
-  onL2Pick(e) {
-    const idx = parseInt(e.detail.value, 10);
-    const opt = (this.data.l2PickerOptions || [])[idx];
-    if (!opt) return;
-    this.selectCategoryById(opt.id);
-  },
-
-  openCourse(e) {
-    const item = e.currentTarget.dataset.item;
-    if (!item) return;
-    const param = item.slug || item.id;
-    wx.navigateTo({
-      url: `/pages/course-detail/course-detail?id=${encodeURIComponent(param)}`,
-    });
   },
 });

@@ -9,7 +9,7 @@
   <view class="products-layout-mp" wx:if="{{sidebarItems.length}}">
     <scroll-view scroll-y class="product-sidebar-mp">
       <view
-        class="sidebar-item-mp {{item.rowActive ? 'active' : ''}} {{item.isSub ? 'sub' : ''}} {{item.isHeader ? 'header' : ''}}"
+        class="sidebar-item-mp {{item.rowActive ? 'active' : ''}} {{item.isSub ? 'sub' : ''}} {{item.isHeader ? 'header' : ''}} {{item.isProduct ? 'product-sub' : ''}}"
         wx:for="{{visibleSidebarItems}}"
         wx:key="rowKey"
         data-idx="{{index}}"
@@ -23,31 +23,7 @@
       </view>
     </scroll-view>
 
-    <view class="product-main-mp">
-      <picker
-        wx:if="{{sidebarItems.length && deviceGuides.length}}"
-        mode="selector"
-        range="{{deviceGuides}}"
-        range-key="name"
-        value="{{productPickerIndex}}"
-        bindchange="onProductPick"
-      >
-        <view class="product-select-row">
-          <view class="select-product-field">
-            <text class="select-label">选择商品</text>
-            <text class="select-value">{{selectedProductLabel}}</text>
-            <text class="select-arrow">›</text>
-          </view>
-        </view>
-      </picker>
-      <view wx:elif="{{sidebarItems.length}}" class="product-select-row">
-        <view class="select-product-field">
-          <text class="select-label">选择商品</text>
-          <text class="select-value">{{selectedCategoryId && !deviceGuides.length ? '该种类下暂无商品' : '请选择商品'}}</text>
-          <text class="select-arrow">›</text>
-        </view>
-      </view>
-
+    <scroll-view scroll-y class="product-main-mp product-main-scroll">
       <view wx:if="{{loading}}" class="loading">加载中...</view>
 
       <block wx:elif="{{guide.id}}">
@@ -113,10 +89,10 @@
         </view>
       </block>
 
-      <view wx:elif="{{!loading && sidebarItems.length}}" class="empty-hint">
+      <view wx:elif="{{!loading}}" class="empty-hint">
         <text>请在左侧选择种类与商品</text>
       </view>
-    </view>
+    </scroll-view>
   </view>
 
   <view wx:elif="{{!loading}}" class="empty-hint">
