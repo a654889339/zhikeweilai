@@ -70,6 +70,7 @@ import {
   filterVisibleSidebarItems,
   isSidebarRowActive,
 } from '@/utils/categorySidebar';
+import { normalizeBrandText } from '@/utils/brandName';
 
 const categories = ref([]);
 const allGuides = ref([]);
@@ -281,8 +282,8 @@ onMounted(async () => {
     const hc = await homeConfigApi.list({ all: 1 });
     const items = hc.data || [];
     const cn = items.find((i) => i.section === 'companyName' && i.status === 'active');
-    const name = cn && cn.title ? String(cn.title).trim() : '';
-    document.title = name || '服务';
+    const name = cn && cn.title ? normalizeBrandText(String(cn.title).trim()) : '';
+    document.title = name || '科必学';
   } catch {
     /* ignore */
   }

@@ -74,7 +74,7 @@ func pcUpdate(c *gin.Context) {
 		NameEn         string  `json:"nameEn"`
 		ThumbnailURL   *string `json:"thumbnailUrl"`
 		ThumbnailURLEn *string `json:"thumbnailUrlEn"`
-		SortOrder      int     `json:"sortOrder"`
+		SortOrder      *int    `json:"sortOrder"`
 		Points         *int    `json:"points"`
 		Status         string  `json:"status"`
 		Level          *int    `json:"level"`
@@ -94,7 +94,9 @@ func pcUpdate(c *gin.Context) {
 	if body.ThumbnailURLEn != nil {
 		cat.ThumbnailURLEn = body.ThumbnailURLEn
 	}
-	cat.SortOrder = body.SortOrder
+	if body.SortOrder != nil {
+		cat.SortOrder = *body.SortOrder
+	}
 	if body.Points != nil {
 		cat.Points = *body.Points
 	}

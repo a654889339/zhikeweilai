@@ -106,12 +106,45 @@ func validateGuideProductCategoryID(cid *int) error {
 	return nil
 }
 
+// allowedPublicL2CategoryIDs 仅返回「一级已启用且自身已启用」的二级种类；父级禁用则子级不在前台展示。
+func allowedPublicL2CategoryIDs() []int {
+	var ids []int
+	db.DB.Raw(`
+		SELECT pc.id FROM product_categories pc
+		INNER JOIN product_categories p1 ON pc.parentId = p1.id
+		WHERE pc.level = 2 AND pc.status = ? AND p1.level = 1 AND p1.status = ?
+	`, "active", "active").Scan(&ids)
+	return ids
+}
+
 func guideList(c *gin.Context) {
 	q := db.DB.Model(&models.DeviceGuide{}).Where("status = ?", "active")
-	if cid := strings.TrimSpace(c.Query("categoryId")); cid != "" {
-		if id, err := strconv.Atoi(cid); err == nil {
-			q = q.Where("categoryId = ?", id)
+	cid := strings.TrimSpace(c.Query("categoryId"))
+	allowed := allowedPublicL2CategoryIDs()
+	if len(allowed) == 0 {
+		resp.OK(c, []gin.H{})
+		return
+	}
+	if cid != "" {
+		id, err := strconv.Atoi(cid)
+		if err != nil {
+			resp.OK(c, []gin.H{})
+			return
 		}
+		ok := false
+		for _, x := range allowed {
+			if x == id {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			resp.OK(c, []gin.H{})
+			return
+		}
+		q = q.Where("categoryId = ?", id)
+	} else {
+		q = q.Where("categoryId IN ?", allowed)
 	}
 	var guides []models.DeviceGuide
 	q.Order("sortOrder ASC, id ASC").Find(&guides)
@@ -152,6 +185,26 @@ func guideDetail(c *gin.Context) {
 		err = db.DB.Where("slug = ?", param).First(&g).Error
 	}
 	if err != nil {
+		resp.Err(c, 404, 404, "不存在")
+		return
+	}
+	if g.Status != "active" {
+		resp.Err(c, 404, 404, "不存在")
+		return
+	}
+	if g.CategoryID == nil || *g.CategoryID <= 0 {
+		resp.Err(c, 404, 404, "不存在")
+		return
+	}
+	allowed := allowedPublicL2CategoryIDs()
+	ok := false
+	for _, x := range allowed {
+		if x == *g.CategoryID {
+			ok = true
+			break
+		}
+	}
+	if !ok {
 		resp.Err(c, 404, 404, "不存在")
 		return
 	}

@@ -58,29 +58,6 @@
         </van-cell-group>
       </div>
 
-      <!-- Service Entry -->
-      <div class="section-card">
-        <h3 class="section-title">服务入口</h3>
-        <div class="service-entry-grid">
-          <div class="entry-item" @click="$router.push('/products')">
-            <div class="entry-icon" style="background:#EDE9FE"><van-icon name="service-o" size="22" color="#7C3AED" /></div>
-            <span>自助服务</span>
-          </div>
-          <div class="entry-item" @click="$router.push('/products')">
-            <div class="entry-icon" style="background:#DBEAFE"><van-icon name="location-o" size="22" color="#2563EB" /></div>
-            <span>服务网点</span>
-          </div>
-          <div class="entry-item" @click="$router.push('/products')">
-            <div class="entry-icon" style="background:#D1FAE5"><van-icon name="shield-o" size="22" color="#059669" /></div>
-            <span>售后政策</span>
-          </div>
-          <div class="entry-item" @click="$router.push('/products')">
-            <div class="entry-icon" style="background:#FEF3C7"><van-icon name="balance-list-o" size="22" color="#D97706" /></div>
-            <span>维修报价</span>
-          </div>
-        </div>
-      </div>
-
       <div style="height:88px"></div>
     </template>
 
@@ -94,8 +71,8 @@
     <div class="app-fixed-bottom-shell guide-footer-z">
       <div class="guide-footer-inner guide-footer-actions">
         <van-button class="gf-btn gf-cart" plain hairline type="default" round @click="goCartPage">购物车</van-button>
-        <van-button class="gf-btn gf-buy" type="danger" round @click="buyNow">购买</van-button>
         <van-button class="gf-btn gf-add" type="primary" color="#B91C1C" round @click="addToCart">加入购物车</van-button>
+        <van-button class="gf-btn gf-buy" type="danger" round @click="buyNow">立即下单</van-button>
       </div>
     </div>
   </div>
@@ -465,41 +442,6 @@ onMounted(async () => {
 .section-card :deep(.van-cell__title) {
   font-weight: 500;
   font-size: 15px;
-}
-
-/* ===== Service Entry ===== */
-.service-entry-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
-
-.entry-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: transform 0.25s var(--vino-transition);
-}
-
-.entry-item:active {
-  transform: scale(0.92);
-}
-
-.entry-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.entry-item span {
-  font-size: 12px;
-  color: var(--vino-text-secondary);
-  font-weight: 500;
 }
 
 .guide-price-card {

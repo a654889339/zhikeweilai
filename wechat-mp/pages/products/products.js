@@ -182,6 +182,8 @@ Page({
     mediaItems: [],
     helpItems: [],
     firstMediaTitle: '',
+    priceText: '0.00',
+    pointsText: '—',
     loading: false,
   },
 
@@ -323,12 +325,17 @@ Page({
         });
         const helpItems = parse(g.helpItems);
         const sections = parse(g.sections);
+        const lp = g.listPrice != null ? Number(g.listPrice) : 0;
+        const pts =
+          g.rewardPoints != null && Number(g.rewardPoints) > 0 ? String(g.rewardPoints) : '—';
         this.setData({
           guide: g,
           sections,
           mediaItems,
           helpItems,
           firstMediaTitle: mediaItems.length ? mediaItems[0].title || g.name : g.name,
+          priceText: lp.toFixed(2),
+          pointsText: pts,
           loading: false,
         });
       })
@@ -368,7 +375,43 @@ Page({
     wx.navigateTo({ url: `/pages/maintenance/maintenance?id=${id}` });
   },
 
-  goServices() {
-    wx.switchTab({ url: '/pages/products/products' });
+  goCart() {
+    wx.navigateTo({ url: '/pages/cart/cart' });
+  },
+
+  addToCart() {
+    if (!app.checkLogin()) return;
+    const gid = Number(this.data.guide.id);
+    if (!gid) return;
+    app
+      .request({ url: '/auth/cart' })
+      .then((res) => {
+        const rows = (res.data && res.data.items) || [];
+        const items = rows.map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
+        const hit = items.find((x) => x.guideId === gid);
+        if (hit) hit.qty += 1;
+        else items.push({ guideId: gid, qty: 1 });
+        return app.request({ url: '/auth/cart', method: 'PUT', data: { items } });
+      })
+      .then(() => wx.showToast({ title: '已加入购物车' }))
+      .catch((e) => wx.showToast({ title: e.message || '失败', icon: 'none' }));
+  },
+
+  openBuy() {
+    if (!app.checkLogin()) return;
+    const gid = Number(this.data.guide.id);
+    if (!gid) return;
+    app
+      .request({ url: '/auth/cart' })
+      .then((res) => {
+        const rows = (res.data && res.data.items) || [];
+        const items = rows.map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
+        const hit = items.find((x) => x.guideId === gid);
+        if (hit) hit.qty += 1;
+        else items.push({ guideId: gid, qty: 1 });
+        return app.request({ url: '/auth/cart', method: 'PUT', data: { items } });
+      })
+      .then(() => wx.navigateTo({ url: '/pages/checkout/checkout' }))
+      .catch((e) => wx.showToast({ title: e.message || '失败', icon: 'none' }));
   },
 });

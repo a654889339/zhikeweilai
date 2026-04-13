@@ -104,10 +104,6 @@ Page({
     wx.navigateTo({ url: `/pages/maintenance/maintenance?id=${id}` });
   },
 
-  goServices() {
-    wx.switchTab({ url: '/pages/products/products' });
-  },
-
   goCart() {
     wx.navigateTo({ url: '/pages/cart/cart' });
   },

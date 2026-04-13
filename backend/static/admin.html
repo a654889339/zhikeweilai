@@ -2136,7 +2136,7 @@ async function loadCategories() {
         <td>${c.thumbnailUrl ? `<img src="${String(c.thumbnailUrl).replace(/"/g,'&quot;')}" class="lod-img" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #eee" alt="" />` : '<span style="color:#999">-</span>'}</td>
         <td>${c.points != null ? c.points : 0}</td>
         <td>${c.sortOrder}</td>
-        <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${c.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${c.status==='active'?'启用':'禁用'}</span></td>
+        <td><button type="button" class="detail-btn" style="${c.status==='active'?'background:#D1FAE5;color:#059669;border-color:#A7F3D0':'background:#F3F4F6;color:#6b7280;border-color:#e5e7eb'}" onclick="toggleCategoryStatus(${c.id})">${c.status==='active'?'启用':'禁用'}</button></td>
         <td>
           <button class="detail-btn" onclick="openCategoryEditor(${c.id})">编辑</button>
           <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteCategory(${c.id})">删除</button>
@@ -2230,6 +2230,28 @@ async function deleteCategory(id) {
     if (res.code === 0) { loadCategories(); loadGuides(); }
     else alert(res.message || '删除失败');
   } catch { alert('删除失败'); }
+}
+
+async function toggleCategoryStatus(id) {
+  const c = (allCategories || []).find(function (x) { return Number(x.id) === Number(id); });
+  if (!c) return;
+  const next = c.status === 'active' ? 'inactive' : 'active';
+  const body = {
+    name: c.name,
+    nameEn: c.nameEn || '',
+    thumbnailUrl: c.thumbnailUrl != null ? c.thumbnailUrl : null,
+    thumbnailUrlEn: c.thumbnailUrlEn != null ? c.thumbnailUrlEn : null,
+    points: c.points != null ? c.points : 0,
+    sortOrder: c.sortOrder != null ? c.sortOrder : 0,
+    status: next,
+    level: c.level === 2 ? 2 : 1,
+    parentId: c.level === 2 && c.parentId ? c.parentId : null,
+  };
+  try {
+    const res = await api('/product-categories/' + id, { method: 'PUT', body: body });
+    if (res.code === 0) { loadCategories(); loadGuides(); }
+    else alert(res.message || '更新失败');
+  } catch (e) { alert('更新失败'); }
 }
 
 async function uploadCategoryThumbnail(input) {

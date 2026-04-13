@@ -54,6 +54,13 @@
           </view>
         </view>
 
+        <view class="price-row-mp">
+          <text class="pr-label">价格</text>
+          <text class="pr-val">¥ {{priceText}}</text>
+          <text class="pr-label">积分</text>
+          <text class="pr-pts">{{pointsText}}</text>
+        </view>
+
         <view wx:if="{{helpItems.length || sections.length}}" class="card">
           <text class="title">使用帮助</text>
           <view wx:if="{{helpItems.length}}" class="help-row" bindtap="goManual">
@@ -65,28 +72,6 @@
             <text class="help-arrow">›</text>
           </view>
         </view>
-
-        <view class="card">
-          <text class="title">服务入口</text>
-          <view class="entry-grid">
-            <view class="entry-item" bindtap="goServices">
-              <view class="entry-icon" style="background:#EDE9FE"><text>🔧</text></view>
-              <text>自助服务</text>
-            </view>
-            <view class="entry-item" bindtap="goServices">
-              <view class="entry-icon" style="background:#DBEAFE"><text>📍</text></view>
-              <text>服务网点</text>
-            </view>
-            <view class="entry-item" bindtap="goServices">
-              <view class="entry-icon" style="background:#D1FAE5"><text>🛡</text></view>
-              <text>售后政策</text>
-            </view>
-            <view class="entry-item" bindtap="goServices">
-              <view class="entry-icon" style="background:#FEF3C7"><text>💰</text></view>
-              <text>维修报价</text>
-            </view>
-          </view>
-        </view>
       </block>
 
       <view wx:elif="{{!loading}}" class="empty-hint">
@@ -95,7 +80,15 @@
     </scroll-view>
   </view>
 
-  <view wx:elif="{{!loading}}" class="empty-hint">
+  <view class="footer-shell" wx:if="{{sidebarItems.length && guide.id}}">
+    <view class="footer-inner">
+      <button class="fb-btn fb-cart" bindtap="goCart">购物车</button>
+      <button class="fb-btn fb-add" bindtap="addToCart">加入购物车</button>
+      <button class="fb-btn fb-buy" bindtap="openBuy">立即下单</button>
+    </view>
+  </view>
+
+  <view wx:if="{{!sidebarItems.length && !loading}}" class="empty-hint">
     <text>暂无商品配置</text>
   </view>
 

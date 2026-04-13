@@ -54,31 +54,18 @@
         </van-cell-group>
       </div>
 
-      <div class="section-card">
-        <h3 class="section-title">服务入口</h3>
-        <div class="service-entry-grid">
-          <div class="entry-item" @click="$router.push('/products')">
-            <div class="entry-icon" style="background:#EDE9FE"><van-icon name="service-o" size="22" color="#7C3AED" /></div>
-            <span>自助服务</span>
-          </div>
-          <div class="entry-item" @click="$router.push('/products')">
-            <div class="entry-icon" style="background:#DBEAFE"><van-icon name="location-o" size="22" color="#2563EB" /></div>
-            <span>服务网点</span>
-          </div>
-          <div class="entry-item" @click="$router.push('/products')">
-            <div class="entry-icon" style="background:#D1FAE5"><van-icon name="shield-o" size="22" color="#059669" /></div>
-            <span>售后政策</span>
-          </div>
-          <div class="entry-item" @click="$router.push('/products')">
-            <div class="entry-icon" style="background:#FEF3C7"><van-icon name="balance-list-o" size="22" color="#D97706" /></div>
-            <span>维修报价</span>
-          </div>
-        </div>
-      </div>
-      <div style="height:24px" />
+      <div style="height:88px" />
     </template>
 
     <div v-if="!loading && !guide.id" class="embed-empty">暂无内容</div>
+
+    <div v-if="guide.id" class="app-fixed-bottom-shell guide-footer-z">
+      <div class="guide-footer-inner guide-footer-actions">
+        <van-button class="gf-btn gf-cart" plain hairline type="default" round @click="goCartPage">购物车</van-button>
+        <van-button class="gf-btn gf-add" type="primary" color="#B91C1C" round @click="addToCart">加入购物车</van-button>
+        <van-button class="gf-btn gf-buy" type="danger" round @click="buyNow">立即下单</van-button>
+      </div>
+    </div>
 
     <div v-if="playShowcase" class="video-backdrop" @click.self="closeVideo()">
       <div class="video-overlay">
@@ -92,8 +79,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { showImagePreview } from 'vant';
-import { guideApi } from '@/api';
+import { showImagePreview, showToast } from 'vant';
+import { guideApi, authApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 
 const props = defineProps({
@@ -189,6 +176,54 @@ const goManual = () => {
 };
 const goMaintenance = () => {
   if (guide.value.id) router.push(`/guide/${guide.value.id}/maintenance`);
+};
+
+const goCartPage = () => {
+  router.push('/cart');
+};
+
+async function mergeCurrentGuideIntoCart() {
+  const gid = Number(guide.value.id);
+  if (!gid) return;
+  const cartRes = await authApi.getCart();
+  const rows = cartRes.data?.items || [];
+  const items = rows.map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
+  const hit = items.find((x) => x.guideId === gid);
+  if (hit) hit.qty += 1;
+  else items.push({ guideId: gid, qty: 1 });
+  await authApi.putCart({ items });
+}
+
+const addToCart = async () => {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    showToast('请先登录');
+    router.push('/login');
+    return;
+  }
+  if (!Number(guide.value.id)) return;
+  try {
+    await mergeCurrentGuideIntoCart();
+    showToast('已加入购物车');
+  } catch (e) {
+    showToast(e.message || '操作失败');
+  }
+};
+
+const buyNow = async () => {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    showToast('请先登录');
+    router.push('/login');
+    return;
+  }
+  if (!Number(guide.value.id)) return;
+  try {
+    await mergeCurrentGuideIntoCart();
+    router.push('/checkout');
+  } catch (e) {
+    showToast(e.message || '操作失败');
+  }
 };
 
 async function load() {
@@ -394,30 +429,31 @@ watch(
   color: #111827;
   margin-bottom: 12px;
 }
-.service-entry-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+/* 产品页有底部 Tabbar，底栏需抬高避免被遮挡（与 Tabbar 分层错开） */
+.embed-guide :deep(.app-fixed-bottom-shell) {
+  bottom: 56px;
 }
-.entry-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
+.guide-footer-z {
+  z-index: 150;
 }
-.entry-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+.guide-footer-inner {
+  padding: 10px 0;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
+  backdrop-filter: blur(8px);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.06);
+}
+.guide-footer-actions {
   display: flex;
-  align-items: center;
+  gap: 8px;
+  align-items: stretch;
   justify-content: center;
 }
-.entry-item span {
-  font-size: 11px;
-  color: #6b7280;
-  font-weight: 500;
+.guide-footer-actions .gf-btn {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
 }
 .video-backdrop {
   position: fixed;
