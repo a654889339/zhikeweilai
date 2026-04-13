@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"strconv"
 	"strings"
 
@@ -26,7 +27,17 @@ func addrCreate(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var body models.Address
+	var body struct {
+		ContactName   string `json:"contactName"`
+		ContactPhone  string `json:"contactPhone"`
+		Country       string `json:"country"`
+		CustomCountry string `json:"customCountry"`
+		Province      string `json:"province"`
+		City          string `json:"city"`
+		District      string `json:"district"`
+		DetailAddress string `json:"detailAddress"`
+		IsDefault     bool   `json:"isDefault"`
+	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		resp.Err(c, 400, 400, "参数错误")
 		return
@@ -35,7 +46,11 @@ func addrCreate(c *gin.Context) {
 		resp.Err(c, 400, 400, "联系人和电话不能为空")
 		return
 	}
-	if strings.TrimSpace(body.Country) == "" {
+	country := strings.TrimSpace(body.Country)
+	if country == "中国" {
+		country = "中国大陆"
+	}
+	if country == "" {
 		resp.Err(c, 400, 400, "请选择国家/地区")
 		return
 	}
@@ -43,18 +58,37 @@ func addrCreate(c *gin.Context) {
 		resp.Err(c, 400, 400, "请填写详细地址")
 		return
 	}
+	var nUser int64
+	db.DB.Model(&models.User{}).Where("id = ?", u.ID).Count(&nUser)
+	if nUser == 0 {
+		resp.Err(c, 401, 401, "登录已失效，请重新登录")
+		return
+	}
 	if body.IsDefault {
 		db.DB.Model(&models.Address{}).Where("userId = ?", u.ID).Update("isDefault", false)
 	}
-	body.UserID = u.ID
-	if body.Country == "" {
-		body.Country = "中国大陆"
+	a := models.Address{
+		UserID:        u.ID,
+		ContactName:   strings.TrimSpace(body.ContactName),
+		ContactPhone:  strings.TrimSpace(body.ContactPhone),
+		Country:       country,
+		CustomCountry: strings.TrimSpace(body.CustomCountry),
+		Province:      strings.TrimSpace(body.Province),
+		City:          strings.TrimSpace(body.City),
+		District:      strings.TrimSpace(body.District),
+		DetailAddress: strings.TrimSpace(body.DetailAddress),
+		IsDefault:     body.IsDefault,
 	}
-	if err := db.DB.Create(&body).Error; err != nil {
-		resp.Err(c, 500, 500, "创建地址失败")
+	if err := db.DB.Create(&a).Error; err != nil {
+		log.Printf("addrCreate: userId=%d err=%v", u.ID, err)
+		msg := "创建地址失败，请稍后重试"
+		if strings.Contains(strings.ToLower(err.Error()), "foreign key") || strings.Contains(err.Error(), "1452") {
+			msg = "用户不存在或已失效，请重新登录后再试"
+		}
+		resp.Err(c, 500, 500, msg)
 		return
 	}
-	resp.OK(c, body)
+	resp.OK(c, a)
 }
 
 func addrUpdate(c *gin.Context) {

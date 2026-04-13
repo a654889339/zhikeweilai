@@ -270,9 +270,14 @@ onMounted(async () => {
 
 .hero-img {
   width: 100%;
-  height: 260px;
-  object-fit: cover;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
   display: block;
+  vertical-align: top;
+}
+.hero-img-wrap {
+  line-height: 0;
 }
 
 .hero-play-btn {

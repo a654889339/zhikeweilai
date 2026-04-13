@@ -319,12 +319,16 @@ watch(
 .hero-img-wrap {
   position: relative;
   cursor: pointer;
+  width: 100%;
+  line-height: 0;
 }
 .hero-img {
   width: 100%;
-  height: 220px;
-  object-fit: cover;
+  height: auto;
+  max-width: 100%;
   display: block;
+  object-fit: contain;
+  vertical-align: top;
 }
 .hero-play-btn {
   position: absolute;
@@ -355,7 +359,7 @@ watch(
 }
 .hero-placeholder {
   width: 100%;
-  height: 220px;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;

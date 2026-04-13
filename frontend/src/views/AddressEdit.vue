@@ -143,12 +143,27 @@ const onSave = async () => {
   if (form.country === '中国大陆' && !form.province) { showToast('请选择省市区'); return; }
   if (!form.detailAddress.trim()) { showToast('请输入详细地址'); return; }
 
+  let country = form.country;
+  if (country === '中国') country = '中国大陆';
+
+  const payload = {
+    contactName: form.contactName.trim(),
+    contactPhone: form.contactPhone.trim(),
+    country,
+    customCountry: (form.customCountry || '').trim(),
+    province: (form.province || '').trim(),
+    city: (form.city || '').trim(),
+    district: (form.district || '').trim(),
+    detailAddress: form.detailAddress.trim(),
+    isDefault: !!form.isDefault,
+  };
+
   saving.value = true;
   try {
     if (isEdit.value) {
-      await addressApi.update(route.params.id, { ...form });
+      await addressApi.update(route.params.id, payload);
     } else {
-      await addressApi.create({ ...form });
+      await addressApi.create(payload);
     }
     showToast('保存成功');
     router.back();

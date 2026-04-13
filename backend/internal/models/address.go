@@ -14,8 +14,8 @@ type Address struct {
 	District       string    `gorm:"size:50" json:"district"`
 	DetailAddress  string    `gorm:"column:detailAddress;size:500" json:"detailAddress"`
 	IsDefault      bool      `gorm:"column:isDefault" json:"isDefault"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
+	CreatedAt      time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt      time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (Address) TableName() string { return "addresses" }
@@ -32,8 +32,8 @@ type OutletAddress struct {
 	District      string    `gorm:"size:50" json:"district"`
 	DetailAddress string    `gorm:"column:detailAddress;size:500" json:"detailAddress"`
 	IsDefault     bool      `gorm:"column:isDefault" json:"isDefault"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+	CreatedAt     time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt     time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (OutletAddress) TableName() string { return "outlet_addresses" }
