@@ -473,10 +473,20 @@ watch(searchKeyword, () => {
 .product-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   padding: 12px;
   background: #fafafa;
   max-height: calc(100vh - 120px);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.product-main :deep(.embed-guide) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-loading {

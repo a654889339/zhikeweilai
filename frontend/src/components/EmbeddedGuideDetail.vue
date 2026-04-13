@@ -1,8 +1,10 @@
-<!-- 嵌入产品页右侧：无顶栏，与 GuideDetail 内容区一致 -->
+<!-- 嵌入产品页右侧：无顶栏，底栏归属本列、与价格区同级并贴底 -->
 <template>
   <div class="embed-guide">
-    <van-loading v-if="loading" size="28" class="embed-loading" />
+    <van-loading v-if="loading" size="28" class="embed-loading embed-loading-full" />
     <template v-else-if="guide.id">
+      <div class="embed-guide-panel">
+        <div class="embed-guide-scroll">
       <div class="hero-block">
         <div class="hero-section">
           <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playVideo(fullUrl(guide.showcaseVideo))">
@@ -53,19 +55,26 @@
           <van-cell v-if="sections.length" title="常见问题与保养建议" icon="info-o" is-link @click="goMaintenance" />
         </van-cell-group>
       </div>
+        </div>
 
-      <div style="height:88px" />
+        <div class="embed-guide-footer guide-footer-actions">
+          <van-button
+            class="gf-btn gf-cart-icon"
+            plain
+            hairline
+            type="default"
+            round
+            icon="shopping-cart-o"
+            aria-label="购物车"
+            @click="goCartPage"
+          />
+          <van-button class="gf-btn gf-add" type="primary" color="#B91C1C" round @click="addToCart">加入购物车</van-button>
+          <van-button class="gf-btn gf-buy" type="danger" round @click="buyNow">立即下单</van-button>
+        </div>
+      </div>
     </template>
 
     <div v-if="!loading && !guide.id" class="embed-empty">暂无内容</div>
-
-    <div v-if="guide.id" class="app-fixed-bottom-shell guide-footer-z">
-      <div class="guide-footer-inner guide-footer-actions">
-        <van-button class="gf-btn gf-cart" plain hairline type="default" round @click="goCartPage">购物车</van-button>
-        <van-button class="gf-btn gf-add" type="primary" color="#B91C1C" round @click="addToCart">加入购物车</van-button>
-        <van-button class="gf-btn gf-buy" type="danger" round @click="buyNow">立即下单</van-button>
-      </div>
-    </div>
 
     <div v-if="playShowcase" class="video-backdrop" @click.self="closeVideo()">
       <div class="video-overlay">
@@ -253,7 +262,40 @@ watch(
 
 <style scoped>
 .embed-guide {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.embed-loading-full {
+  flex: 1;
   min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.embed-guide-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+.embed-guide-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.embed-guide-footer {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding-top: 10px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.06);
 }
 .embed-loading {
   display: flex;
@@ -429,31 +471,24 @@ watch(
   color: #111827;
   margin-bottom: 12px;
 }
-/* 产品页有底部 Tabbar，底栏需抬高避免被遮挡（与 Tabbar 分层错开） */
-.embed-guide :deep(.app-fixed-bottom-shell) {
-  bottom: 56px;
-}
-.guide-footer-z {
-  z-index: 150;
-}
-.guide-footer-inner {
-  padding: 10px 0;
-  padding-bottom: max(10px, env(safe-area-inset-bottom));
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
-  backdrop-filter: blur(8px);
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.06);
-}
 .guide-footer-actions {
   display: flex;
   gap: 8px;
   align-items: stretch;
   justify-content: center;
 }
-.guide-footer-actions .gf-btn {
+.guide-footer-actions .gf-add,
+.guide-footer-actions .gf-buy {
   flex: 1;
   min-width: 0;
   font-size: 14px;
+}
+.guide-footer-actions .gf-cart-icon {
+  flex: 0 0 48px;
+  width: 48px;
+  min-width: 48px;
+  padding: 0;
+  font-size: 20px;
 }
 .video-backdrop {
   position: fixed;
