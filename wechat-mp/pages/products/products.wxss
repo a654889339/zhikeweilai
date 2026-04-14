@@ -41,18 +41,19 @@
   box-sizing: border-box;
 }
 
+/* 一级种类：较大字；二级种类、商品行见 .sub / .product-sub（小约 4rpx≈2 号） */
 .sidebar-item-mp {
   margin: 0 12rpx 12rpx;
   padding: 16rpx 12rpx;
   border-radius: 999rpx;
-  font-size: 24rpx;
+  font-size: 28rpx;
   font-weight: 500;
   color: #4b5563;
   line-height: 1.35;
 }
 
 .sidebar-item-mp.header {
-  font-size: 22rpx;
+  font-size: 28rpx;
   font-weight: 700;
   color: #6b7280;
   border-radius: 16rpx;
@@ -60,6 +61,7 @@
 
 .sidebar-item-mp.sub {
   padding: 14rpx 12rpx;
+  font-size: 24rpx;
 }
 
 .sidebar-item-mp.product-sub {
@@ -67,6 +69,7 @@
   margin-left: 6rpx;
   border-radius: 16rpx;
   border-left: 4rpx solid rgba(185, 28, 28, 0.3);
+  font-size: 24rpx;
 }
 
 .sidebar-item-mp.active {
@@ -75,28 +78,10 @@
   font-weight: 600;
 }
 
-.sidebar-inner-mp {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-}
-
-.sidebar-thumb-mp {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 12rpx;
-  flex-shrink: 0;
-  background: #f3f4f6;
-}
-
 .sidebar-name-mp {
-  flex: 1;
-  min-width: 0;
-  word-break: break-all;
-}
-
-.sidebar-name-mp.only {
   display: block;
+  width: 100%;
+  word-break: break-all;
 }
 
 .product-main-mp {

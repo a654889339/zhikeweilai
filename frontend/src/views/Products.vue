@@ -27,15 +27,11 @@
               sub: cat.depth === 1,
               header: cat.isHeader,
               'depth-2': cat.depth === 2 || cat.rowKind === 'product',
+              'sidebar-item--child': cat.depth > 0 || cat.rowKind === 'product',
             }"
             @click="selectCategory(cat)"
           >
-            <span class="sidebar-item-inner">
-              <span class="sidebar-thumb" v-if="cat.thumb">
-                <LodImg :src="cat.thumb" :thumb="cat.thumb" class="sidebar-thumb-img" alt="" />
-              </span>
-              <span class="sidebar-name">{{ cat.name }}</span>
-            </span>
+            <span class="sidebar-name">{{ cat.name }}</span>
           </button>
         </aside>
         <div class="product-main">
@@ -59,7 +55,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { guideApi, homeConfigApi } from '@/api';
-import LodImg from '@/components/LodImg.vue';
 import EmbeddedGuideDetail from '@/components/EmbeddedGuideDetail.vue';
 import {
   sortGuidesByDisplayOrder,
@@ -392,13 +387,14 @@ watch(searchKeyword, () => {
   align-items: stretch;
 }
 
+/* 一级种类：较大字号；二级种类与商品行见 .sidebar-item--child */
 .sidebar-item {
   margin: 0 8px;
   padding: 12px 8px;
   border: none;
   border-radius: 999px;
   background: transparent;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #4b5563;
   cursor: pointer;
@@ -410,7 +406,7 @@ watch(searchKeyword, () => {
 
 .sidebar-item.header {
   cursor: default;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   color: #6b7280;
   padding: 10px 6px 6px;
@@ -428,36 +424,19 @@ watch(searchKeyword, () => {
   border-left: 3px solid rgba(185, 28, 28, 0.25);
 }
 
-.sidebar-item-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sidebar-thumb {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #f3f4f6;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-}
-
-.sidebar-thumb-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* 非一级（二级种类、商品行）：比一级小 2px（约传统「小二号」） */
+.sidebar-item--child {
+  font-size: 14px;
 }
 
 .sidebar-name {
-  flex: 1;
+  display: block;
+  width: 100%;
   min-width: 0;
-  font-size: 13px;
   white-space: normal;
   word-break: break-all;
   line-height: 1.25;
-  max-width: 6em;
+  max-width: 7em;
 }
 
 .sidebar-item.active {

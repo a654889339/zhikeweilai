@@ -15,11 +15,7 @@
         data-idx="{{index}}"
         bindtap="selectCategory"
       >
-        <view class="sidebar-inner-mp" wx:if="{{item.thumb}}">
-          <image class="sidebar-thumb-mp" src="{{item.thumb}}" mode="aspectFill" />
-          <text class="sidebar-name-mp">{{item.name}}</text>
-        </view>
-        <text class="sidebar-name-mp only" wx:else>{{item.name}}</text>
+        <text class="sidebar-name-mp">{{item.name}}</text>
       </view>
     </scroll-view>
 
