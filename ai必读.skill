@@ -1,0 +1,131 @@
+# AI 必读：zhikeweilai 全局规范
+
+本文档汇总对本仓库 AI 辅助开发与 Code Review 的**强制约定**。编写 Skill、部署说明或改动后端/管理页/存储前请先阅读。
+
+下列规范整合了：
+
+- **`F:\Vino_test\.cursor\skills\ai必读\SKILL.md`**（Vino_test 对齐项与演进规则）
+- **`F:\COLOMO_Like\R-Melamine\ai必读.skill`**（COLOMO / R-Melamine：路径、OSS、调试窗口、`version`、前后端隔离）
+
+其中与 **阿里云 OSS / `/usr/local/R-Melamine`** 相关的**具体路径与接口表**仅适用于 R-Melamine；本仓库对象存储与健康部署路径见 **§2、§1**。
+
+---
+
+## 1. 服务器路径与部署（唯一口径）
+
+凡涉及 **106 服务器 / ECS 上的目录、compose、cron、SSH 示例**，以 **`.cursor/skills/deploy-to-106/SKILL.md`** 为准：
+
+| 项 | 约定 |
+|----|------|
+| **部署目录** | `/home/ubuntu/zhikeweilai`（与 Vino_test 的 `/home/ubuntu/Vino_test` 分离） |
+| **容器前缀** | `zkwl-*`（`zkwl-mysql`、`zkwl-backend`、`zkwl-frontend`、`zkwl-frontend-outlet`）；禁止使用 `vino-*`，以免与同机项目冲突 |
+| **端口** | 主前端 **5301**→容器 80、API **5302**、门店 **5303**；MySQL 宿主机 **3310** |
+
+**禁止**把 R-Melamine 文档中的 **`/usr/local/R-Melamine`、`RM_DEPLOY_ROOT`、`/etc/default/r-melamine`** 当作本仓库在 ECS 上的默认示例路径。
+
+---
+
+## 2. 对象存储（腾讯云 COS）
+
+本仓库后端通过 **`backend/internal/services/cos.go`** 等与**腾讯云 COS**交互（与同系 Vino 代码对齐的桶与 key 前缀），**不是**阿里云 OSS。
+
+1. **禁止**新增第二套并行的「桶增删查」封装（重复 SDK、重复通用上传/删除路由等）。需要上传、代理或校验对象时，**沿用现有 services 与路由**；新能力须在 Issue/PR 中说明后统一扩展。
+2. **`COS_SECRET_ID`、`COS_SECRET_KEY`** 仅通过环境变量或部署目录 **`.env`** 注入。**禁止**在 Skill、规则、Markdown、示例代码或 Git 中写入真实密钥。
+3. **对象键**：沿用既有前缀（如 `vino/uploads/`）；新增业务目录须在团队内约定并保持各端一致。
+
+（对照：R-Melamine 要求一律走 **`/api/oss`** 统一接口；本项目技术栈不同，以 **本节与现有 COS 封装**为准，不复述对方 Bucket 名或 AccessKey 细节。）
+
+---
+
+## 3. 密钥与配置的文档纪律
+
+以下内容**不得**写入可提交的文档、Skill、注释或示例：**云密钥、JWT Secret、数据库密码、第三方 Key** 等。只允许占位符（如 `${COS_SECRET_KEY:-}`）并注明来源于环境变量。
+
+---
+
+## 4. 前端 / 小程序 与 后端 / DB 改动隔离（强制）
+
+与 Vino_test、R-Melamine **一致**：为降低联调与回滚成本，**同一任务、同一提交**内需二选一，**禁止混改**：
+
+| 任务类型 | 允许改动 | **禁止**改动 |
+| -------- | ---------- | ------------- |
+| 仅 **前端 / 小程序**（UI、路由、在不改契约前提下调用已有接口） | 前端与小程序仓库内代码与静态资源 | **后端**（`backend/`）与 **数据库**（迁移、结构、批量 SQL） |
+| **后端能力与 DB**（契约变更、新表列、迁移、数据结构） | `backend/`、DB 及相关脚本 | **前端与小程序**（含 `backend/static/admin.html`、门店页等） |
+
+若必须全栈联动，应拆成**至少两次独立变更**（先后端再前端，或相反），**不得**在同一 PR 内混绑。
+
+---
+
+## 5. 数据库 schema 版本（`version`）与读时升级（强制）
+
+与两份来源文档一致：**凡**涉及新增列、JSON 形态变更、或旧行与新语义并存时：
+
+1. 维护并**递增**约定的整型 **`version`**（全局或按行，与现有表结构约定一致）。
+2. **读取**路径须按 `version` 做链式升级到当前代码期望版本，再进入业务逻辑；**禁止**假设历史行已含有效新字段。
+3. DDL（`AutoMigrate` / migration）与版本策略**分工明确**：备份恢复的旧库仍依赖应用层版本升级兜底。
+4. 生产routine **避免**无端 `docker compose down` 清库；迁移须可重复、幂等优先。
+
+---
+
+## 6. 角色、调试窗口与高权限运维（对齐 Vino_test / R-Melamine）
+
+以下摘自 **`F:\Vino_test\.cursor\skills\ai必读\SKILL.md`** 与 **`F:\COLOMO_Like\R-Melamine\ai必读.skill`**，作为**与同系项目对齐时的标准**（角色名在 R-Melamine 文案中为 `superadmin`，Vino_test 为 `super_admin`，若合并代码须统一枚举与前端判断）。
+
+### 6.1 角色（Vino_test 模型）
+
+- `users`：`user`、`admin`、`super_admin`。**超级管理员**独占：调试窗口侧栏、`/api/admin/ops/*`、修改他人角色等高风险能力。
+- **`middleware.Admin()`**：放行 `admin` 与 `super_admin`。  
+- **`middleware.SuperAdmin()`**：**仅** `super_admin`。  
+- **运维类路由**（备份、恢复、审计上传、数据库切换等）必须 **`SuperAdmin()`**，**严禁**降级为 `Admin()`。
+- **管理页 `admin.html`**：调试入口仅 `super_admin` 可见；角色展示与 `isAdminRole` / `isSuperAdminRole` 等助手一致，避免把 `super_admin` 误判为普通用户。
+
+### 6.2 R-Melamine 侧对应表述（对照）
+
+- 调试视图路径示例：`/datamgr/debug`；普通管理员不得见入口，直接访问应重定向回管理首页；`/api/admin/ops/*` 一律超级管理员。
+
+### 6.3 启动迁移（Vino_test）
+
+- `MigrateSuperAdmin()`：扩展 role 枚举；若无任何 `super_admin`，将最早一条 `admin` 升为 `super_admin`。**不要**随意删除该幂等逻辑；新增 DDL 时保持兼容。
+
+### 6.4 JWT 与数据库（Vino_test）
+
+- **中间件以数据库为准**：`Admin()` / `SuperAdmin()` 按 token 内用户 ID 查库，用**库中 `role`** 覆盖上下文，避免 JWT 角色滞后导致长期 403。前端展示走 `GET /auth/profile` 等实时数据。
+
+### 6.5 **当前 zhikeweilai 仓库现状（执行前务必核对代码）**
+
+当前主线中 **`users.role` 可能仍为 `user` | `admin`**（见 `backend/internal/models/user.go`），**且 `middleware.Admin()` 可能仅校验 JWT 内角色**，未必已实现 **§6.1–6.4** 的全部能力。
+
+- **新增**备份/恢复/运维类接口时：即使尚未合并 Vino 的 `super_admin`，也应按 **「最高权限单独中间件 + 独立可见性」** 设计，避免普通 `admin` 误触生产数据。
+- **从 Vino_test 合并**角色与 ops 能力时：以 **§6** 为验收清单，同步模型、中间件、`admin.html` 与路由。
+
+---
+
+## 7. R-Melamine 独有内容（仅作对照，不照搬路径）
+
+下列内容**仅适用于 R-Melamine 仓库**，本仓库 AI **不得**默认套用其服务器路径或 OSS 接口名：
+
+- 阿里云 OSS、统一 **`/api/oss/*`**、本地审计日志目录与 OSS 归档策略（`data/logs/backend`、`log/backend/...`）等。
+- 若需在本仓库实现**类似**「统一对象存储 HTTP 层」，应单独设计并与 **§2 COS** 一致，不在本文复制对方 Bucket 名或密钥标识。
+
+---
+
+## 8. AI 工作约束（强制）
+
+1. **部署**：以 **`deploy-to-106`** 与本文 **§1** 为准。
+2. **存储**：遵守 **§2**，禁止旁路直连 COS 或复制第二套 CRUD。
+3. **密钥**：遵守 **§3**。
+4. **隔离**：遵守 **§4**。
+5. **DB 演进**：遵守 **§5**。
+6. **权限与运维**：新增高风险能力时遵守 **§6** 的原则；合并 Vino 代码时按 **§6.5** 对齐现状。
+7. **用户要求「发布 / 部署 / 上 106」**：执行 **`.cursor/skills/deploy-to-106/SKILL.md`** 的步骤。
+
+---
+
+## 9. 来源路径（便于人工同步）
+
+| 来源 | 路径 |
+|------|------|
+| Vino_test | `F:\Vino_test\.cursor\skills\ai必读\SKILL.md` |
+| COLOMO / R-Melamine | `F:\COLOMO_Like\R-Melamine\ai必读.skill` |
+
+若上述文件更新，可对照修订本节结构与原则说明；本仓库仍以 **COS + 106 部署目录 + 当前代码**为最终执行依据。

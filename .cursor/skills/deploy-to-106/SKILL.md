@@ -3,6 +3,8 @@ name: deploy-to-106
 description: 将 zhikeweilai 部署到 106.54.50.88；与 Vino_test 同机并存（zkwl-* 容器、主前端 5301:80 / API 5302 / 门店 5303、3310 MySQL 映射、独立 MySQL 卷）。后端为 Go（Gin，`backend/Dockerfile` 构建）。使用 SSH + ghfast 镜像拉代码 + docker compose。在用户要求发布/部署/上 106 时执行本 skill。
 ---
 
+全局规范（路径口径、COS 与密钥纪律、AI 约束）见仓库根目录 **`ai必读.skill`**。
+
 # Deploy zhikeweilai to 106
 
 ## 与同机 Vino_test 的约定（勿改乱）
