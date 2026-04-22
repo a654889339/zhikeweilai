@@ -24,6 +24,11 @@ export default defineConfig({
         target: 'http://localhost:5302',
         changeOrigin: true,
       },
+      /** 3D 素材与小程序同源（主前端 nginx 静态目录）；本地无文件时可走线上 */
+      '/res': {
+        target: 'http://106.54.50.88:5301',
+        changeOrigin: true,
+      },
     },
   },
 });

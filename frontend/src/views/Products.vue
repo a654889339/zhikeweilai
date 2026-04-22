@@ -33,12 +33,25 @@
           >
             <span class="sidebar-name">{{ cat.name }}</span>
           </button>
+          <button
+            type="button"
+            class="sidebar-item sidebar-item--viewer"
+            :class="{ active: show3DViewer }"
+            @click="select3DViewer"
+          >
+            <span class="sidebar-name">3D 预览</span>
+          </button>
         </aside>
         <div class="product-main">
-          <van-loading v-if="detailLoading" size="28" class="main-loading" />
-          <EmbeddedGuideDetail v-else-if="selectedGuideId" :guide-id="selectedGuideId" />
-          <div v-else-if="selectedCategoryId && !detailLoading" class="main-empty">该种类下暂无商品</div>
-          <div v-else class="main-empty">请选择左侧分类与商品</div>
+          <template v-if="show3DViewer">
+            <ProductModelViewer />
+          </template>
+          <template v-else>
+            <van-loading v-if="detailLoading" size="28" class="main-loading" />
+            <EmbeddedGuideDetail v-else-if="selectedGuideId" :guide-id="selectedGuideId" />
+            <div v-else-if="selectedCategoryId && !detailLoading" class="main-empty">该种类下暂无商品</div>
+            <div v-else class="main-empty">请选择左侧分类与商品</div>
+          </template>
         </div>
       </div>
 
@@ -53,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue';
 import { guideApi, homeConfigApi } from '@/api';
 import EmbeddedGuideDetail from '@/components/EmbeddedGuideDetail.vue';
 import {
@@ -67,6 +80,10 @@ import {
 } from '@/utils/categorySidebar';
 import { normalizeBrandText } from '@/utils/brandName';
 
+const ProductModelViewer = defineAsyncComponent(() =>
+  import('@/components/ProductModelViewer.vue')
+);
+
 const categories = ref([]);
 const allGuides = ref([]);
 const selectedCategoryId = ref(null);
@@ -76,6 +93,7 @@ const expandedL2Id = ref(null);
 const listLoading = ref(false);
 const detailLoading = ref(false);
 const searchKeyword = ref('');
+const show3DViewer = ref(false);
 
 const BASE = import.meta.env.VITE_API_BASE || '';
 function fullUrl(url) {
@@ -221,6 +239,7 @@ function firstGuideIdForL2(l2Id) {
 
 const selectCategory = async (cat) => {
   if (!cat) return;
+  show3DViewer.value = false;
 
   if (cat.rowKind === 'product') {
     selectedCategoryId.value = cat.parentL2Id;
@@ -271,6 +290,15 @@ const selectCategory = async (cat) => {
     selectedGuideId.value = null;
   }
 };
+
+/** 与小程序 `wechat-mp/pages/products/products.js` 的 select3DViewer 一致：展示 bucket.glb + 圆柱贴花 */
+function select3DViewer() {
+  const already = show3DViewer.value;
+  show3DViewer.value = true;
+  selectedGuideId.value = null;
+  detailLoading.value = false;
+  if (already) return;
+}
 
 onMounted(async () => {
   try {
@@ -443,6 +471,12 @@ watch(searchKeyword, () => {
   background: rgba(255, 183, 77, 0.45);
   color: #111827;
   font-weight: 600;
+}
+
+.sidebar-item--viewer {
+  margin-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-top: 14px;
 }
 
 .sidebar-item:active {
