@@ -1,0 +1,19 @@
+<view class="mv-container">
+  <canvas
+    type="webgl"
+    id="{{canvasId}}"
+    class="mv-canvas"
+    bindtouchstart="onTouchStart"
+    catchtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd"
+    bindtouchcancel="onTouchEnd"
+  ></canvas>
+
+  <view class="mv-overlay" wx:if="{{loading}}">
+    <text class="mv-loading">加载中...</text>
+  </view>
+
+  <view class="mv-overlay" wx:if="{{error}}">
+    <text class="mv-error">{{error}}</text>
+  </view>
+</view>

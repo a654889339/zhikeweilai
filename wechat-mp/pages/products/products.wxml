@@ -17,10 +17,20 @@
       >
         <text class="sidebar-name-mp">{{item.name}}</text>
       </view>
+      <view
+        class="sidebar-item-mp {{show3DViewer ? 'active' : ''}}"
+        bindtap="select3DViewer"
+      >
+        <text class="sidebar-name-mp">3D 预览</text>
+      </view>
     </scroll-view>
 
     <scroll-view scroll-y class="product-main-mp product-main-scroll">
-      <view wx:if="{{loading}}" class="loading">加载中...</view>
+      <view wx:if="{{show3DViewer}}" class="viewer-3d-wrap">
+        <model-viewer id="modelViewer" canvas-id="product-model-canvas" bg-color="#1a1a2e" />
+      </view>
+
+      <view wx:elif="{{loading}}" class="loading">加载中...</view>
 
       <block wx:elif="{{guide.id}}">
         <view class="hero-block">
@@ -70,7 +80,7 @@
         </view>
       </block>
 
-      <view wx:elif="{{!loading}}" class="empty-hint">
+      <view wx:elif="{{!loading && !show3DViewer}}" class="empty-hint">
         <text>请在左侧选择种类与商品</text>
       </view>
     </scroll-view>

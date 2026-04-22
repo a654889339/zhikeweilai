@@ -1,3 +1,6 @@
+const MODEL_URL = 'http://106.54.50.88:5301/res/model-viewer/bucket.glb';
+const DECAL_URL = 'http://106.54.50.88:5301/res/model-viewer/decal.png';
+
 const app = getApp();
 
 function fullUrl(u) {
@@ -185,6 +188,7 @@ Page({
     priceText: '0.00',
     pointsText: '—',
     loading: false,
+    show3DViewer: false,
   },
 
   onShow() {
@@ -229,6 +233,7 @@ Page({
   },
 
   selectCategory(e) {
+    this.setData({ show3DViewer: false });
     const idx = e.currentTarget.dataset.idx;
     const item = (this.data.visibleSidebarItems || [])[idx];
     if (!item) return;
@@ -395,6 +400,23 @@ Page({
       })
       .then(() => wx.showToast({ title: '已加入购物车' }))
       .catch((e) => wx.showToast({ title: e.message || '失败', icon: 'none' }));
+  },
+
+  select3DViewer() {
+    const already = this.data.show3DViewer;
+    this.setData({ show3DViewer: true, guide: {}, loading: false });
+    if (already) return;
+    // deactivate all sidebar rows
+    const visibleSidebarItems = (this.data.visibleSidebarItems || []).map((it) => ({ ...it, rowActive: false }));
+    this.setData({ visibleSidebarItems });
+    // load model after the canvas node is rendered
+    setTimeout(() => {
+      const viewer = this.selectComponent('#modelViewer');
+      if (!viewer) return;
+      viewer.loadModel(MODEL_URL).then(() =>
+        viewer.applyDecal(DECAL_URL, { angle: 0, height: 0, arcWidth: Math.PI / 3, heightRange: 1.0, opacity: 1.0 })
+      );
+    }, 400);
   },
 
   openBuy() {

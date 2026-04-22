@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "产品"
+  "navigationBarTitleText": "产品",
+  "usingComponents": {
+    "model-viewer": "/components/model-viewer/index"
+  }
 }
