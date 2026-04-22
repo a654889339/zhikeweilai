@@ -74,29 +74,39 @@ export class ModelRenderer {
     return fetch(url)
       .then((r) => {
         if (!r.ok) throw new Error(`加载模型失败: ${r.status}`);
+        const ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (ct.startsWith('text/') || ct.includes('html') || ct.includes('json')) {
+          throw new Error(`模型文件缺失：${url}（服务器返回的是网页而非 GLB）`);
+        }
         return r.arrayBuffer();
       })
-      .then(
-        (buf) =>
-          new Promise((resolve, reject) => {
-            const loader = new GLTFLoader();
-            loader.parse(
-              buf,
-              '',
-              (gltf) => {
-                const object = gltf.scene;
-                this._centerAndScale(object);
-                this._clearCurrentModel();
-                this._currentModel = object;
-                this._scene.add(object);
-                this._startLoop();
-                setTimeout(() => this._stopLoop(), 120);
-                resolve();
-              },
-              reject
-            );
-          })
-      );
+      .then((buf) => {
+        // Validate GLB magic header "glTF" so we fail early with a clear message
+        // instead of letting GLTFLoader emit cryptic JSON parse errors.
+        const head = new Uint8Array(buf, 0, Math.min(4, buf.byteLength));
+        const magic = String.fromCharCode(...head);
+        if (buf.byteLength < 12 || magic !== 'glTF') {
+          throw new Error(`模型文件不是有效的 GLB：${url}`);
+        }
+        return new Promise((resolve, reject) => {
+          const loader = new GLTFLoader();
+          loader.parse(
+            buf,
+            '',
+            (gltf) => {
+              const object = gltf.scene;
+              this._centerAndScale(object);
+              this._clearCurrentModel();
+              this._currentModel = object;
+              this._scene.add(object);
+              this._startLoop();
+              setTimeout(() => this._stopLoop(), 120);
+              resolve();
+            },
+            reject
+          );
+        });
+      });
   }
 
   switchModel(url) {
