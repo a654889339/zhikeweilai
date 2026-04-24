@@ -18,24 +18,34 @@
 
 const THREE = require('../../../libs/three.min.js');
 
-// GLSL injected after map_fragment — modifies diffuseColor before lighting
-const DECAL_FRAGMENT_INJECT = /* glsl */`
+// GLSL injected after map_fragment — overrides diffuseColor.rgb in decal region
+const DECAL_FRAGMENT_COLOR = /* glsl */`
   {
     vec3 wp = vDecalWorldPos;
-
     float angle = atan(wp.z, wp.x);
     float u = (angle - decalAngle) / decalArcWidth + 0.5;
-    // v is scaled by aspect (arcLen/heightRange) so 1 unit in v = 1 unit in u (world space)
     float v = (wp.y - decalHeight) / decalHeightRange / decalAspect + 0.5;
-
     u = (u - 0.5) / decalScaleX + 0.5;
     v = (v - 0.5) / decalScaleY + 0.5;
 
     if (u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0) {
       vec4 dc = texture2D(decalTexture, vec2(1.0 - u, v));
-      diffuseColor.rgb = mix(diffuseColor.rgb, dc.rgb, dc.a * decalOpacity);
+      vDecalBlend = dc.a * decalOpacity;
+      diffuseColor.rgb = mix(diffuseColor.rgb, dc.rgb, vDecalBlend);
+      // alpha: decal区域用贴花自己的alpha，不受底层材质透明度影响
+      diffuseColor.a = mix(diffuseColor.a, dc.a, vDecalBlend);
     }
   }
+`;
+
+// injected after metalnessmap_fragment — override metalness in decal region
+const DECAL_FRAGMENT_METALNESS = /* glsl */`
+  metalnessFactor = mix(metalnessFactor, decalMetalness, vDecalBlend);
+`;
+
+// injected after roughnessmap_fragment — override roughness in decal region
+const DECAL_FRAGMENT_ROUGHNESS = /* glsl */`
+  roughnessFactor = mix(roughnessFactor, decalRoughness, vDecalBlend);
 `;
 
 // GLSL injected into the vertex shader to pass world position
@@ -77,6 +87,8 @@ class DecalProjector {
       decalScaleX:      { value: scaleX },
       decalScaleY:      { value: scaleY },
       decalAspect:      { value: aspect },
+      decalMetalness:   { value: 0.0 },
+      decalRoughness:   { value: 0.5 },
     };
     this._cylinderRadius = cylinderRadius;
     this._patchedMaterials = [];
@@ -116,6 +128,12 @@ class DecalProjector {
   setScaleY(v) {
     this._uniforms.decalScaleY.value = v;
   }
+
+  /** Metalness of the decal surface (0–1). */
+  setMetalness(v) { this._uniforms.decalMetalness.value = v; }
+
+  /** Roughness of the decal surface (0–1). */
+  setRoughness(v) { this._uniforms.decalRoughness.value = v; }
 
   /**
    * Patch all MeshStandardMaterial / MeshPhysicalMaterial in the model.
@@ -174,7 +192,7 @@ class DecalProjector {
           '#include <project_vertex>\n' + DECAL_VERTEX_INJECT
         );
 
-      // Fragment: declare uniforms + varying + inject blend before output
+      // Fragment: declare uniforms + varyings + inject blends
       shader.fragmentShader = shader.fragmentShader
         .replace(
           'void main() {',
@@ -188,13 +206,24 @@ class DecalProjector {
             'uniform float decalScaleX;',
             'uniform float decalScaleY;',
             'uniform float decalAspect;',
+            'uniform float decalMetalness;',
+            'uniform float decalRoughness;',
             'varying vec3 vDecalWorldPos;',
+            'float vDecalBlend = 0.0;',
             'void main() {',
           ].join('\n')
         )
         .replace(
           '#include <map_fragment>',
-          '#include <map_fragment>\n' + DECAL_FRAGMENT_INJECT
+          '#include <map_fragment>\n' + DECAL_FRAGMENT_COLOR
+        )
+        .replace(
+          '#include <metalnessmap_fragment>',
+          '#include <metalnessmap_fragment>\n' + DECAL_FRAGMENT_METALNESS
+        )
+        .replace(
+          '#include <roughnessmap_fragment>',
+          '#include <roughnessmap_fragment>\n' + DECAL_FRAGMENT_ROUGHNESS
         );
 
       // Force shader recompile — customProgramCacheKey makes Three.js treat this
